@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-26T22:49:53.416Z",
+  "phase": "P2",
+  "phase_name": "Accessibility Basics",
+  "phase_dir": ".planning/phases/02-accessibility-basics",
+  "plan": 1,
+  "task": 1,
+  "total_tasks": 2,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "P2 Task 1 - Accessibility runtime status slice",
+      "status": "done",
+      "commit": null
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 2,
+      "name": "P2 Task 2 - First semantic UI capability slice",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    {
+      "action": "If Ghosthand is reinstalled before verification, re-enable Ghosthand Accessibility in Android accessibility settings or append the service back into enabled_accessibility_services.",
+      "context": "This device drops Ghosthand from the enabled accessibility-services list after reinstall, which makes /state.accessibility fall back to disabled until the service is re-enabled.",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Bound P2 Task 1 to accessibility status only.",
+      "rationale": "The phase needed the AccessibilityService capability boundary and observability before any tree or action endpoints were added.",
+      "phase": "P2"
+    },
+    {
+      "decision": "Expose accessibility state using implemented/enabled/healthy/status rather than guessing action readiness.",
+      "rationale": "This keeps /state honest while still making the service observable from the app and local API.",
+      "phase": "P2"
+    }
+  ],
+  "uncommitted_files": [
+    ".gitignore",
+    "app/",
+    "build.gradle.kts",
+    "docs/",
+    "gradle.properties",
+    "gradle/",
+    "gradlew",
+    "gradlew.bat",
+    "icon.png",
+    "settings.gradle.kts",
+    ".planning/HANDOFF.json",
+    ".planning/phases/02-accessibility-basics/.continue-here.md"
+  ],
+  "next_action": "Start with P2 Task 2 and keep scope tight: add the first minimal semantic UI capability without introducing root or recovery logic.",
+  "context_notes": "P1 is in good shape: /health, /state, /device, and /foreground all work on 127.0.0.1:5583. P2 Task 1 is complete and verified on-device. GhostAccessibilityService is registered, can be enabled in settings, and /state.accessibility reports real status. The home screen shows accessibility status too. The biggest resume nuance is device-state verification: reinstalling the APK can remove Ghosthand from the device's enabled accessibility-services list, so the connected state may need to be restored manually before verification."
+}
