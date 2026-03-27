@@ -1,0 +1,108 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-27T22:18:53.164Z",
+  "phase": "09",
+  "phase_name": "Mainline capability-parity runtime acceptance correction",
+  "phase_dir": ".planning/phases/09-capability-parity-mainline",
+  "plan": 1,
+  "task": 3,
+  "total_tasks": 5,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Align Ghosthand route surface to the settled local-agent contract",
+      "status": "done"
+    },
+    {
+      "id": 2,
+      "name": "Root-install updated APK and verify major read/action routes on-device",
+      "status": "done"
+    },
+    {
+      "id": 3,
+      "name": "Debug remaining sensing and wait blockers",
+      "status": "in_progress",
+      "progress": "Added crash-safe screenshot handling, root screenshot fallback, command catalog, notification buffer, and concurrent request handling. /screenshot still unavailable without completed permission/fallback path. /wait transport is fixed but semantic change detection still needs a final passing live verification."
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 4,
+      "name": "Finish screenshot runtime acceptance",
+      "status": "not_started"
+    },
+    {
+      "id": 5,
+      "name": "Verify and repair remaining focused/input/setText/scroll/swipe/longpress/gesture/wait routes",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [
+    {
+      "description": "GET /screenshot still returns SCREENSHOT_FAILED on-device",
+      "type": "technical",
+      "workaround": "Root screencap works directly under su -c, but the in-process fallback is not yet taking effect. MediaProjection consent click no longer crashes the app, but the permission path has not been completed successfully."
+    },
+    {
+      "description": "GET /wait still has no confirmed passing live foreground-change verification",
+      "type": "technical",
+      "workaround": "Transport bottleneck is fixed by concurrent request handling. Need a final Settings -> Home or similar verified transition after the latest build."
+    },
+    {
+      "description": "Repeated APK reinstalls can leave Ghosthand accessibility enabled but not rebound until secure settings are rewritten",
+      "type": "technical",
+      "workaround": "Use separate root commands: start foreground service, temporarily set enabled_accessibility_services to Orb only, then restore Orb + Ghosthand core."
+    }
+  ],
+  "human_actions_pending": [
+    {
+      "action": "Complete screenshot consent if the system dialog is shown",
+      "context": "MediaProjection path is still needed as the clean non-root screenshot route when the platform allows it.",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Adapt the external MVP's method rather than its code: fresh current-window reads, action-ready responses, and explicit stale-reference handling",
+      "rationale": "Makes Ghosthand workable for on-device agents without copying external implementation or naming.",
+      "phase": "09"
+    },
+    {
+      "decision": "Expose GET /commands for local agents",
+      "rationale": "Agents running on-device need discoverable route, method, and parameter metadata instead of relying only on repo docs.",
+      "phase": "09"
+    },
+    {
+      "decision": "Make the local API server handle clients concurrently",
+      "rationale": "Blocking GET /wait requests were starving all other requests when the server handled one client at a time.",
+      "phase": "09"
+    },
+    {
+      "decision": "Keep screenshot failure crash-safe and fall through to secondary capture paths",
+      "rationale": "On this device, AccessibilityService.takeScreenshot throws SecurityException, so Ghosthand must fail safely and continue running.",
+      "phase": "09"
+    }
+  ],
+  "uncommitted_files": [
+    "app/src/main/java/com/folklore25/ghosthand/AccessibilityNodeFinder.kt",
+    "app/src/main/java/com/folklore25/ghosthand/AccessibilityNodeLocator.kt",
+    "app/src/main/java/com/folklore25/ghosthand/AccessibilityTreeSnapshotProvider.kt",
+    "app/src/main/java/com/folklore25/ghosthand/GhostCoreAccessibilityService.kt",
+    "app/src/main/java/com/folklore25/ghosthand/GhostNotificationService.kt",
+    "app/src/main/java/com/folklore25/ghosthand/GhosthandForegroundService.kt",
+    "app/src/main/java/com/folklore25/ghosthand/LocalApiServer.kt",
+    "app/src/main/java/com/folklore25/ghosthand/NotificationBuffer.kt",
+    "app/src/main/java/com/folklore25/ghosthand/NotificationDispatcher.kt",
+    "app/src/main/java/com/folklore25/ghosthand/RootScreenshotProvider.kt",
+    "app/src/main/java/com/folklore25/ghosthand/StateCoordinator.kt",
+    "build.gradle.kts",
+    "gradle.properties",
+    "gradle/",
+    "gradlew",
+    "gradlew.bat",
+    "settings.gradle.kts"
+  ],
+  "next_action": "Resume by restoring the runtime with root (start foreground service, rebind accessibility service), then finish GET /screenshot first: either complete MediaProjection consent successfully or make the in-process root fallback actually return data. After that, rerun GET /wait across a real Settings -> Home foreground transition, then verify focused/input/setText/scroll/swipe/longpress/gesture in order.",
+  "context_notes": "Major route surface is now much closer to the target local-agent contract. Verified on-device: ping, screen, tree, info, find, tap, click, back, home, recents, clipboard read/write, notify post/read, commands catalog. The current pause point is no longer broad API shape work; it is final runtime acceptance of screenshot, wait, and the remaining text/gesture endpoints."
+}
