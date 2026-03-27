@@ -1,62 +1,70 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-26T22:49:53.416Z",
-  "phase": "P2",
-  "phase_name": "Accessibility Basics",
+  "timestamp": "2026-03-27T06:11:37.519Z",
+  "phase": "P3",
+  "phase_name": "Action Expansion",
   "phase_dir": ".planning/phases/02-accessibility-basics",
   "plan": 1,
   "task": 1,
-  "total_tasks": 2,
+  "total_tasks": 1,
   "status": "paused",
   "completed_tasks": [
     {
       "id": 1,
-      "name": "P2 Task 1 - Accessibility runtime status slice",
+      "name": "P0-P2 runtime, state, tree, find, tap, and MIUI accessibility bind stabilization",
       "status": "done",
       "commit": null
     }
   ],
   "remaining_tasks": [
     {
-      "id": 2,
-      "name": "P2 Task 2 - First semantic UI capability slice",
-      "status": "not_started"
+      "id": 1,
+      "name": "P3 swipe acceptance and dispatch-capability retention hardening on MIUI",
+      "status": "in_progress"
     }
   ],
-  "blockers": [],
+  "blockers": [
+    {
+      "description": "Production GhostAccessibilityService can fall from enabled_connected/dispatchCapable=true to enabled_idle/dispatchCapable=false between runs on the target MIUI device.",
+      "type": "technical",
+      "workaround": "Re-enable Ghosthand Accessibility through settings or the dev helper before live verification. /state and dumpsys must both be checked before relying on swipe/tap results."
+    }
+  ],
   "human_actions_pending": [
     {
-      "action": "If Ghosthand is reinstalled before verification, re-enable Ghosthand Accessibility in Android accessibility settings or append the service back into enabled_accessibility_services.",
-      "context": "This device drops Ghosthand from the enabled accessibility-services list after reinstall, which makes /state.accessibility fall back to disabled until the service is re-enabled.",
+      "action": "Before continuing any live accessibility gesture verification, manually confirm Ghosthand Accessibility is enabled and bound again if /state reports enabled_idle or disabled.",
+      "context": "The target MIUI device can drop Ghosthand out of a dispatch-capable state between runs. Resume work should begin by checking /state and accessibility settings, then restoring enabled_connected if needed.",
       "blocking": false
     }
   ],
   "decisions": [
     {
-      "decision": "Bound P2 Task 1 to accessibility status only.",
-      "rationale": "The phase needed the AccessibilityService capability boundary and observability before any tree or action endpoints were added.",
-      "phase": "P2"
+      "decision": "Use /state plus dumpsys accessibility as the machine-readable truth sources for MIUI accessibility readiness.",
+      "rationale": "The device can diverge from UI assumptions and stale visual state. /state.accessibility and dumpsys together reliably show enabled, connected, and dispatch-capable conditions.",
+      "phase": "P3"
     },
     {
-      "decision": "Expose accessibility state using implemented/enabled/healthy/status rather than guessing action readiness.",
-      "rationale": "This keeps /state honest while still making the service observable from the app and local API.",
-      "phase": "P2"
+      "decision": "Treat swipe probe scrollability and accessibility gesture dispatch as separate paths.",
+      "rationale": "Shell/manual swipe on the real probe can move the probe, while Ghosthand accessibility /swipe can still fail. Acceptance and diagnosis must not conflate those paths.",
+      "phase": "P3"
+    },
+    {
+      "decision": "Gate /swipe on real framework dispatch capability instead of lifecycle-connected state alone.",
+      "rationale": "Instrumentation showed the correct connected service instance can still have connectionId=-1 and no framework connection, causing dispatchGesture() to return false immediately.",
+      "phase": "P3"
     }
   ],
   "uncommitted_files": [
-    ".gitignore",
     "app/",
     "build.gradle.kts",
-    "docs/",
     "gradle.properties",
     "gradle/",
     "gradlew",
     "gradlew.bat",
-    "icon.png",
     "settings.gradle.kts",
     ".planning/HANDOFF.json",
     ".planning/phases/02-accessibility-basics/.continue-here.md"
   ],
-  "next_action": "Start with P2 Task 2 and keep scope tight: add the first minimal semantic UI capability without introducing root or recovery logic.",
-  "context_notes": "P1 is in good shape: /health, /state, /device, and /foreground all work on 127.0.0.1:5583. P2 Task 1 is complete and verified on-device. GhostAccessibilityService is registered, can be enabled in settings, and /state.accessibility reports real status. The home screen shows accessibility status too. The biggest resume nuance is device-state verification: reinstalling the APK can remove Ghosthand from the device's enabled accessibility-services list, so the connected state may need to be restored manually before verification."
+  "next_action": "Resume by collecting one clean run-to-degradation timeline for the production GhostAccessibilityService: restore enabled_connected, capture service/lifecycle/system logs, then watch for the first event where dispatchCapable is lost.",
+  "context_notes": "P2 is complete on the real MIUI rooted phone: production accessibility bind is stable with typeAllMask plus FLAG_INCLUDE_NOT_IMPORTANT_VIEWS; /tree, /find, and /tap all work and TAP PROBE increments. P3 /swipe exists and builds, and the swipe probe now exposes a truthful scroll signal from real scrollY and top visible item. Manual shell swipe using real probe bounds changes the swipe probe signal, but Ghosthand accessibility /swipe still fails because dispatchGesture() can be called when the service has no usable framework connection. A focused diagnostic pass showed that the correct service instance was used, but connectionId could be -1 with no framework connection. A bounded readiness fix was then added so /swipe fails honestly with ACCESSIBILITY_UNAVAILABLE when dispatchCapable is false. The remaining work is no longer API shape or gesture-shape experimentation; it is MIUI connection-retention diagnosis for the production GhostAccessibilityService between runs."
 }
