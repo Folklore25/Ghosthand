@@ -1,78 +1,63 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-27T18:45:02.445Z",
+  "timestamp": "2026-03-27T19:16:34.687Z",
   "phase": "09",
-  "phase_name": "Mainline capability-parity implementation after architecture slimming",
+  "phase_name": "Mainline capability-parity implementation",
   "phase_dir": ".planning/phases/09-capability-parity-mainline",
   "plan": 1,
-  "task": 1,
-  "total_tasks": 3,
+  "task": 6,
+  "total_tasks": 6,
   "status": "paused",
   "completed_tasks": [
     {
       "id": 1,
-      "name": "Audit current capability surface and GhostCore reuse points",
-      "status": "in_progress",
-      "progress": "Read the required docs and knowledgebase files, mapped the currently implemented endpoints (/tree, /find, /tap, /swipe, /type), confirmed LocalApiServer/StateCoordinator/GhostCoreAccessibilityService as the main integration points, and identified the requested parity gaps."
+      "name": "Stage 1 — Read/Inspect endpoints",
+      "status": "done",
+      "summary": "/screen, /info, /focused implemented. GhostCoreAccessibilityService.takeScreenshot, AccessibilityClicker, AccessibilityTyper.setTextOnNode, StateCoordinator additions, LocalApiServer routes, docs/API.md updated."
+    },
+    {
+      "id": 2,
+      "name": "Stage 2 — Gestures + Global Actions",
+      "status": "done",
+      "summary": "/scroll, /longpress, /gesture, /back, /home, /recents implemented. GhostAccessibilityExecutionCore.GestureStroke/GesturePoint types, AccessibilityScroller, performLongPressGesture, performGesture, doGlobalAction on both services. Key fix: performGlobalAction is final on AccessibilityService — called via when(service) cast in StateCoordinator."
     }
   ],
   "remaining_tasks": [
     {
-      "id": 2,
-      "name": "Synthesize the staged implementation plan",
-      "status": "not_started"
-    },
-    {
       "id": 3,
-      "name": "Deliver the planning-only report with next stage recommendation",
-      "status": "not_started"
+      "name": "Stage 3 — Sensing/Utility",
+      "status": "not_started",
+      "summary": "/screenshot (MediaProjection), /notify (NotificationListenerService), /wait (tree polling), /clipboard (ClipboardManager). These require new Android permissions beyond current scope."
     }
   ],
-  "blockers": [
-    {
-      "description": "No technical blocker was found for the planning task; the turn was interrupted before the staged parity plan was written up.",
-      "type": "external",
-      "workaround": "Resume from the gathered audit evidence and write the five-part planning report only."
-    },
-    {
-      "description": "The user also asked for service-button toggle behavior and a small alignment cleanup on the current UI, but that is separate from the planning-only capability-parity task.",
-      "type": "technical",
-      "workaround": "Keep those UI fixes as a follow-up after the parity plan is delivered unless the user reprioritizes them again."
-    }
-  ],
+  "blockers": [],
   "human_actions_pending": [],
   "decisions": [
     {
-      "decision": "Keep Ghosthand accessibility-first and root optional/secondary.",
-      "rationale": "The user explicitly reset the architecture and does not want a separate root execution direction.",
+      "decision": "performGlobalAction is final on AccessibilityService — cannot be in GhostAccessibilityExecutionCore interface",
+      "rationale": "Android AccessibilityService.performGlobalAction is a final framework method. Cannot override in interface. Solved with doGlobalAction() method on concrete services called via when(service) cast in StateCoordinator.",
       "phase": "09"
     },
     {
-      "decision": "Use the proven external reference implementation patterns as the basis for parity work, but keep Ghosthand naming, API shape, and architecture.",
-      "rationale": "The user wants direct port/adaptation rather than re-deriving accessibility mechanics.",
+      "decision": "GLOBAL_ACTION_BACK/HOME/RECENTS routed via single buildGlobalActionResponse with actionCode parameter",
+      "rationale": "Avoids code duplication. All three share the same response logic.",
       "phase": "09"
     },
     {
-      "decision": "Planning must come before the next coding pass for the parity program.",
-      "rationale": "The user explicitly asked for a staged implementation plan only in this task.",
-      "phase": "09"
-    },
-    {
-      "decision": "The dark premium UI refinement was completed and verified on-device, but UI work should stop here until the mainline parity plan is reported.",
-      "rationale": "The latest user instruction made capability parity the highest-priority mainline task.",
+      "decision": "GestureStroke/GesturePoint are data classes in GhostAccessibilityExecutionCore.kt",
+      "rationale": "Shared types needed by both services and StateCoordinator. Kept in the core interface file.",
       "phase": "09"
     }
   ],
   "uncommitted_files": [
-    "app/src/main/java/com/folklore25/ghosthand/MainActivity.kt",
-    "app/src/main/res/drawable/bg_status_chip.xml",
-    "app/src/main/res/layout/activity_main.xml",
-    "app/src/main/res/values/colors.xml",
-    "app/src/main/res/values/themes.xml",
-    "app/src/main/res/values-night/themes.xml",
-    ".planning/HANDOFF.json",
-    ".planning/phases/09-capability-parity-mainline/.continue-here.md"
+    "app/src/main/java/com/folklore25/ghosthand/GhostAccessibilityExecutionCore.kt",
+    "app/src/main/java/com/folklore25/ghosthand/GhostCoreAccessibilityService.kt",
+    "app/src/main/java/com/folklore25/ghosthand/GhostAccessibilityService.kt",
+    "app/src/main/java/com/folklore25/ghosthand/AccessibilityScroller.kt",
+    "app/src/main/java/com/folklore25/ghosthand/StateCoordinator.kt",
+    "app/src/main/java/com/folklore25/ghosthand/LocalApiServer.kt",
+    "docs/API.md"
   ],
-  "next_action": "Start by converting the gathered audit into the requested five-part planning report: current phase, parity gap list, staged implementation plan (Stage 1-3), reusable Ghosthand components, and the first stage to execute next.",
-  "context_notes": "Latest verified state before pausing: the dark premium operator surface is live on the device, the default home surface no longer shows foreground package, and no backend behavior was changed. During the new high-priority parity-planning task, the codebase audit confirmed that LocalApiServer currently exposes /tree, /find, /tap, /swipe, /type, plus /health, /state, /device, /foreground, /launch, /stop, and that GhostCoreAccessibilityService already contains reusable gesture and focused-text primitives. The staged parity plan itself was not yet written when the user interrupted."
+  "next_action": "Stage 3 — implement /screenshot (MediaProjection), /notify (NotificationListenerService), /wait (tree polling), /clipboard (ClipboardManager). These require new Android permissions beyond accessibility scope.",
+  "context_notes": "Stages 1 and 2 of the 3-stage capability-parity program are complete. 12 endpoints total added. All build cleanly. docs/API.md updated with sections 7.16–7.27. No blockers. Stage 3 is the final stage and requires different Android capabilities (MediaProjection, NotificationListenerService, ClipboardManager) that go beyond the current accessibility-core scope."
 }
