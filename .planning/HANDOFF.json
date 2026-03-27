@@ -1,70 +1,78 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-27T06:11:37.519Z",
-  "phase": "P3",
-  "phase_name": "Action Expansion",
-  "phase_dir": ".planning/phases/02-accessibility-basics",
+  "timestamp": "2026-03-27T18:45:02.445Z",
+  "phase": "09",
+  "phase_name": "Mainline capability-parity implementation after architecture slimming",
+  "phase_dir": ".planning/phases/09-capability-parity-mainline",
   "plan": 1,
   "task": 1,
-  "total_tasks": 1,
+  "total_tasks": 3,
   "status": "paused",
   "completed_tasks": [
     {
       "id": 1,
-      "name": "P0-P2 runtime, state, tree, find, tap, and MIUI accessibility bind stabilization",
-      "status": "done",
-      "commit": null
+      "name": "Audit current capability surface and GhostCore reuse points",
+      "status": "in_progress",
+      "progress": "Read the required docs and knowledgebase files, mapped the currently implemented endpoints (/tree, /find, /tap, /swipe, /type), confirmed LocalApiServer/StateCoordinator/GhostCoreAccessibilityService as the main integration points, and identified the requested parity gaps."
     }
   ],
   "remaining_tasks": [
     {
-      "id": 1,
-      "name": "P3 swipe acceptance and dispatch-capability retention hardening on MIUI",
-      "status": "in_progress"
+      "id": 2,
+      "name": "Synthesize the staged implementation plan",
+      "status": "not_started"
+    },
+    {
+      "id": 3,
+      "name": "Deliver the planning-only report with next stage recommendation",
+      "status": "not_started"
     }
   ],
   "blockers": [
     {
-      "description": "Production GhostAccessibilityService can fall from enabled_connected/dispatchCapable=true to enabled_idle/dispatchCapable=false between runs on the target MIUI device.",
-      "type": "technical",
-      "workaround": "Re-enable Ghosthand Accessibility through settings or the dev helper before live verification. /state and dumpsys must both be checked before relying on swipe/tap results."
-    }
-  ],
-  "human_actions_pending": [
+      "description": "No technical blocker was found for the planning task; the turn was interrupted before the staged parity plan was written up.",
+      "type": "external",
+      "workaround": "Resume from the gathered audit evidence and write the five-part planning report only."
+    },
     {
-      "action": "Before continuing any live accessibility gesture verification, manually confirm Ghosthand Accessibility is enabled and bound again if /state reports enabled_idle or disabled.",
-      "context": "The target MIUI device can drop Ghosthand out of a dispatch-capable state between runs. Resume work should begin by checking /state and accessibility settings, then restoring enabled_connected if needed.",
-      "blocking": false
+      "description": "The user also asked for service-button toggle behavior and a small alignment cleanup on the current UI, but that is separate from the planning-only capability-parity task.",
+      "type": "technical",
+      "workaround": "Keep those UI fixes as a follow-up after the parity plan is delivered unless the user reprioritizes them again."
     }
   ],
+  "human_actions_pending": [],
   "decisions": [
     {
-      "decision": "Use /state plus dumpsys accessibility as the machine-readable truth sources for MIUI accessibility readiness.",
-      "rationale": "The device can diverge from UI assumptions and stale visual state. /state.accessibility and dumpsys together reliably show enabled, connected, and dispatch-capable conditions.",
-      "phase": "P3"
+      "decision": "Keep Ghosthand accessibility-first and root optional/secondary.",
+      "rationale": "The user explicitly reset the architecture and does not want a separate root execution direction.",
+      "phase": "09"
     },
     {
-      "decision": "Treat swipe probe scrollability and accessibility gesture dispatch as separate paths.",
-      "rationale": "Shell/manual swipe on the real probe can move the probe, while Ghosthand accessibility /swipe can still fail. Acceptance and diagnosis must not conflate those paths.",
-      "phase": "P3"
+      "decision": "Use the proven external reference implementation patterns as the basis for parity work, but keep Ghosthand naming, API shape, and architecture.",
+      "rationale": "The user wants direct port/adaptation rather than re-deriving accessibility mechanics.",
+      "phase": "09"
     },
     {
-      "decision": "Gate /swipe on real framework dispatch capability instead of lifecycle-connected state alone.",
-      "rationale": "Instrumentation showed the correct connected service instance can still have connectionId=-1 and no framework connection, causing dispatchGesture() to return false immediately.",
-      "phase": "P3"
+      "decision": "Planning must come before the next coding pass for the parity program.",
+      "rationale": "The user explicitly asked for a staged implementation plan only in this task.",
+      "phase": "09"
+    },
+    {
+      "decision": "The dark premium UI refinement was completed and verified on-device, but UI work should stop here until the mainline parity plan is reported.",
+      "rationale": "The latest user instruction made capability parity the highest-priority mainline task.",
+      "phase": "09"
     }
   ],
   "uncommitted_files": [
-    "app/",
-    "build.gradle.kts",
-    "gradle.properties",
-    "gradle/",
-    "gradlew",
-    "gradlew.bat",
-    "settings.gradle.kts",
+    "app/src/main/java/com/folklore25/ghosthand/MainActivity.kt",
+    "app/src/main/res/drawable/bg_status_chip.xml",
+    "app/src/main/res/layout/activity_main.xml",
+    "app/src/main/res/values/colors.xml",
+    "app/src/main/res/values/themes.xml",
+    "app/src/main/res/values-night/themes.xml",
     ".planning/HANDOFF.json",
-    ".planning/phases/02-accessibility-basics/.continue-here.md"
+    ".planning/phases/09-capability-parity-mainline/.continue-here.md"
   ],
-  "next_action": "Resume by collecting one clean run-to-degradation timeline for the production GhostAccessibilityService: restore enabled_connected, capture service/lifecycle/system logs, then watch for the first event where dispatchCapable is lost.",
-  "context_notes": "P2 is complete on the real MIUI rooted phone: production accessibility bind is stable with typeAllMask plus FLAG_INCLUDE_NOT_IMPORTANT_VIEWS; /tree, /find, and /tap all work and TAP PROBE increments. P3 /swipe exists and builds, and the swipe probe now exposes a truthful scroll signal from real scrollY and top visible item. Manual shell swipe using real probe bounds changes the swipe probe signal, but Ghosthand accessibility /swipe still fails because dispatchGesture() can be called when the service has no usable framework connection. A focused diagnostic pass showed that the correct service instance was used, but connectionId could be -1 with no framework connection. A bounded readiness fix was then added so /swipe fails honestly with ACCESSIBILITY_UNAVAILABLE when dispatchCapable is false. The remaining work is no longer API shape or gesture-shape experimentation; it is MIUI connection-retention diagnosis for the production GhostAccessibilityService between runs."
+  "next_action": "Start by converting the gathered audit into the requested five-part planning report: current phase, parity gap list, staged implementation plan (Stage 1-3), reusable Ghosthand components, and the first stage to execute next.",
+  "context_notes": "Latest verified state before pausing: the dark premium operator surface is live on the device, the default home surface no longer shows foreground package, and no backend behavior was changed. During the new high-priority parity-planning task, the codebase audit confirmed that LocalApiServer currently exposes /tree, /find, /tap, /swipe, /type, plus /health, /state, /device, /foreground, /launch, /stop, and that GhostCoreAccessibilityService already contains reusable gesture and focused-text primitives. The staged parity plan itself was not yet written when the user interrupted."
 }
