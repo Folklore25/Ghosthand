@@ -78,12 +78,52 @@ wait_home_check() {
   '
 }
 
+focused_input_check() {
+  adb shell su -c 'am start -a android.settings.SETTINGS'
+  sleep 1
+
+  echo "== click search field =="
+  http_request POST /click '{"desc":"搜索"}'
+  echo
+  sleep 1
+
+  echo "== focused =="
+  http_request GET /focused
+  echo
+  sleep 1
+
+  echo "== input =="
+  http_request POST /input '{"text":"wifi"}'
+  echo
+}
+
+selector_click_check() {
+  echo "== selector click by text =="
+  http_request POST /click '{"text":"Grant Screenshot Permission"}'
+  echo
+  echo
+
+  echo "== selector click by resource id =="
+  http_request POST /click '{"id":"com.folklore25.ghosthand:id/grantScreenshotPermissionButton"}'
+  echo
+  echo
+
+  adb shell su -c 'am start -a android.settings.SETTINGS'
+  sleep 1
+
+  echo "== selector click by content description =="
+  http_request POST /click '{"desc":"搜索"}'
+  echo
+}
+
 usage() {
   cat <<'EOF'
 Usage:
   scripts/ghosthand-verify-runtime.sh install-current-build
   scripts/ghosthand-verify-runtime.sh restore-runtime
   scripts/ghosthand-verify-runtime.sh smoke
+  scripts/ghosthand-verify-runtime.sh focused-input
+  scripts/ghosthand-verify-runtime.sh selector-click
   scripts/ghosthand-verify-runtime.sh wait-home
   scripts/ghosthand-verify-runtime.sh all
 
@@ -106,6 +146,12 @@ main() {
     smoke)
       smoke_check
       ;;
+    focused-input)
+      focused_input_check
+      ;;
+    selector-click)
+      selector_click_check
+      ;;
     wait-home)
       wait_home_check
       ;;
@@ -113,6 +159,8 @@ main() {
       install_current_build
       restore_runtime
       smoke_check
+      focused_input_check
+      selector_click_check
       wait_home_check
       ;;
     *)
