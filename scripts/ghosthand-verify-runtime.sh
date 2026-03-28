@@ -7,6 +7,7 @@ ACTIVITY="${PKG}/.MainActivity"
 CORE_SERVICE="${PKG}/${PKG}.GhostCoreAccessibilityService"
 PORT="5583"
 APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+SCREENSHOT_RESPONSE_FILE="/tmp/ghosthand-screenshot-response.txt"
 LAST_OUTPUT=""
 LAST_LABEL=""
 MODE_NAME=""
@@ -104,6 +105,15 @@ dump_ui_xml() {
   adb shell cat /sdcard/ghosthand-ui.xml | sed -n '/^<?xml/,$p'
 }
 
+extract_ui_text_bounds() {
+  local xml="$1"
+  local text="$2"
+  printf '%s' "$xml" |
+    grep -o "text=\"${text}\"[^>]*bounds=\"\\[[0-9]*,[0-9]*\\]\\[[0-9]*,[0-9]*\\]\"" |
+    head -n 1 |
+    sed -E 's/.*bounds=\"\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]\"/\1 \2 \3 \4/'
+}
+
 tap_ui_resource() {
   local resource_id="$1"
   local xml
@@ -146,6 +156,12 @@ extract_json_int() {
   local response="$1"
   local field="$2"
   printf '%s' "$response" | sed -n "s/.*\"${field}\":\([0-9][0-9]*\).*/\1/p" | head -n 1
+}
+
+extract_json_string() {
+  local response="$1"
+  local field="$2"
+  printf '%s' "$response" | sed -n "s/.*\"${field}\":\"\\([^\"]*\\)\".*/\\1/p" | head -n 1
 }
 
 run_step() {
@@ -225,6 +241,70 @@ commands_preview() {
 
 screenshot_preview() {
   http_request GET /screenshot | head -c 1200
+}
+
+capture_screenshot_response() {
+  http_request GET /screenshot | tee "${SCREENSHOT_RESPONSE_FILE}"
+}
+
+extract_http_content_length() {
+  local response="$1"
+  printf '%s' "$response" | sed -n 's/^Content-Length: \([0-9][0-9]*\).*/\1/p' | head -n 1
+}
+
+extract_screenshot_base64() {
+  local response="$1"
+  printf '%s' "$response" | node -e '
+let s = "";
+process.stdin.on("data", d => s += d);
+process.stdin.on("end", () => {
+  const bodyStart = s.indexOf("{");
+  if (bodyStart < 0) return;
+  try {
+    const obj = JSON.parse(s.slice(bodyStart));
+    const image = obj?.data?.image || "";
+    process.stdout.write(image.replace(/^data:image\/png;base64,/, ""));
+  } catch (_) {}
+});
+'
+}
+
+extract_screenshot_base64_from_file() {
+  local path="$1"
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const s = fs.readFileSync(path, "utf8");
+const bodyStart = s.indexOf("{");
+if (bodyStart < 0) process.exit(0);
+try {
+  const obj = JSON.parse(s.slice(bodyStart));
+  const image = obj?.data?.image || "";
+  process.stdout.write(image.replace(/^data:image\/png;base64,/, ""));
+} catch (_) {}
+' "$path"
+}
+
+hash_text_sha256() {
+  local text="$1"
+  printf '%s' "$text" | shasum -a 256 | awk '{print $1}'
+}
+
+hash_screenshot_file_sha256() {
+  local path="$1"
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const s = fs.readFileSync(path, "utf8");
+const bodyStart = s.indexOf("{");
+if (bodyStart < 0) process.exit(0);
+try {
+  const obj = JSON.parse(s.slice(bodyStart));
+  const image = obj?.data?.image || "";
+  const payload = image.replace(/^data:image\/png;base64,/, "");
+  process.stdout.write(payload);
+} catch (_) {}
+' "$path" | shasum -a 256 | awk '{print $1}'
 }
 
 smoke_check() {
@@ -384,6 +464,291 @@ wait_home_check() {
   expect_contains "$combined" '"changed":true' "wait-home failed: /wait did not observe UI change" || return 1
 }
 
+scenario_settings_search_back() {
+  run_step "restore-runtime" restore_runtime || return 1
+
+  adb shell su -c 'am start -a android.settings.SETTINGS'
+  sleep 1
+
+  run_step "scenario foreground settings" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.android.settings"' "scenario failed: Settings was not foreground after launch" || return 1
+
+  run_step "scenario find search field" http_request POST /find '{"id":"android:id/input"}' || return 1
+  expect_contains "$LAST_OUTPUT" '"found":true' "scenario failed: search field was not found" || return 1
+
+  local center_x center_y
+  center_x="$(extract_json_int "$LAST_OUTPUT" "centerX")"
+  center_y="$(extract_json_int "$LAST_OUTPUT" "centerY")"
+  if [[ -z "$center_x" || -z "$center_y" ]]; then
+    echo "scenario failed: could not extract search field coordinates"
+    return 1
+  fi
+
+  run_step "scenario tap search field" http_request POST /tap "{\"x\":${center_x},\"y\":${center_y}}" || return 1
+  expect_contains "$LAST_OUTPUT" '"performed":true' "scenario failed: tap on search field did not perform" || return 1
+  sleep 1
+
+  run_step "scenario focused field" http_request GET /focused || return 1
+  expect_contains "$LAST_OUTPUT" '"available":true' "scenario failed: no focused field after tap" || return 1
+  expect_contains "$LAST_OUTPUT" '"resourceId":"android:id\/input"' "scenario failed: focused field was not the Settings search input" || return 1
+
+  run_step "scenario input text" http_request POST /input '{"text":"wifi"}' || return 1
+  expect_contains "$LAST_OUTPUT" '"performed":true' "scenario failed: input did not perform" || return 1
+  expect_contains "$LAST_OUTPUT" '"text":"wifi"' "scenario failed: input response did not reflect the requested text" || return 1
+
+  run_step "scenario find result" http_request POST /find '{"text":"WLAN","clickable":true}' || return 1
+  expect_contains "$LAST_OUTPUT" '"found":true' "scenario failed: Settings search result was not found" || return 1
+
+  local combined
+  combined="$(adb shell '
+    rm -f /data/local/tmp/ghosthand-scenario-wait.out /data/local/tmp/ghosthand-scenario-click.out
+    (
+      printf "GET /wait?timeout=4000 HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n" |
+        toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario-wait.out
+    ) &
+    sleep 1
+    BODY="{\"text\":\"WLAN\",\"clickable\":true}"
+    LEN=$(printf "%s" "$BODY" | wc -c | tr -d " ")
+    printf "POST /click HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s" "$LEN" "$BODY" |
+      toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario-click.out
+    sleep 5
+    echo "== click =="
+    cat /data/local/tmp/ghosthand-scenario-click.out
+    echo
+    echo "== wait =="
+    cat /data/local/tmp/ghosthand-scenario-wait.out
+    echo
+  ')"
+  printf '%s\n' "$combined"
+  expect_contains "$combined" '"performed":true' "scenario failed: result click did not perform" || return 1
+  expect_contains "$combined" '"changed":true' "scenario failed: /wait did not observe UI change after result click" || return 1
+
+  run_step "scenario foreground after click" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.android.settings"' "scenario failed: foreground package drifted after back" || return 1
+
+  combined="$(adb shell '
+    rm -f /data/local/tmp/ghosthand-scenario-wait.out /data/local/tmp/ghosthand-scenario-back.out
+    (
+      printf "GET /wait?timeout=4000 HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n" |
+        toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario-wait.out
+    ) &
+    sleep 1
+    printf "POST /back HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n" |
+      toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario-back.out
+    sleep 5
+    echo "== back =="
+    cat /data/local/tmp/ghosthand-scenario-back.out
+    echo
+    echo "== wait =="
+    cat /data/local/tmp/ghosthand-scenario-wait.out
+    echo
+  ')"
+  printf '%s\n' "$combined"
+  expect_contains "$combined" '"performed":true' "scenario failed: /back did not perform" || return 1
+  expect_contains "$combined" '"changed":true' "scenario failed: /wait did not observe UI change after back" || return 1
+
+  run_step "scenario foreground after back" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.android.settings"' "scenario failed: foreground package drifted after back" || return 1
+}
+
+scenario_settings_home_screenshot() {
+  run_step "restore-runtime" restore_runtime || return 1
+  local baseline_file="/tmp/ghosthand-scenario2-settings-response.txt"
+  local home_file="/tmp/ghosthand-scenario2-home-response.txt"
+
+  adb shell su -c 'am start -a android.settings.SETTINGS'
+  sleep 1
+
+  run_step "scenario2 foreground settings" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.android.settings"' "scenario2 failed: Settings was not foreground before baseline capture" || return 1
+
+  run_step "scenario2 screenshot settings baseline" capture_screenshot_response || return 1
+  expect_contains "$LAST_OUTPUT" '"image":"data:image\/png;base64,' "scenario2 failed: baseline screenshot did not expose PNG image data" || return 1
+  local baseline_response_length
+  baseline_response_length="$(extract_http_content_length "$LAST_OUTPUT")"
+  if [[ -z "$baseline_response_length" || "$baseline_response_length" -lt 100000 ]]; then
+    echo "scenario2 failed: baseline screenshot response size was unexpectedly small"
+    return 1
+  fi
+  cp "${SCREENSHOT_RESPONSE_FILE}" "${baseline_file}"
+  local baseline_hash
+  baseline_hash="$(hash_screenshot_file_sha256 "${baseline_file}")"
+  if [[ -z "$baseline_hash" ]]; then
+    echo "scenario2 failed: could not hash baseline screenshot payload"
+    return 1
+  fi
+
+  local combined
+  combined="$(adb shell '
+    rm -f /data/local/tmp/ghosthand-scenario2-wait.out /data/local/tmp/ghosthand-scenario2-home.out
+    (
+      printf "GET /wait?timeout=5000 HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n" |
+        toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario2-wait.out
+    ) &
+    sleep 1
+    printf "POST /home HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n" |
+      toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario2-home.out
+    sleep 6
+    echo "== home =="
+    cat /data/local/tmp/ghosthand-scenario2-home.out
+    echo
+    echo "== wait =="
+    cat /data/local/tmp/ghosthand-scenario2-wait.out
+    echo
+  ')"
+  printf '%s\n' "$combined"
+  expect_contains "$combined" '"performed":true' "scenario2 failed: /home did not perform" || return 1
+  expect_contains "$combined" '"packageName":"com.miui.home"' "scenario2 failed: /wait did not resolve to the launcher package" || return 1
+  expect_contains "$combined" '"activity":"com.miui.home.launcher.Launcher"' "scenario2 failed: /wait did not resolve to the launcher activity" || return 1
+
+  run_step "scenario2 foreground home" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.miui.home"' "scenario2 failed: launcher was not foreground after /home" || return 1
+  expect_contains "$LAST_OUTPUT" '"activity":"com.miui.home.launcher.Launcher"' "scenario2 failed: launcher activity was not foreground after /home" || return 1
+
+  run_step "scenario2 screenshot home" capture_screenshot_response || return 1
+  expect_contains "$LAST_OUTPUT" '"image":"data:image\/png;base64,' "scenario2 failed: home screenshot did not expose PNG image data" || return 1
+  local home_response_length
+  home_response_length="$(extract_http_content_length "$LAST_OUTPUT")"
+  if [[ -z "$home_response_length" || "$home_response_length" -lt 100000 ]]; then
+    echo "scenario2 failed: home screenshot response size was unexpectedly small"
+    return 1
+  fi
+  cp "${SCREENSHOT_RESPONSE_FILE}" "${home_file}"
+  local home_hash
+  home_hash="$(hash_screenshot_file_sha256 "${home_file}")"
+  if [[ -z "$home_hash" ]]; then
+    echo "scenario2 failed: could not hash home screenshot payload"
+    return 1
+  fi
+  if [[ "$home_hash" == "$baseline_hash" ]]; then
+    echo "scenario2 failed: home screenshot hash matched the baseline Settings screenshot"
+    return 1
+  fi
+}
+
+scenario_settings_clipboard_input() {
+  run_step "restore-runtime" restore_runtime || return 1
+
+  adb shell su -c 'am start -a android.settings.SETTINGS'
+  sleep 1
+
+  run_step "scenario3 foreground settings" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.android.settings"' "scenario3 failed: Settings was not foreground after launch" || return 1
+
+  local clipboard_seed="ghosthand clip path"
+  run_step "scenario3 clipboard write" http_request POST /clipboard "{\"text\":\"${clipboard_seed}\"}" || return 1
+  expect_contains "$LAST_OUTPUT" '"written":true' "scenario3 failed: clipboard write did not succeed" || return 1
+
+  run_step "scenario3 clipboard read" http_request GET /clipboard || return 1
+  expect_contains "$LAST_OUTPUT" "\"text\":\"${clipboard_seed}\"" "scenario3 failed: clipboard read did not return the expected text" || return 1
+
+  local clipboard_text
+  clipboard_text="$(extract_json_string "$LAST_OUTPUT" "text")"
+  if [[ -z "$clipboard_text" ]]; then
+    echo "scenario3 failed: could not extract clipboard text from /clipboard response"
+    return 1
+  fi
+
+  run_step "scenario3 find search field" http_request POST /find '{"id":"android:id/input"}' || return 1
+  expect_contains "$LAST_OUTPUT" '"found":true' "scenario3 failed: Settings search field was not found" || return 1
+
+  local center_x center_y
+  center_x="$(extract_json_int "$LAST_OUTPUT" "centerX")"
+  center_y="$(extract_json_int "$LAST_OUTPUT" "centerY")"
+  if [[ -z "$center_x" || -z "$center_y" ]]; then
+    echo "scenario3 failed: could not extract Settings search field coordinates"
+    return 1
+  fi
+
+  run_step "scenario3 tap search field" http_request POST /tap "{\"x\":${center_x},\"y\":${center_y}}" || return 1
+  expect_contains "$LAST_OUTPUT" '"performed":true' "scenario3 failed: tap on Settings search field did not perform" || return 1
+  sleep 1
+
+  run_step "scenario3 focused field before input" http_request GET /focused || return 1
+  expect_contains "$LAST_OUTPUT" '"available":true' "scenario3 failed: no focused field after tapping the search field" || return 1
+  expect_contains "$LAST_OUTPUT" '"resourceId":"android:id\/input"' "scenario3 failed: focused field was not the Settings search input" || return 1
+
+  run_step "scenario3 input clipboard text" http_request POST /input "{\"text\":\"${clipboard_text}\"}" || return 1
+  expect_contains "$LAST_OUTPUT" '"performed":true' "scenario3 failed: /input did not perform with clipboard-driven text" || return 1
+  expect_contains "$LAST_OUTPUT" "\"text\":\"${clipboard_text}\"" "scenario3 failed: /input response did not reflect the clipboard-driven text" || return 1
+
+  run_step "scenario3 focused field after input" http_request GET /focused || return 1
+  expect_contains "$LAST_OUTPUT" '"available":true' "scenario3 failed: focused field disappeared after input" || return 1
+  expect_contains "$LAST_OUTPUT" "\"text\":\"${clipboard_text}\"" "scenario3 failed: focused field text did not match the clipboard-driven text" || return 1
+}
+
+scenario_notification_navigation() {
+  run_step "restore-runtime" restore_runtime || return 1
+
+  run_step "scenario4 go home" http_request POST /home '{}' || return 1
+  expect_contains "$LAST_OUTPUT" '"performed":true' "scenario4 failed: /home did not perform" || return 1
+  sleep 1
+
+  run_step "scenario4 foreground home" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.miui.home"' "scenario4 failed: launcher was not foreground before posting the notification" || return 1
+
+  local notification_text="scenario4-nav-$(date +%s)"
+  run_step "scenario4 notify post" http_request POST /notify "{\"title\":\"Ghosthand Scenario 04\",\"text\":\"${notification_text}\"}" || return 1
+  if [[ "$LAST_OUTPUT" == *'"performed":true'* ]]; then
+    :
+  else
+    expect_contains "$LAST_OUTPUT" '"posted":true' "scenario4 failed: notification post did not succeed" || return 1
+  fi
+
+  run_step "scenario4 notify read" http_request GET /notify || return 1
+  expect_contains "$LAST_OUTPUT" "${notification_text}" "scenario4 failed: /notify did not return the scenario notification text" || return 1
+  expect_contains "$LAST_OUTPUT" '"package":"com.folklore25.ghosthand"' "scenario4 failed: /notify entry package did not match Ghosthand" || return 1
+  expect_contains "$LAST_OUTPUT" '"tag":"ghosthand_notify"' "scenario4 failed: /notify entry tag did not match the posted notification" || return 1
+
+  adb shell cmd statusbar expand-notifications
+  sleep 1
+
+  run_step "scenario4 find notification" http_request POST /find "{\"text\":\"${notification_text}\",\"clickable\":true}" || return 1
+  if [[ "$LAST_OUTPUT" != *'"found":true'* ]]; then
+    local shade_xml aggregate_bounds left top right bottom aggregate_center_y
+    shade_xml="$(dump_ui_xml | tr '\n' ' ')"
+    aggregate_bounds="$(extract_ui_text_bounds "$shade_xml" "不重要通知")"
+    if [[ -z "$aggregate_bounds" ]]; then
+      echo "scenario4 failed: notification text was not found in the expanded notification shade"
+      return 1
+    fi
+    read -r left top right bottom <<<"$aggregate_bounds"
+    aggregate_center_y=$(((top + bottom) / 2))
+    adb shell su -c "input tap 540 ${aggregate_center_y}"
+    sleep 1
+
+    run_step "scenario4 find notification after aggregate" http_request POST /find "{\"text\":\"${notification_text}\",\"clickable\":true}" || return 1
+    expect_contains "$LAST_OUTPUT" '"found":true' "scenario4 failed: notification text was not found after opening the unimportant notifications bucket" || return 1
+  fi
+
+  local combined
+  combined="$(adb shell '
+    rm -f /data/local/tmp/ghosthand-scenario4-wait.out /data/local/tmp/ghosthand-scenario4-click.out
+    (
+      printf "GET /wait?timeout=5000 HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n" |
+        toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario4-wait.out
+    ) &
+    sleep 1
+    BODY="{\"text\":\"'"${notification_text}"'\",\"clickable\":true}"
+    LEN=$(printf "%s" "$BODY" | wc -c | tr -d " ")
+    printf "POST /click HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s" "$LEN" "$BODY" |
+      toybox nc 127.0.0.1 '"${PORT}"' > /data/local/tmp/ghosthand-scenario4-click.out
+    sleep 6
+    echo "== click =="
+    cat /data/local/tmp/ghosthand-scenario4-click.out
+    echo
+    echo "== wait =="
+    cat /data/local/tmp/ghosthand-scenario4-wait.out
+    echo
+  ')"
+  printf '%s\n' "$combined"
+  expect_contains "$combined" '"performed":true' "scenario4 failed: clicking the notification did not perform" || return 1
+  expect_contains "$combined" '"changed":true' "scenario4 failed: /wait did not observe a UI change after notification click" || return 1
+
+  run_step "scenario4 foreground ghosthand" http_request GET /foreground || return 1
+  expect_contains "$LAST_OUTPUT" '"packageName":"com.folklore25.ghosthand"' "scenario4 failed: Ghosthand was not foreground after notification click" || return 1
+}
+
 core_check() {
   run_step "restore-runtime" restore_runtime || return 1
   smoke_check || return 1
@@ -420,12 +785,20 @@ Usage:
   scripts/ghosthand-verify-runtime.sh notify-check
   scripts/ghosthand-verify-runtime.sh commands-schema-check
   scripts/ghosthand-verify-runtime.sh wait-home
+  scripts/ghosthand-verify-runtime.sh scenario-settings-search-back
+  scripts/ghosthand-verify-runtime.sh scenario-settings-home-screenshot
+  scripts/ghosthand-verify-runtime.sh scenario-settings-clipboard-input
+  scripts/ghosthand-verify-runtime.sh scenario-notification-navigation
   scripts/ghosthand-verify-runtime.sh all
 
 Modes:
   - smoke: runtime up + foreground + commands preview
   - core: restore runtime, validate contract, screen, tree/find/click, focused input, selector click, clipboard, swipe
   - full: install current build, then run core + screenshot + notify + wait
+  - scenario-settings-search-back: Scenario 01, search inside Settings, enter Wi-Fi settings, then back with wait confirmation
+  - scenario-settings-home-screenshot: Scenario 02, wait for home transition and confirm it with a screenshot digest change
+  - scenario-settings-clipboard-input: Scenario 03, write/read clipboard text, focus the Settings search field, input the clipboard-driven value, and confirm the field content
+  - scenario-notification-navigation: Scenario 04, post a unique Ghosthand notification, read it, open the shade, open the MIUI unimportant bucket if needed, click that exact notification, and confirm navigation back into Ghosthand
 
 Notes:
   - Uses adb plus su -c to install and restore runtime on the target device
@@ -474,6 +847,18 @@ main() {
       ;;
     wait-home)
       run_step "wait-home" wait_home_check || status=$?
+      ;;
+    scenario-settings-search-back)
+      run_step "scenario-settings-search-back" scenario_settings_search_back || status=$?
+      ;;
+    scenario-settings-home-screenshot)
+      run_step "scenario-settings-home-screenshot" scenario_settings_home_screenshot || status=$?
+      ;;
+    scenario-settings-clipboard-input)
+      run_step "scenario-settings-clipboard-input" scenario_settings_clipboard_input || status=$?
+      ;;
+    scenario-notification-navigation)
+      run_step "scenario-notification-navigation" scenario_notification_navigation || status=$?
       ;;
     all)
       MODE_NAME="full"

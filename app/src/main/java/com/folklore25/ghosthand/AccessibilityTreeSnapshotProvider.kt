@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.content.Context
@@ -18,8 +24,8 @@ class AccessibilityTreeSnapshotProvider(
             )
 
         repeat(MAX_SNAPSHOT_ATTEMPTS) { attempt ->
-            val foregroundSnapshot = foregroundAppProvider.snapshot()
-            val snapshot = service.withActiveWindowRoot { rootNode ->
+            val foregroundBefore = foregroundAppProvider.snapshot()
+            val capturedTree = service.withActiveWindowRoot { rootNode ->
                 val snapshotToken = AccessibilityNodeLocator.snapshotToken(rootNode)
                 val nodes = mutableListOf<FlatAccessibilityNode>()
                 collectNodes(
@@ -29,26 +35,33 @@ class AccessibilityTreeSnapshotProvider(
                     snapshotToken = snapshotToken
                 )
 
-                val rootPackageName = rootNode.packageName?.toString()
-                val packagesAligned = foregroundSnapshot.packageName == null ||
-                    rootPackageName == null ||
-                    foregroundSnapshot.packageName == rootPackageName
-
-                AccessibilityTreeSnapshot(
-                    packageName = rootPackageName ?: foregroundSnapshot.packageName,
-                    activity = if (packagesAligned) foregroundSnapshot.activity else null,
+                CapturedTree(
+                    rootPackageName = rootNode.packageName?.toString(),
                     snapshotToken = snapshotToken,
                     capturedAt = Instant.now().toString(),
                     nodes = nodes
                 )
             }
+            val foregroundAfter = foregroundAppProvider.snapshot()
 
-            if (snapshot != null) {
-                val packagesAligned = foregroundSnapshot.packageName == null ||
-                    snapshot.packageName == null ||
-                    foregroundSnapshot.packageName == snapshot.packageName
+            if (capturedTree != null) {
+                val freshness = assessSnapshotFreshness(
+                    foregroundBefore = foregroundBefore,
+                    foregroundAfter = foregroundAfter,
+                    rootPackageName = capturedTree.rootPackageName,
+                    finalAttempt = attempt == MAX_SNAPSHOT_ATTEMPTS - 1
+                )
+                val snapshot = AccessibilityTreeSnapshot(
+                    packageName = capturedTree.rootPackageName ?: foregroundAfter.packageName,
+                    activity = freshness.activity,
+                    snapshotToken = capturedTree.snapshotToken,
+                    capturedAt = capturedTree.capturedAt,
+                    nodes = capturedTree.nodes,
+                    foregroundStableDuringCapture = freshness.foregroundStableDuringCapture,
+                    freshnessWarnings = freshness.warnings
+                )
 
-                if (packagesAligned || attempt == MAX_SNAPSHOT_ATTEMPTS - 1) {
+                if (freshness.acceptSnapshot) {
                     return AccessibilityTreeSnapshotResult.available(snapshot)
                 }
             }
@@ -146,14 +159,61 @@ class AccessibilityTreeSnapshotProvider(
         const val MAX_SNAPSHOT_ATTEMPTS = 3
         const val SNAPSHOT_RETRY_DELAY_MS = 100L
     }
+
+    private data class CapturedTree(
+        val rootPackageName: String?,
+        val snapshotToken: String,
+        val capturedAt: String,
+        val nodes: List<FlatAccessibilityNode>
+    )
 }
+
+internal fun assessSnapshotFreshness(
+    foregroundBefore: ForegroundAppSnapshot,
+    foregroundAfter: ForegroundAppSnapshot,
+    rootPackageName: String?,
+    finalAttempt: Boolean
+): SnapshotFreshnessAssessment {
+    val foregroundStableDuringCapture =
+        foregroundBefore.packageName == foregroundAfter.packageName &&
+            foregroundBefore.activity == foregroundAfter.activity
+    val packagesAligned =
+        foregroundAfter.packageName == null ||
+            rootPackageName == null ||
+            foregroundAfter.packageName == rootPackageName
+
+    val warnings = buildList {
+        if (!foregroundStableDuringCapture) {
+            add("foreground_changed_during_capture")
+        }
+        if (!packagesAligned) {
+            add("surface_package_mismatch")
+        }
+    }
+
+    return SnapshotFreshnessAssessment(
+        acceptSnapshot = (foregroundStableDuringCapture && packagesAligned) || finalAttempt,
+        activity = if (foregroundStableDuringCapture && packagesAligned) foregroundAfter.activity else null,
+        foregroundStableDuringCapture = foregroundStableDuringCapture,
+        warnings = warnings
+    )
+}
+
+internal data class SnapshotFreshnessAssessment(
+    val acceptSnapshot: Boolean,
+    val activity: String?,
+    val foregroundStableDuringCapture: Boolean,
+    val warnings: List<String>
+)
 
 data class AccessibilityTreeSnapshot(
     val packageName: String?,
     val activity: String?,
     val snapshotToken: String,
     val capturedAt: String,
-    val nodes: List<FlatAccessibilityNode>
+    val nodes: List<FlatAccessibilityNode>,
+    val foregroundStableDuringCapture: Boolean = true,
+    val freshnessWarnings: List<String> = emptyList()
 )
 
 data class AccessibilityTreeSnapshotResult(

@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.content.Context
@@ -285,7 +291,7 @@ class StateCoordinator(
         clickableOnly: Boolean = false,
         index: Int = 0
     ): ClickAttemptResult {
-        val found = accessibilityNodeFinder.findNodes(
+        val found = accessibilityNodeFinder.findNodesForClick(
             snapshot = snapshot,
             strategy = strategy,
             query = query,
@@ -296,10 +302,56 @@ class StateCoordinator(
         val nodeId = found.node?.nodeId
             ?: return ClickAttemptResult.failure(
                 reason = ClickFailureReason.NODE_NOT_FOUND,
-                attemptedPath = "selector_lookup"
+                attemptedPath = "selector_lookup",
+                selectorResolution = found.clickResolution
             )
 
-        return clickNode(nodeId)
+        val clickResult = clickNode(nodeId)
+        return clickResult.copy(selectorResolution = found.clickResolution)
+    }
+
+    fun clickFirstMatchFresh(
+        strategy: String,
+        query: String,
+        clickableOnly: Boolean = false,
+        index: Int = 0,
+        attempts: Int = 4,
+        retryDelayMs: Long = 250L
+    ): ClickAttemptResult {
+        var lastResult = ClickAttemptResult.failure(
+            reason = ClickFailureReason.ACCESSIBILITY_UNAVAILABLE,
+            attemptedPath = "tree_unavailable"
+        )
+
+        repeat(attempts.coerceAtLeast(1)) { attempt ->
+            val treeSnapshotResult = accessibilityTreeSnapshotProvider.snapshot()
+            val snapshot = treeSnapshotResult.snapshot
+
+            lastResult = if (!treeSnapshotResult.available || snapshot == null) {
+                ClickAttemptResult.failure(
+                    reason = ClickFailureReason.ACCESSIBILITY_UNAVAILABLE,
+                    attemptedPath = "tree_unavailable"
+                )
+            } else {
+                clickFirstMatch(
+                    snapshot = snapshot,
+                    strategy = strategy,
+                    query = query,
+                    clickableOnly = clickableOnly,
+                    index = index
+                )
+            }
+
+            if (lastResult.performed || lastResult.failureReason != ClickFailureReason.NODE_NOT_FOUND) {
+                return lastResult
+            }
+
+            if (attempt < attempts - 1) {
+                SystemClock.sleep(retryDelayMs)
+            }
+        }
+
+        return lastResult
     }
 
     fun inputText(text: String): TypeAttemptResult {
@@ -586,12 +638,30 @@ class StateCoordinator(
             }
         }
 
+        val finalTree = getTreeSnapshotResult().snapshot
+        val finalForeground = foregroundAppProvider.snapshot()
+        val finalState = UiStateSnapshot(
+            snapshotToken = finalTree?.snapshotToken,
+            packageName = finalForeground.packageName,
+            activity = finalForeground.activity
+        )
+
+        if (GhosthandWaitLogic.hasUiChanged(initialState, finalState)) {
+            return WaitUiChangeResult(
+                changed = true,
+                elapsedMs = System.currentTimeMillis() - startTime,
+                snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
+                packageName = finalForeground.packageName,
+                activity = finalForeground.activity
+            )
+        }
+
         return WaitUiChangeResult(
             changed = false,
-            elapsedMs = timeoutMs,
-            snapshotToken = initialState.snapshotToken,
-            packageName = initialState.packageName,
-            activity = initialState.activity
+            elapsedMs = System.currentTimeMillis() - startTime,
+            snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
+            packageName = finalForeground.packageName ?: initialState.packageName,
+            activity = finalForeground.activity ?: initialState.activity
         )
     }
 

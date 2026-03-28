@@ -1,5 +1,12 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
+import java.io.InputStream
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -9,6 +16,46 @@ data class GhosthandRequestTarget(
 )
 
 object GhosthandHttp {
+    fun readHttpLine(inputStream: InputStream): String? {
+        val bytes = ArrayList<Byte>(64)
+
+        while (true) {
+            val next = inputStream.read()
+            if (next == -1) {
+                return if (bytes.isEmpty()) null else bytes.toByteArray().toString(StandardCharsets.UTF_8)
+            }
+
+            if (next == '\n'.code) {
+                break
+            }
+
+            if (next != '\r'.code) {
+                bytes.add(next.toByte())
+            }
+        }
+
+        return bytes.toByteArray().toString(StandardCharsets.UTF_8)
+    }
+
+    fun readUtf8Body(inputStream: InputStream, contentLengthHeader: String?): String {
+        val contentLength = contentLengthHeader?.toIntOrNull() ?: return ""
+        if (contentLength <= 0) {
+            return ""
+        }
+
+        val bodyBytes = ByteArray(contentLength)
+        var offset = 0
+        while (offset < contentLength) {
+            val read = inputStream.read(bodyBytes, offset, contentLength - offset)
+            if (read == -1) {
+                break
+            }
+            offset += read
+        }
+
+        return String(bodyBytes, 0, offset, StandardCharsets.UTF_8)
+    }
+
     fun parseRequestTarget(requestTarget: String): GhosthandRequestTarget {
         return GhosthandRequestTarget(
             path = requestTarget.substringBefore('?'),

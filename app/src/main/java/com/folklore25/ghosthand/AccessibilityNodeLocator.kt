@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.graphics.Rect
@@ -17,18 +23,37 @@ object AccessibilityNodeLocator {
     }
 
     fun snapshotToken(rootNode: AccessibilityNodeInfo): String {
-        val bounds = Rect()
-        rootNode.getBoundsInScreen(bounds)
-        val rawToken = listOf(
-            rootNode.windowId.toString(),
-            rootNode.packageName?.toString().orEmpty(),
-            rootNode.className?.toString().orEmpty(),
-            bounds.left.toString(),
-            bounds.top.toString(),
-            bounds.right.toString(),
-            bounds.bottom.toString(),
-            rootNode.childCount.toString()
-        ).joinToString("|")
+        val parts = ArrayList<String>(MAX_TOKEN_NODES * 6)
+
+        fun appendNodeFingerprint(node: AccessibilityNodeInfo) {
+            if (parts.size >= MAX_TOKEN_NODES * 10) {
+                return
+            }
+
+            val bounds = Rect()
+            node.getBoundsInScreen(bounds)
+            parts += node.windowId.toString()
+            parts += node.packageName?.toString().orEmpty()
+            parts += node.className?.toString().orEmpty()
+            parts += node.viewIdResourceName.orEmpty()
+            parts += node.text?.toString().orEmpty()
+            parts += node.contentDescription?.toString().orEmpty()
+            parts += bounds.flattenToString()
+            parts += node.childCount.toString()
+            parts += node.isClickable.toString()
+            parts += node.isFocused.toString()
+
+            for (index in 0 until node.childCount.coerceAtMost(MAX_CHILDREN_PER_TOKEN_NODE)) {
+                if (parts.size >= MAX_TOKEN_NODES * 10) {
+                    break
+                }
+                val child = node.getChild(index) ?: continue
+                appendNodeFingerprint(child)
+            }
+        }
+
+        appendNodeFingerprint(rootNode)
+        val rawToken = parts.joinToString("|")
         return rawToken.hashCode().toUInt().toString(16)
     }
 
@@ -133,6 +158,9 @@ object AccessibilityNodeLocator {
 
         data object Invalid : EncodedNodeId
     }
+
+    private const val MAX_TOKEN_NODES = 64
+    private const val MAX_CHILDREN_PER_TOKEN_NODE = 8
 }
 
 sealed interface NodeResolutionResult {

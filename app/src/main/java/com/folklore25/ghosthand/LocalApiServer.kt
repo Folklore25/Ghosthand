@@ -1,11 +1,15 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import org.json.JSONException
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -85,12 +89,12 @@ class LocalApiServer(
     private fun handleClient(socket: Socket) {
         socket.use { client ->
             try {
-                val reader = BufferedReader(InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8))
-                val requestLine = reader.readLine() ?: return
+                val inputStream = client.getInputStream()
+                val requestLine = GhosthandHttp.readHttpLine(inputStream) ?: return
                 val headers = mutableMapOf<String, String>()
 
                 while (true) {
-                    val headerLine = reader.readLine() ?: break
+                    val headerLine = GhosthandHttp.readHttpLine(inputStream) ?: break
                     if (headerLine.isBlank()) {
                         break
                     }
@@ -109,7 +113,7 @@ class LocalApiServer(
                 val target = GhosthandHttp.parseRequestTarget(requestTarget)
                 val path = target.path
                 val queryParameters = target.queryParameters
-                val requestBody = readRequestBody(reader, headers["content-length"])
+                val requestBody = GhosthandHttp.readUtf8Body(inputStream, headers["content-length"])
 
                 val response = when {
                     method == "GET" && path == "/ping" -> buildPingResponse()
@@ -222,10 +226,19 @@ class LocalApiServer(
                             JSONObject()
                                 .put("aliases", org.json.JSONArray(selectorSupport.aliases))
                                 .put("strategies", org.json.JSONArray(selectorSupport.strategies))
+                                .put("primaryStrategies", org.json.JSONArray(selectorSupport.primaryStrategies))
+                                .put("boundedAids", org.json.JSONArray(selectorSupport.boundedAids))
                         } ?: JSONObject.NULL
                     )
                     .put("focusRequirement", command.focusRequirement)
                     .put("delayedAcceptance", command.delayedAcceptance)
+                    .put("transportContract", command.transportContract)
+                    .put("stateTruth", command.stateTruth)
+                    .put("changeSignal", command.changeSignal)
+                    .put("operatorUses", org.json.JSONArray(command.operatorUses))
+                    .put("referenceStability", command.referenceStability)
+                    .put("snapshotScope", command.snapshotScope)
+                    .put("recommendedInteractionModel", command.recommendedInteractionModel)
                     .put("stability", command.stability)
                     .put("exampleRequest", command.exampleRequest?.let(::toJsonValue) ?: JSONObject.NULL)
                     .put("exampleResponse", command.exampleResponse?.let(::toJsonValue) ?: JSONObject.NULL)
@@ -602,31 +615,13 @@ class LocalApiServer(
             }
         }
 
-        val from = body.optJSONObject("from") ?: return buildJsonResponse(
-            statusCode = 400,
-            body = errorEnvelope(
-                code = "INVALID_ARGUMENT",
-                message = "from is required."
-            )
-        )
-        val to = body.optJSONObject("to") ?: return buildJsonResponse(
-            statusCode = 400,
-            body = errorEnvelope(
-                code = "INVALID_ARGUMENT",
-                message = "to is required."
-            )
-        )
-
-        val fromX = from.optIntOrNull("x")
-        val fromY = from.optIntOrNull("y")
-        val toX = to.optIntOrNull("x")
-        val toY = to.optIntOrNull("y")
-        if (fromX == null || fromY == null || toX == null || toY == null) {
+        val swipeCoordinates = parseSwipeCoordinates(body)
+        if (!swipeCoordinates.valid) {
             return buildJsonResponse(
                 statusCode = 400,
                 body = errorEnvelope(
                     code = "INVALID_ARGUMENT",
-                    message = "from/to must contain integer x and y values."
+                    message = swipeCoordinates.errorMessage ?: "Swipe coordinates are invalid."
                 )
             )
         }
@@ -642,17 +637,26 @@ class LocalApiServer(
             )
         }
 
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
         val swipeResult = stateCoordinator.swipe(
-            fromX = fromX,
-            fromY = fromY,
-            toX = toX,
-            toY = toY,
+            fromX = swipeCoordinates.fromX!!,
+            fromY = swipeCoordinates.fromY!!,
+            toX = swipeCoordinates.toX!!,
+            toY = swipeCoordinates.toY!!,
             durationMs = durationMs
         )
+        val observation = if (swipeResult.performed) {
+            observeActionSurfaceChange(
+                beforeSnapshot = beforeSnapshot,
+                snapshotProvider = { stateCoordinator.getTreeSnapshotResult().snapshot }
+            )
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
 
         Log.i(
             SWIPE_LOG_TAG,
-            "event=swipe_request backendRequested=$backend backendUsed=${swipeResult.backendUsed ?: "none"} swipePath=${swipeResult.attemptedPath} success=${swipeResult.performed} failure=${swipeResult.failureReason ?: "none"} from=$fromX,$fromY to=$toX,$toY durationMs=$durationMs"
+            "event=swipe_request backendRequested=$backend backendUsed=${swipeResult.backendUsed ?: "none"} swipePath=${swipeResult.attemptedPath} success=${swipeResult.performed} failure=${swipeResult.failureReason ?: "none"} from=${swipeCoordinates.fromX},${swipeCoordinates.fromY} to=${swipeCoordinates.toX},${swipeCoordinates.toY} durationMs=$durationMs requestShape=${swipeCoordinates.requestShape}"
         )
 
         return when {
@@ -662,6 +666,12 @@ class LocalApiServer(
                     JSONObject()
                         .put("performed", true)
                         .put("backendUsed", swipeResult.backendUsed)
+                        .put("requestShape", swipeCoordinates.requestShape)
+                        .put("contentChanged", observation.surfaceChanged)
+                        .put("beforeSnapshotToken", observation.beforeSnapshotToken)
+                        .put("afterSnapshotToken", observation.afterSnapshotToken)
+                        .put("finalPackageName", observation.finalPackageName)
+                        .put("finalActivity", observation.finalActivity)
                 )
             )
             swipeResult.failureReason == SwipeFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
@@ -1016,34 +1026,23 @@ class LocalApiServer(
                     )
                 )
 
-            val treeSnapshotResult = stateCoordinator.getTreeSnapshotResult()
-            if (!treeSnapshotResult.available) {
-                return buildTreeUnavailableResponse(treeSnapshotResult.reason)
-            }
-
-            stateCoordinator.clickFirstMatch(
-                snapshot = treeSnapshotResult.snapshot
-                    ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT),
+            stateCoordinator.clickFirstMatchFresh(
                 strategy = selector.strategy,
                 query = selector.query ?: "",
-                clickableOnly = body.optBoolean("clickable", false),
+                clickableOnly = clickSelectorRequiresClickableTarget(body),
                 index = body.optIntOrNull("index") ?: 0
             )
         }
 
         Log.i(
             CLICK_LOG_TAG,
-            "event=click_request nodeId=$nodeId clickPath=${clickResult.attemptedPath} success=${clickResult.performed} failure=${clickResult.failureReason?.name ?: "none"}"
+            "event=click_request nodeId=$nodeId clickPath=${clickResult.attemptedPath} success=${clickResult.performed} failure=${clickResult.failureReason?.name ?: "none"} resolutionKind=${clickResult.selectorResolution?.resolutionKind ?: "none"} requestedStrategy=${clickResult.selectorResolution?.requestedStrategy ?: "none"} effectiveStrategy=${clickResult.selectorResolution?.effectiveStrategy ?: "none"}"
         )
 
         return when {
             clickResult.performed -> buildJsonResponse(
                 statusCode = 200,
-                body = successEnvelope(
-                    JSONObject()
-                        .put("performed", true)
-                        .put("backendUsed", clickResult.backendUsed)
-                )
+                body = successEnvelope(GhosthandApiPayloads.clickPayload(clickResult))
             )
             clickResult.failureReason == ClickFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
                 statusCode = 503,
@@ -1249,6 +1248,7 @@ class LocalApiServer(
         val nodeId = body.optString("nodeId").trim().ifEmpty { null }
         val target = body.optString("target").trim().ifEmpty { null }
         val count = (body.optIntOrNull("count") ?: 1).coerceAtLeast(1)
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
 
         val result = if (nodeId != null) {
             val single = stateCoordinator.scrollNode(nodeId, direction)
@@ -1265,6 +1265,14 @@ class LocalApiServer(
                 count = count
             )
         }
+        val observation = if (result.performed) {
+            observeActionSurfaceChange(
+                beforeSnapshot = beforeSnapshot,
+                snapshotProvider = { stateCoordinator.getTreeSnapshotResult().snapshot }
+            )
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
 
         return when {
             result.performed -> buildJsonResponse(
@@ -1273,6 +1281,14 @@ class LocalApiServer(
                     JSONObject()
                         .put("performed", true)
                         .put("count", result.performedCount)
+                        .put("direction", direction)
+                        .put("attemptedPath", result.attemptedPath)
+                        .put("contentChanged", observation.surfaceChanged)
+                        .put("surfaceChanged", observation.surfaceChanged)
+                        .put("beforeSnapshotToken", observation.beforeSnapshotToken)
+                        .put("afterSnapshotToken", observation.afterSnapshotToken)
+                        .put("finalPackageName", observation.finalPackageName)
+                        .put("finalActivity", observation.finalActivity)
                 )
             )
             result.failureReason == ScrollFailureReason.ACCESSIBILITY_UNAVAILABLE ->
@@ -1393,7 +1409,12 @@ class LocalApiServer(
     private fun buildClipboardReadResponse(): String {
         val result = stateCoordinator.readClipboard()
         return if (result.available) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("text", result.text ?: "")))
+            val payload = JSONObject()
+                .put("text", result.text ?: JSONObject.NULL)
+            if (result.attemptedPath == "clipboard_cached_after_write") {
+                payload.put("reason", result.attemptedPath)
+            }
+            buildJsonResponse(200, successEnvelope(payload))
         } else {
             buildJsonResponse(200, successEnvelope(JSONObject()
                 .put("text", JSONObject.NULL)
@@ -1615,24 +1636,6 @@ class LocalApiServer(
         )
     }
 
-    private fun readRequestBody(reader: BufferedReader, contentLengthHeader: String?): String {
-        val contentLength = contentLengthHeader?.toIntOrNull() ?: return ""
-        if (contentLength <= 0) {
-            return ""
-        }
-
-        val body = CharArray(contentLength)
-        var offset = 0
-        while (offset < contentLength) {
-            val read = reader.read(body, offset, contentLength - offset)
-            if (read == -1) {
-                break
-            }
-            offset += read
-        }
-        return String(body, 0, offset)
-    }
-
     private fun JSONObject.optIntOrNull(key: String): Int? {
         val value = opt(key)
         return if (value is Number) value.toInt() else null
@@ -1676,6 +1679,7 @@ class LocalApiServer(
         private const val LONGPRESS_LOG_TAG = "GhostLongpress"
         private const val GESTURE_LOG_TAG = "GhostGesture"
         private const val MAX_SWIPE_DURATION_MS = 5000L
+        private const val ACTION_SETTLE_DELAY_MS = 300L
         private val SUPPORTED_FIND_STRATEGIES = setOf(
             "text",
             "textContains",
@@ -1693,4 +1697,114 @@ class LocalApiServer(
             "focused"
         )
     }
+}
+
+internal data class ParsedSwipeCoordinates(
+    val valid: Boolean,
+    val fromX: Int? = null,
+    val fromY: Int? = null,
+    val toX: Int? = null,
+    val toY: Int? = null,
+    val requestShape: String? = null,
+    val errorMessage: String? = null
+)
+
+internal fun parseSwipeCoordinates(body: JSONObject): ParsedSwipeCoordinates {
+    val from = body.optJSONObject("from")
+    val to = body.optJSONObject("to")
+    if (from != null || to != null) {
+        if (from == null || to == null) {
+            return ParsedSwipeCoordinates(valid = false, errorMessage = "from and to are both required.")
+        }
+        val fromX = jsonOptIntOrNull(from, "x")
+        val fromY = jsonOptIntOrNull(from, "y")
+        val toX = jsonOptIntOrNull(to, "x")
+        val toY = jsonOptIntOrNull(to, "y")
+        return if (fromX == null || fromY == null || toX == null || toY == null) {
+            ParsedSwipeCoordinates(valid = false, errorMessage = "from/to must contain integer x and y values.")
+        } else {
+            ParsedSwipeCoordinates(
+                valid = true,
+                fromX = fromX,
+                fromY = fromY,
+                toX = toX,
+                toY = toY,
+                requestShape = "from_to"
+            )
+        }
+    }
+
+    val x1 = jsonOptIntOrNull(body, "x1")
+    val y1 = jsonOptIntOrNull(body, "y1")
+    val x2 = jsonOptIntOrNull(body, "x2")
+    val y2 = jsonOptIntOrNull(body, "y2")
+    return if (x1 != null && y1 != null && x2 != null && y2 != null) {
+        ParsedSwipeCoordinates(
+            valid = true,
+            fromX = x1,
+            fromY = y1,
+            toX = x2,
+            toY = y2,
+            requestShape = "xy_alias"
+        )
+    } else {
+        ParsedSwipeCoordinates(
+            valid = false,
+            errorMessage = "Use canonical from/to point objects or the x1/y1/x2/y2 alias form."
+        )
+    }
+}
+
+internal fun clickSelectorRequiresClickableTarget(body: JSONObject): Boolean {
+    return if (body.has("clickable")) {
+        body.optBoolean("clickable", false)
+    } else {
+        true
+    }
+}
+
+internal data class ScrollSurfaceObservation(
+    val surfaceChanged: Boolean,
+    val beforeSnapshotToken: String?,
+    val afterSnapshotToken: String?,
+    val finalPackageName: String?,
+    val finalActivity: String?
+)
+
+internal fun observeScrollSurfaceChange(
+    beforeSnapshot: AccessibilityTreeSnapshot?,
+    afterSnapshot: AccessibilityTreeSnapshot?
+): ScrollSurfaceObservation {
+    val beforeToken = beforeSnapshot?.snapshotToken
+    val afterToken = afterSnapshot?.snapshotToken
+    val beforePackage = beforeSnapshot?.packageName
+    val afterPackage = afterSnapshot?.packageName
+    val beforeActivity = beforeSnapshot?.activity
+    val afterActivity = afterSnapshot?.activity
+    val surfaceChanged =
+        (beforeToken != null && afterToken != null && beforeToken != afterToken) ||
+            (beforePackage != afterPackage) ||
+            (beforeActivity != afterActivity)
+
+    return ScrollSurfaceObservation(
+        surfaceChanged = surfaceChanged,
+        beforeSnapshotToken = beforeToken,
+        afterSnapshotToken = afterToken,
+        finalPackageName = afterPackage,
+        finalActivity = afterActivity
+    )
+}
+
+internal fun observeActionSurfaceChange(
+    beforeSnapshot: AccessibilityTreeSnapshot?,
+    snapshotProvider: () -> AccessibilityTreeSnapshot?
+): ScrollSurfaceObservation {
+    Thread.sleep(300L)
+    val afterSnapshot = snapshotProvider()
+    return observeScrollSurfaceChange(beforeSnapshot, afterSnapshot)
+}
+
+private fun jsonOptIntOrNull(json: JSONObject, key: String): Int? {
+    val value = json.opt(key)
+    return if (value is Number) value.toInt() else null
 }

@@ -113,21 +113,38 @@ All JSON error responses should follow this structure:
 }
 ```
 
-### 3.3 Image Capture Payload
+### 3.3 Visual vs Structured Surface Payloads
 
-`GET /screen` and `POST /screenshot` both return:
+Ghosthand exposes two different surface-reading routes:
 
-```json
-{
-  "ok": true,
-  "data": {
-    "format": "png",
-    "width": 1080,
-    "height": 2400,
-    "data": "<base64-encoded PNG>"
-  }
-}
-```
+- `GET /screen`
+  - structured actionable surface snapshot
+  - used for selector planning, element geometry, and visible-surface state
+- `GET /screenshot`
+  - visual truth
+  - used for debugging, verification, and resolving ambiguity when structured output looks stale or hard to interpret
+
+They do not return the same payload shape and should not be treated as interchangeable.
+
+### 3.4 Substrate Principle
+
+Ghosthand should remain a robust, faithful substrate for AI rather than a narrowly curated success-path.
+
+Platform-level implications:
+
+- expose as much practical capability and interface as possible
+- prefer additive capability exposure over subtractive hiding
+- expose real node properties, relationships, and function as faithfully as practical
+- keep heuristics bounded, inspectable, and non-destructive
+- when shaped output exists, do not let it become the only truth surface by policy
+
+Workflow-level implications:
+
+- prompting defaults, escalation order, and execution discipline belong primarily in external skills, playbooks, and runbooks
+- Phase 10 remains in the Ghosthand main repo as the canonical operator-validation, evidence, and acceptance framework for the platform
+- the future `ghosthand-skill` repository should own operator steering, prompting, selector-choice defaults, task-specific workflow discipline, and ClawHub-facing packaging
+- the future skill repo does not replace Phase 10 or absorb the platform repo's validation/evidence framework
+- the API should not remove truthful structure merely because a narrower workflow is easier to steer
 
 ---
 
@@ -325,6 +342,20 @@ Fast readiness probe.
 }
 ```
 
+### Fallback-After-Write Response
+
+On some devices, a successful `POST /clipboard` from Ghosthand's app process can be followed by an immediate empty system clipboard read once Ghosthand is backgrounded. In that narrow case, `GET /clipboard` may return the last successful Ghosthand-written value once with an explicit reason:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "text": "ghosthand clip path",
+    "reason": "clipboard_cached_after_write"
+  }
+}
+```
+
 ### Notes
 
 This is a shallow health check.
@@ -377,6 +408,13 @@ It includes:
   * `selectorSupport`
   * `focusRequirement`
   * `delayedAcceptance`
+  * `transportContract`
+  * `stateTruth`
+  * `changeSignal`
+  * `operatorUses`
+  * `referenceStability`
+  * `snapshotScope`
+  * `recommendedInteractionModel`
   * `stability`
   * `exampleRequest`
   * `exampleResponse`
@@ -389,10 +427,46 @@ Field meaning:
 
 * `params`: every param now exposes `location` as `query` or `body`
 * `responseFields`: machine-readable list of top-level keys expected inside the `data` success payload
-* `selectorSupport`: selector aliases and strategy names supported by that command, or `null`
+* `selectorSupport`: selector aliases, supported strategy names, primary strategy set, and bounded selector aids supported by that command, or `null`
 * `focusRequirement`: one of `none` or `focused_editable`
 * `delayedAcceptance`: one of `none`, `recommended`, or `required`
+* `transportContract`: transport-level expectation, such as `prompt_completion`
+* `stateTruth`: what kind of UI truth the command exposes, such as `observer_context`, `structured_actionable_surface_snapshot`, `visual_truth`, or `final_settled_state`
+* `changeSignal`: for change-detecting commands, the meaning of the boolean change signal; otherwise `none`
+* `operatorUses`: machine-readable practical roles for zero-context operator use, such as `visual_truth`, `debugging`, `verification`, `observer_context`, `selector_planning`, or `content_desc_selector`
+* `referenceStability`: whether returned or accepted node references are stable, such as `snapshot_ephemeral` or `not_applicable`
+* `snapshotScope`: whether a reference is valid only inside one snapshot context, such as `same_snapshot_only`
+* `recommendedInteractionModel`: the intended reliable model, such as `selector_reresolution`
 * `stability`: current contract stability marker, currently `stable`
+
+### Canonical Selector Model
+
+For selector-driven interaction, Ghosthand treats these as normal primary selector paths:
+
+* `text`
+* `contentDesc`
+* `resourceId`
+
+Practical rules:
+
+* do not default to text-only reasoning
+* use `desc` when the meaningful label lives in `contentDesc`
+* use `id` when the stable app-facing handle is a resource id
+* use bounded aids like `index` only to disambiguate a selector that already matched
+
+### Stable Reference Policy
+
+For node-bearing routes, Ghosthand treats `nodeId` as:
+
+* snapshot-ephemeral
+* same-snapshot only
+* a bounded local aid, not a stable cross-snapshot handle
+
+Normal interaction model:
+
+* use `nodeId` only inside the same trusted snapshot context
+* after any meaningful UI change, prefer selector-based re-resolution
+* do not treat post-change `NODE_NOT_FOUND` as proof that the app is broken until stale node reuse is ruled out
 
 ### Example Response
 
@@ -400,7 +474,7 @@ Field meaning:
 {
   "ok": true,
   "data": {
-    "schemaVersion": "1.2",
+    "schemaVersion": "1.14",
     "selectorAliases": {
       "text": "text",
       "desc": "contentDesc",
@@ -420,27 +494,36 @@ Field meaning:
         "category": "interaction",
         "method": "POST",
         "path": "/click",
-        "description": "Click by nodeId or selector",
+        "description": "Click by nodeId or first-class selector (text, contentDesc, resourceId); request must return promptly after dispatch or fail fast with an error",
         "params": [
           {
-            "name": "text",
+            "name": "desc",
             "type": "string",
             "location": "body",
             "required": false,
-            "description": "Exact text selector",
+            "description": "Exact content description selector; use when the meaningful label lives in contentDesc",
             "allowedValues": []
           }
         ],
         "responseFields": ["performed", "backendUsed"],
+        "transportContract": "prompt_completion",
+        "stateTruth": "none",
+        "changeSignal": "none",
+        "operatorUses": ["text_selector", "content_desc_selector", "resource_id_selector"],
+        "referenceStability": "snapshot_ephemeral",
+        "snapshotScope": "same_snapshot_only",
+        "recommendedInteractionModel": "selector_reresolution",
         "selectorSupport": {
           "aliases": ["text", "desc", "id"],
-          "strategies": ["text", "resourceId", "contentDesc"]
+          "strategies": ["text", "resourceId", "contentDesc"],
+          "primaryStrategies": ["text", "contentDesc", "resourceId"],
+          "boundedAids": []
         },
         "focusRequirement": "none",
         "delayedAcceptance": "none",
         "stability": "stable",
         "exampleRequest": {
-          "text": "Settings"
+          "desc": "Settings"
         },
         "exampleResponse": {
           "ok": true,
@@ -571,6 +654,13 @@ Initial P3 implementation is accessibility-only.
 
 Return current foreground app/activity summary.
 
+### Semantics
+
+- `/foreground` is observer context.
+- On this device path, do not treat `/foreground` as the sole truth source for the currently visible UI surface.
+- When visible-surface truth matters for action planning, prefer `/screen`.
+- When visual confirmation or debugging matters, prefer `/screenshot`.
+
 ### Success Response
 
 ```json
@@ -659,6 +749,12 @@ GET /tree?mode=flat
   "data": {
     "packageName": "com.tencent.mm",
     "activity": "com.tencent.mm.ui.LauncherUI",
+    "warnings": [],
+    "invalidBoundsCount": 0,
+    "lowSignalCount": 0,
+    "foregroundStableDuringCapture": true,
+    "partialOutput": false,
+    "returnedNodeCount": 1,
     "nodes": [
       {
         "nodeId": "n1",
@@ -668,6 +764,9 @@ GET /tree?mode=flat
         "className": "android.widget.TextView",
         "clickable": true,
         "enabled": true,
+        "boundsValid": true,
+        "actionableBounds": true,
+        "lowSignal": false,
         "bounds": {
           "left": 100,
           "top": 2100,
@@ -689,6 +788,11 @@ GET /tree?mode=flat
 V1 supports `flat` first.
 `raw` is explicitly unsupported for now and should return `UNSUPPORTED_OPERATION`.
 If Accessibility is enabled but not connected, or no active root is available, `/tree` should return `ACCESSIBILITY_UNAVAILABLE` instead of an empty tree.
+Returned node identifiers are snapshot-ephemeral. After UI drift, prefer selector-based re-resolution instead of reusing a stale tree node id.
+When invalid bounds are present on complex surfaces, `/tree` keeps the nodes but signals the risk explicitly through `warnings`, `invalidBoundsCount`, and per-node `boundsValid` / `actionableBounds`.
+`foregroundStableDuringCapture = false` means the foreground summary changed during snapshot capture, so the returned tree should be treated with stale-risk caution even if it is the best available final attempt.
+`lowSignalCount` and per-node `lowSignal` flag low-information passive structural nodes so operators do not mistake deep container noise for equally useful surface evidence.
+`partialOutput = false` means the current `/tree` payload is structurally full in this implementation, even if warnings still indicate geometry, freshness, or low-signal caveats.
 
 ---
 
@@ -702,9 +806,10 @@ Find a node by semantic query.
 
 ```json
 {
-  "strategy": "text",
+  "strategy": "contentDesc",
   "query": "设置",
-  "timeoutMs": 3000
+  "timeoutMs": 3000,
+  "index": 0
 }
 ```
 
@@ -722,6 +827,8 @@ Find a node by semantic query.
 V1 accepts `timeoutMs`, but the initial implementation performs an immediate snapshot query only.
 `found: false` is only valid when a real tree snapshot exists.
 If the accessibility tree is unavailable, `/find` should return `ACCESSIBILITY_UNAVAILABLE` instead of pretending nothing matched.
+`contentDesc` is a normal primary selector path, not a fallback behind `text`.
+Use `index` only as a bounded aid to disambiguate multiple matches from an already meaningful selector.
 
 ### Success Response
 
@@ -850,6 +957,18 @@ Perform swipe gesture.
 }
 ```
 
+Accepted alias form for discoverability:
+
+```json
+{
+  "x1": 500,
+  "y1": 1800,
+  "x2": 500,
+  "y2": 600,
+  "durationMs": 300
+}
+```
+
 ### Success Response
 
 ```json
@@ -857,7 +976,13 @@ Perform swipe gesture.
   "ok": true,
   "data": {
     "performed": true,
-    "backendUsed": "accessibility"
+    "backendUsed": "accessibility",
+    "requestShape": "from_to",
+    "contentChanged": true,
+    "beforeSnapshotToken": "snap_a",
+    "afterSnapshotToken": "snap_b",
+    "finalPackageName": "com.reddit.frontpage",
+    "finalActivity": "MainActivity"
   },
   "meta": {
     "requestId": "req_swipe_1",
@@ -867,6 +992,10 @@ Perform swipe gesture.
 ```
 
 ### Notes
+
+Canonical request shape is `from` / `to` point objects.
+`x1` / `y1` / `x2` / `y2` are accepted as backward-compatible aliases for zero-context discoverability.
+`contentChanged` is the primary same-activity effect signal for whether Ghosthand observed a structured-surface change after the swipe.
 
 For MIUI acceptance on the target device, do not treat an immediate post-dispatch reread as the final `/swipe` result.
 
@@ -1114,6 +1243,13 @@ Use it when the caller already knows the failure class.
 
 Capture the current screenshot as base64 PNG.
 
+### Semantics
+
+- `/screenshot` is the visual-truth route.
+- Use `/screenshot` when `/screen` or `/tree` looks stale, bounds look invalid, deep structure is unreadable, or action/result interpretation is ambiguous.
+- `/screenshot` is the preferred debugging and verification fallback for zero-context operator use.
+- `/screenshot` is not the route to use for selector planning or action geometry.
+
 ### Success Response
 
 ```json
@@ -1137,12 +1273,14 @@ Current preferred baseline is accessibility screenshot capability. MediaProjecti
 
 ### Purpose
 
-Capture the current window as a PNG image, returned as base64-encoded JSON.
+Return the current visible-surface accessibility snapshot with action-ready geometry.
 
 ### Query Parameters
 
-* `width` — *(optional)* desired output width in pixels. Default: window width.
-* `height` — *(optional)* desired output height in pixels. Default: window height.
+* `editable` — *(optional)* filter to editable elements only
+* `scrollable` — *(optional)* filter to scrollable elements only
+* `clickable` — *(optional)* filter to clickable elements only
+* `package` — *(optional)* restrict results to one package name
 
 ### Success Response
 
@@ -1150,10 +1288,32 @@ Capture the current window as a PNG image, returned as base64-encoded JSON.
 {
   "ok": true,
   "data": {
-    "format": "png",
-    "width": 1080,
-    "height": 2400,
-    "data": "<base64-encoded PNG>"
+    "packageName": "com.android.settings",
+    "activity": "com.android.settings.MiuiSettings",
+    "snapshotToken": "abcd1234",
+    "capturedAt": "2026-03-28T00:00:00Z",
+    "foregroundStableDuringCapture": true,
+    "partialOutput": false,
+    "candidateNodeCount": 1,
+    "returnedElementCount": 1,
+    "warnings": [],
+    "omittedInvalidBoundsCount": 0,
+    "omittedLowSignalCount": 0,
+    "omittedNodeCount": 0,
+    "elements": [
+      {
+        "nodeId": "p0.0.1@tabcd1234",
+        "text": "WLAN",
+        "desc": "",
+        "id": "android:id/title",
+        "clickable": true,
+        "editable": false,
+        "scrollable": false,
+        "bounds": "[211,1270][359,1338]",
+        "centerX": 285,
+        "centerY": 1304
+      }
+    ]
   },
   "meta": {
     "requestId": "req_screen_1",
@@ -1168,15 +1328,29 @@ Capture the current window as a PNG image, returned as base64-encoded JSON.
 {
   "ok": false,
   "error": {
-    "code": "SCREENSHOT_UNAVAILABLE",
-    "message": "Screenshot is not available. Reason: root_unavailable"
+    "code": "ACCESSIBILITY_UNAVAILABLE",
+    "message": "Accessibility service is unavailable or not connected."
   }
 }
 ```
 
 ### Notes
 
-`/screen` is the element-listing route. It returns current UI elements with action-ready geometry, not image capture.
+- `/screen` is the structured actionable surface route. It is not image capture.
+- `/screen` is the primary structured truth source for selector planning and action geometry on this device path.
+- `/screen` should be paired with `/screenshot` when structured output looks stale, geometry looks invalid, or the visible surface is hard to interpret.
+- `snapshotToken` is a freshness marker for the current visible accessibility tree and should change when the visible surface changes materially.
+- `elements[].nodeId` is snapshot-ephemeral and should only be reused inside the same trusted snapshot context.
+- After the UI changes, prefer selector-based re-resolution instead of reusing an older `nodeId`.
+- `/screen` omits nodes whose bounds are not actionable and reports that omission explicitly through `warnings` and `omittedInvalidBoundsCount`.
+- This keeps `/screen` aligned with its role as the actionable surface route instead of pretending invalid geometry is usable.
+- `/screen` now retries before accepting a capture when the foreground changes during the capture window.
+- `foregroundStableDuringCapture = false` means Ghosthand returned the best available final attempt but could not fully guarantee freshness across the capture window.
+- `/screen` also omits low-signal passive nodes by default and reports that omission through `warnings` and `omittedLowSignalCount`.
+- Unlabeled but actionable nodes are retained; low-signal suppression is not allowed to hide genuine interaction structure.
+- This keeps `/screen` readable on complex surfaces by foregrounding visible/actionable signal instead of deep container noise.
+- `partialOutput = true` means `/screen` is a reduced actionable subset, not an exhaustive structured surface dump.
+- `candidateNodeCount`, `returnedElementCount`, and `omittedNodeCount` make that reduction explicit so operators do not misread omission as absence.
 
 ---
 
@@ -1273,6 +1447,7 @@ Return the currently focused accessibility node — the input focus or accessibi
 ### Notes
 
 Returns `200` even when no focus is available (see above). Use `available: false` to distinguish no-focus from no-tree-access.
+If a focused node exposes `nodeId`, treat it as same-snapshot only.
 
 ---
 
@@ -1280,13 +1455,27 @@ Returns `200` even when no focus is available (see above). Use `available: false
 
 ### Purpose
 
-Click an accessibility node by its `nodeId`. The node's clickable parent is used as the click target if direct click fails.
+Click an accessibility node by its `nodeId` or by a first-class selector path. For selector-based click, Ghosthand resolves to an actionable clickable target by default so nested text can still activate its wrapper, retries a bounded contains-based match for text/desc before failing, and reports how selector resolution landed on the dispatched target.
 
 ### Request Body
 
 ```json
 {
-  "nodeId": "n42"
+  "desc": "设置"
+}
+```
+
+Other normal selector forms:
+
+```json
+{
+  "text": "Settings"
+}
+```
+
+```json
+{
+  "id": "com.example:id/settings"
 }
 ```
 
@@ -1297,7 +1486,18 @@ Click an accessibility node by its `nodeId`. The node's clickable parent is used
   "ok": true,
   "data": {
     "performed": true,
-    "backendUsed": "accessibility"
+    "backendUsed": "accessibility",
+    "attemptedPath": "node_click",
+    "resolution": {
+      "requestedStrategy": "contentDesc",
+      "effectiveStrategy": "contentDesc",
+      "usedContainsFallback": false,
+      "matchedNodeId": "p0.0.1@tabcd1234",
+      "matchedNodeClickable": true,
+      "resolvedNodeId": "p0.0.1@tabcd1234",
+      "resolutionKind": "matched_node",
+      "ancestorDepth": null
+    }
   },
   "meta": {
     "requestId": "req_click_1",
@@ -1308,7 +1508,7 @@ Click an accessibility node by its `nodeId`. The node's clickable parent is used
 
 ### Error Codes
 
-* `400` / `INVALID_ARGUMENT` — `nodeId` missing or empty
+* `400` / `INVALID_ARGUMENT` — no usable `nodeId` or selector provided
 * `422` / `NODE_NOT_FOUND` — node not found in current tree
 * `422` / `ACCESSIBILITY_ACTION_FAILED` — click dispatched but did not succeed
 * `503` / `ACCESSIBILITY_UNAVAILABLE` — accessibility service not connected
@@ -1316,6 +1516,24 @@ Click an accessibility node by its `nodeId`. The node's clickable parent is used
 ### Notes
 
 Differs from `POST /tap` with `type=node` in that `/click` is node-semantic only (no coordinate support) and uses `ACTION_CLICK` + clickable-parent fallback. Use `/tap` for coordinate-based tapping.
+For zero-context operator use, do not assume meaningful labels only live in visible text. `desc` / `contentDesc` is a normal primary click path when that is where the app exposes the actionable label.
+When the UI has already changed, prefer selector-based re-resolution over reusing an older `nodeId`.
+Selector-based `/click` now defaults to actionable-target resolution. That means visible text on a child node can still activate a clickable wrapper or parent without requiring an explicit `clickable=true` hint.
+For `text` and `desc` selectors, `/click` also retries a bounded contains-based match before failing, which reduces brittleness on feed/card surfaces where the visible label is truncated or nested.
+`attemptedPath` exposes the dispatch path that actually executed, such as `node_click` or `clickable_parent_click`.
+`resolution` exposes the selector-resolution path before dispatch:
+
+- `requestedStrategy`: the selector strategy requested by the caller
+- `effectiveStrategy`: the strategy that actually matched, which may show the bounded contains fallback
+- `usedContainsFallback`: whether bounded contains retry was needed
+- `matchedNodeId`: the node that matched the selector text/desc/id
+- `matchedNodeClickable`: whether that matched node was itself clickable
+- `resolvedNodeId`: the node Ghosthand dispatched to after bounded actionable-target resolution
+- `resolutionKind`: `matched_node` or `clickable_ancestor`
+- `ancestorDepth`: ancestor distance when a clickable wrapper/ancestor was used
+
+This convenience behavior is intentionally bounded. It should not become silent semantic guessing across unrelated ancestors or a substitute for exposing truthful node/action relationships elsewhere in the platform.
+The current accepted conclusion is that inspectable wrapper resolution is now good enough at the platform layer; remaining friction on Reddit is increasingly about choosing the right selector surface (`text` vs `desc` vs `id`) rather than broad substrate opacity.
 
 ---
 
@@ -1375,6 +1593,10 @@ Set text on a specific accessibility node by `nodeId`. The node must be editable
 }
 ```
 
+### Notes
+
+`nodeId` here is snapshot-ephemeral and same-snapshot only. If focus or surface state may have changed, prefer re-resolving the target through `/screen` or `/find` before using `/setText`.
+
 ### Success Response
 
 ```json
@@ -1427,13 +1649,33 @@ Allowed directions: `up`, `down`, `left`, `right`.
 ```json
 {
   "ok": true,
-  "data": { "performed": true }
+  "data": {
+    "performed": true,
+    "count": 1,
+    "direction": "down",
+    "attemptedPath": "repeated_scroll",
+    "contentChanged": false,
+    "surfaceChanged": false,
+    "beforeSnapshotToken": "snap_a",
+    "afterSnapshotToken": "snap_a",
+    "finalPackageName": "com.reddit.frontpage",
+    "finalActivity": "MainActivity"
+  }
 }
 ```
 
 ### Notes
 
 Swipe vector is computed as 35% of node bounds in the target direction. Duration: 300ms.
+`performed = true` means the gesture dispatched.
+`contentChanged` is the primary operator-facing clue for whether Ghosthand actually observed a structured-surface change from the before/after snapshots.
+`surfaceChanged` is retained as supporting detail for backward compatibility.
+
+Interpretation rule:
+
+- `performed = true` with `contentChanged = false` is not proof that content advanced
+- verify with `/screen`
+- use `/wait` as the preferred settle path where applicable
 
 ---
 
@@ -1545,7 +1787,9 @@ Read the current primary clipboard text from Ghosthand's app process.
 
 ### Notes
 
-This endpoint returns `200` for both present and empty clipboard states. Callers should inspect `data.text`.
+This endpoint returns `200` for present, empty, and narrow fallback-after-write states. Callers should inspect `data.text`.
+
+`reason = "clipboard_cached_after_write"` means Ghosthand returned the last successful in-process clipboard write once because Android reported the clipboard empty immediately afterward. This is a best-effort fallback for agent continuity, not a general historical clipboard store.
 
 ---
 
@@ -1577,6 +1821,10 @@ Write text into the primary clipboard.
   }
 }
 ```
+
+### Notes
+
+A successful write can enable the one-read `clipboard_cached_after_write` fallback on the next `GET /clipboard` if Android immediately reports the clipboard empty while Ghosthand is backgrounded.
 
 ### Error Codes
 
@@ -1652,7 +1900,7 @@ Supported strategies match `/find`, including `focused`.
 
 ### Purpose
 
-Wait for a foreground or tree change event and return when the current UI state changes.
+Wait for a foreground or tree change event and return the final observed UI state.
 
 ### Query Parameters
 
@@ -1673,6 +1921,29 @@ Wait for a foreground or tree change event and return when the current UI state 
   }
 }
 ```
+
+### Semantics
+
+- `changed = true` means Ghosthand observed a transition during the wait window.
+- `changed = false` means Ghosthand did not observe a transition during that wait window.
+- `packageName`, `activity`, and `snapshotToken` always describe the final observed settled state at the end of the wait.
+- Agents should treat `packageName`, `activity`, and `snapshotToken` as the final-state truth source for `/wait`, not `changed` alone.
+
+On this ROM/device, `packageName` and `activity` are the more trustworthy post-action truth source when diagnosing whether the UI already landed on the expected screen before or near the timeout boundary.
+
+### Operator Guidance
+
+- After visible-state-changing actions, `/wait` should be the standard settle path before using arbitrary fixed sleeps.
+- If `changed = false` but final `packageName` / `activity` / `snapshotToken` match the expected target, treat the action as settled.
+- On same-activity surfaces, follow final `/wait` settled fields with a subsequent `/screen` to confirm that the visible content actually changed.
+- Use a bounded fixed sleep only when `/wait` cannot express the relevant settle condition, and report that as a caveat rather than treating it as normal practice.
+- Coordinate fallback should be treated as an exception path, not the default interaction model.
+- Use coordinate fallback only when selector/action paths are insufficient for a concrete reason and the target region is justified by `/screen`, `/screenshot`, or both.
+- After coordinate fallback, confirm the result with `/wait` or equivalent settled-state evidence rather than treating the tap itself as proof.
+- On desc-heavy or container-driven surfaces, use a selector-to-action escalation ladder:
+  - direct selector action
+  - then `/find` with the strongest selector for that surface
+  - then coordinate fallback only if the resolved target is still too broad for direct action
 
 ---
 

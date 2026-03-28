@@ -1,6 +1,13 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -26,11 +33,15 @@ class GhosthandApiPayloadsTest {
 
         val elements = payload["elements"] as List<*>
         assertEquals(1, elements.size)
+        assertEquals(false, payload["partialOutput"])
+        assertEquals(1, payload["candidateNodeCount"])
+        assertEquals(1, payload["returnedElementCount"])
         val button = elements.first() as Map<*, *>
         assertEquals("Button", button["text"])
         assertEquals(10, button["centerX"])
         assertEquals(20, button["centerY"])
         assertEquals("[0,0][100,100]", button["bounds"])
+        assertEquals(true, payload["foregroundStableDuringCapture"])
     }
 
     @Test
@@ -50,6 +61,178 @@ class GhosthandApiPayloadsTest {
         assertEquals("Child", child["text"])
         val grandchild = (child["children"] as List<*>).first() as Map<*, *>
         assertEquals("Grandchild", grandchild["text"])
+    }
+
+    @Test
+    fun screenPayloadOmitsNodesWithInvalidActionBoundsAndSignalsWarning() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", text = "Good", clickable = true, centerX = 10, centerY = 20),
+                node(
+                    "p0.1@tsnap",
+                    text = "Bad",
+                    clickable = true,
+                    centerX = -5,
+                    centerY = 20,
+                    bounds = NodeBounds(-10, 0, 5, 40)
+                )
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenFields(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+
+        val warnings = payload["warnings"] as List<*>
+        val elements = payload["elements"] as List<*>
+        assertTrue(warnings.contains("omitted_nodes_with_invalid_bounds"))
+        assertTrue(warnings.contains("partial_output"))
+        assertEquals(true, payload["foregroundStableDuringCapture"])
+        assertEquals(true, payload["partialOutput"])
+        assertEquals(3, payload["candidateNodeCount"])
+        assertEquals(1, payload["returnedElementCount"])
+        assertEquals(1, payload["omittedInvalidBoundsCount"])
+        assertEquals(2, payload["omittedNodeCount"])
+        assertEquals(1, elements.size)
+        val kept = elements.first() as Map<*, *>
+        assertEquals("Good", kept["text"])
+    }
+
+    @Test
+    fun treePayloadFlagsInvalidBoundsWithoutDroppingNodes() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap", bounds = NodeBounds(0, 0, 100, 100)),
+                node("p0.0@tsnap", text = "Broken", bounds = NodeBounds(100, 50, 100, 80))
+            )
+        )
+
+        val payload = GhosthandApiPayloads.treeFields(snapshot)
+        val warnings = payload["warnings"] as List<*>
+        val nodes = payload["nodes"] as List<*>
+        assertTrue(warnings.contains("invalid_bounds_present"))
+        assertTrue(warnings.contains("low_signal_nodes_present"))
+        assertEquals(true, payload["foregroundStableDuringCapture"])
+        assertEquals(false, payload["partialOutput"])
+        assertEquals(2, payload["returnedNodeCount"])
+        assertEquals(1, payload["invalidBoundsCount"])
+        assertEquals(1, payload["lowSignalCount"])
+        assertEquals(2, nodes.size)
+        val broken = nodes[1] as Map<*, *>
+        assertFalse(broken["boundsValid"] as Boolean)
+        assertFalse(broken["actionableBounds"] as Boolean)
+    }
+
+    @Test
+    fun screenPayloadOmitsLowSignalNodesAndSignalsWarning() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap", text = "Root"),
+                node("p0.0@tsnap", text = "Visible label", clickable = true, centerX = 10, centerY = 20),
+                node("p0.1@tsnap", clickable = false, centerX = 30, centerY = 40)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenFields(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+
+        val warnings = payload["warnings"] as List<*>
+        val elements = payload["elements"] as List<*>
+        assertTrue(warnings.contains("omitted_low_signal_nodes"))
+        assertTrue(warnings.contains("partial_output"))
+        assertEquals(true, payload["partialOutput"])
+        assertEquals(3, payload["candidateNodeCount"])
+        assertEquals(2, payload["returnedElementCount"])
+        assertEquals(1, payload["omittedLowSignalCount"])
+        assertEquals(2, elements.size)
+        assertTrue(
+            elements.any { candidate ->
+                (candidate as Map<*, *>)["text"] == "Visible label"
+            }
+        )
+    }
+
+    @Test
+    fun screenPayloadKeepsClickableUnlabeledNodesAsActionRelevant() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", clickable = true, centerX = 30, centerY = 40)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenFields(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = true
+        )
+
+        val warnings = payload["warnings"] as List<*>
+        val elements = payload["elements"] as List<*>
+        assertFalse(warnings.contains("omitted_low_signal_nodes"))
+        assertEquals(false, payload["partialOutput"])
+        assertEquals(1, payload["candidateNodeCount"])
+        assertEquals(1, payload["returnedElementCount"])
+        assertEquals(0, payload["omittedLowSignalCount"])
+        assertEquals(1, elements.size)
+        val kept = elements.first() as Map<*, *>
+        assertEquals("p0.0@tsnap", kept["nodeId"])
+        assertEquals("", kept["text"])
+    }
+
+    @Test
+    fun treePayloadFlagsLowSignalNodesWithoutPretendingTheyAreUseful() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap", text = "Root"),
+                node("p0.0@tsnap"),
+                node("p0.1@tsnap", text = "Signal")
+            )
+        )
+
+        val payload = GhosthandApiPayloads.treeFields(snapshot)
+        val warnings = payload["warnings"] as List<*>
+        val nodes = payload["nodes"] as List<*>
+        assertTrue(warnings.contains("low_signal_nodes_present"))
+        assertEquals(false, payload["partialOutput"])
+        assertEquals(3, payload["returnedNodeCount"])
+        assertEquals(1, payload["lowSignalCount"])
+        val lowSignalNode = nodes[1] as Map<*, *>
+        assertEquals(true, lowSignalNode["lowSignal"])
+        val signalNode = nodes[2] as Map<*, *>
+        assertEquals(false, signalNode["lowSignal"])
+    }
+
+    @Test
+    fun treePayloadDoesNotMarkClickableUnlabeledNodesAsLowSignal() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap", text = "Root"),
+                node("p0.0@tsnap", clickable = true)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.treeFields(snapshot)
+        val warnings = payload["warnings"] as List<*>
+        val nodes = payload["nodes"] as List<*>
+        assertFalse(warnings.contains("low_signal_nodes_present"))
+        assertEquals(false, payload["partialOutput"])
+        assertEquals(2, payload["returnedNodeCount"])
+        assertEquals(0, payload["lowSignalCount"])
+        val clickableNode = nodes[1] as Map<*, *>
+        assertEquals(false, clickableNode["lowSignal"])
     }
 
     @Test
@@ -89,6 +272,64 @@ class GhosthandApiPayloadsTest {
         assertEquals(0, payload["matchCount"])
     }
 
+    @Test
+    fun clickResolutionFieldsExposeInspectableSelectorMetadata() {
+        val resolution = GhosthandApiPayloads.clickResolutionFields(
+            ClickSelectorResolution(
+                requestedStrategy = "text",
+                effectiveStrategy = "textContains",
+                usedContainsFallback = true,
+                matchedNodeId = "p0.0.0@tsnap",
+                matchedNodeClickable = false,
+                resolvedNodeId = "p0.0@tsnap",
+                resolutionKind = "clickable_ancestor",
+                ancestorDepth = 1
+            )
+        )
+
+        assertEquals("text", resolution["requestedStrategy"])
+        assertEquals("textContains", resolution["effectiveStrategy"])
+        assertEquals(true, resolution["usedContainsFallback"])
+        assertEquals("p0.0.0@tsnap", resolution["matchedNodeId"])
+        assertEquals(false, resolution["matchedNodeClickable"])
+        assertEquals("p0.0@tsnap", resolution["resolvedNodeId"])
+        assertEquals("clickable_ancestor", resolution["resolutionKind"])
+        assertEquals(1, resolution["ancestorDepth"])
+    }
+
+    @Test
+    fun screenAndTreePayloadsIncludeFreshnessWarningsFromSnapshot() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = null,
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(node("p0@tsnap")),
+            foregroundStableDuringCapture = false,
+            freshnessWarnings = listOf("foreground_changed_during_capture")
+        )
+
+        val screenPayload = GhosthandApiPayloads.screenFields(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+        val treePayload = GhosthandApiPayloads.treeFields(snapshot)
+
+        val screenWarnings = screenPayload["warnings"] as List<*>
+        val treeWarnings = treePayload["warnings"] as List<*>
+        assertEquals(false, screenPayload["foregroundStableDuringCapture"])
+        assertTrue(screenWarnings.contains("foreground_changed_during_capture"))
+        assertTrue(screenWarnings.contains("omitted_low_signal_nodes"))
+        assertEquals(true, screenPayload["partialOutput"])
+        assertEquals(false, treePayload["foregroundStableDuringCapture"])
+        assertTrue(treeWarnings.contains("foreground_changed_during_capture"))
+        assertTrue(treeWarnings.contains("low_signal_nodes_present"))
+        assertEquals(false, treePayload["partialOutput"])
+    }
+
     private fun snapshot(nodes: List<FlatAccessibilityNode>): AccessibilityTreeSnapshot {
         return AccessibilityTreeSnapshot(
             packageName = "com.example",
@@ -108,7 +349,8 @@ class GhosthandApiPayloadsTest {
         editable: Boolean = false,
         scrollable: Boolean = false,
         centerX: Int = 0,
-        centerY: Int = 0
+        centerY: Int = 0,
+        bounds: NodeBounds = NodeBounds(0, 0, 100, 100)
     ): FlatAccessibilityNode {
         return FlatAccessibilityNode(
             nodeId = nodeId,
@@ -123,7 +365,7 @@ class GhosthandApiPayloadsTest {
             scrollable = scrollable,
             centerX = centerX,
             centerY = centerY,
-            bounds = NodeBounds(0, 0, 100, 100)
+            bounds = bounds
         )
     }
 }

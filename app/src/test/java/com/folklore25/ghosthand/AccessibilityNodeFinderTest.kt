@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
@@ -74,6 +80,41 @@ class AccessibilityNodeFinderTest {
 
         assertFalse(result.found)
         assertTrue(result.matches.isEmpty())
+    }
+
+    @Test
+    fun clickResolutionFallsBackToContainsAndClickableAncestor() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(
+                node("p0@tsnap", clickable = false),
+                node("p0.0@tsnap", clickable = true),
+                node("p0.0.0@tsnap", text = "Vibe Coding... more", clickable = false)
+            )
+        )
+
+        val result = finder.findNodesForClick(
+            snapshot = snapshot,
+            strategy = "text",
+            query = "Vibe Coding",
+            clickableOnly = true,
+            index = 0
+        )
+
+        assertTrue(result.found)
+        assertEquals("p0.0@tsnap", result.node?.nodeId)
+        assertNotNull(result.clickResolution)
+        assertEquals("text", result.clickResolution?.requestedStrategy)
+        assertEquals("textContains", result.clickResolution?.effectiveStrategy)
+        assertEquals(true, result.clickResolution?.usedContainsFallback)
+        assertEquals("p0.0.0@tsnap", result.clickResolution?.matchedNodeId)
+        assertEquals(false, result.clickResolution?.matchedNodeClickable)
+        assertEquals("p0.0@tsnap", result.clickResolution?.resolvedNodeId)
+        assertEquals("clickable_ancestor", result.clickResolution?.resolutionKind)
+        assertEquals(1, result.clickResolution?.ancestorDepth)
     }
 
     private fun node(

@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.util.Log
@@ -46,22 +52,32 @@ data class ClickAttemptResult(
     val performed: Boolean,
     val backendUsed: String?,
     val failureReason: ClickFailureReason?,
-    val attemptedPath: String
+    val attemptedPath: String,
+    val selectorResolution: ClickSelectorResolution? = null
 ) {
     companion object {
-        fun success(attemptedPath: String): ClickAttemptResult = ClickAttemptResult(
+        fun success(
+            attemptedPath: String,
+            selectorResolution: ClickSelectorResolution? = null
+        ): ClickAttemptResult = ClickAttemptResult(
             performed = true,
             backendUsed = "accessibility",
             failureReason = null,
-            attemptedPath = attemptedPath
+            attemptedPath = attemptedPath,
+            selectorResolution = selectorResolution
         )
 
-        fun failure(reason: ClickFailureReason, attemptedPath: String): ClickAttemptResult =
+        fun failure(
+            reason: ClickFailureReason,
+            attemptedPath: String,
+            selectorResolution: ClickSelectorResolution? = null
+        ): ClickAttemptResult =
             ClickAttemptResult(
                 performed = false,
                 backendUsed = null,
                 failureReason = reason,
-                attemptedPath = attemptedPath
+                attemptedPath = attemptedPath,
+                selectorResolution = selectorResolution
             )
     }
 }

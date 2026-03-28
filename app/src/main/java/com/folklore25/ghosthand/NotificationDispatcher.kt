@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.Manifest
@@ -35,7 +41,7 @@ class NotificationDispatcher(private val context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
             CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Ghosthand operator notifications"
             enableLights(true)
@@ -90,7 +96,8 @@ class NotificationDispatcher(private val context: Context) {
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title.ifBlank { context.getString(R.string.app_name) })
             .setContentText(text)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .apply {
                 if (pendingIntent != null) {
@@ -158,7 +165,7 @@ class NotificationDispatcher(private val context: Context) {
     }
 
     private companion object {
-        const val CHANNEL_ID = "ghosthand_notifications"
+        const val CHANNEL_ID = "ghosthand_notifications_high"
         const val CHANNEL_NAME = "Ghosthand"
         const val TAG_PREFIX = "ghosthand_notify"
         @Volatile

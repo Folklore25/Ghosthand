@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.content.ClipData
@@ -11,6 +17,7 @@ import android.content.Context
 class ClipboardProvider(context: Context) {
     private val clipboardManager = context.applicationContext.getSystemService(Context.CLIPBOARD_SERVICE)
         as ClipboardManager
+    private val fallbackState = ClipboardReadFallbackState()
 
     /**
      * Reads the current primary clipboard text.
@@ -19,19 +26,13 @@ class ClipboardProvider(context: Context) {
     fun readClipboard(): ClipboardReadResult {
         return try {
             val clip = clipboardManager.primaryClip
-            if (clip == null || clip.itemCount == 0) {
-                return ClipboardReadResult(
-                    available = false,
-                    text = null,
-                    attemptedPath = "clipboard_empty"
-                )
+            val itemCount = clip?.itemCount ?: 0
+            val text = if (itemCount > 0) {
+                clip?.getItemAt(0)?.coerceToText(null)?.toString()
+            } else {
+                null
             }
-            val text = clip.getItemAt(0).coerceToText(null)?.toString()
-            ClipboardReadResult(
-                available = true,
-                text = text,
-                attemptedPath = "clipboard_read"
-            )
+            fallbackState.resolveRead(itemCount = itemCount, text = text)
         } catch (_: Exception) {
             ClipboardReadResult(
                 available = false,
@@ -49,6 +50,7 @@ class ClipboardProvider(context: Context) {
         return try {
             val clip = ClipData.newPlainText(label ?: CLIPBOARD_LABEL, text)
             clipboardManager.setPrimaryClip(clip)
+            fallbackState.recordSuccessfulWrite(text)
             ClipboardWriteResult(
                 performed = true,
                 attemptedPath = "clipboard_write"

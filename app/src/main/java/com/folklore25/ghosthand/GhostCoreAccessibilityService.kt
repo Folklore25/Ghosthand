@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 import android.accessibilityservice.AccessibilityService
@@ -19,6 +25,7 @@ import java.util.concurrent.TimeUnit
 
 class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibilityExecutionCore {
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val foregroundAppProvider by lazy { ForegroundAppProvider(applicationContext) }
 
     @Volatile
     private var isConnectedForDispatch = false
@@ -769,37 +776,78 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
     }
 
     private fun currentActiveRootOnMainThread(): AccessibilityNodeInfo? {
+        val foregroundPackage = foregroundAppProvider.snapshot().packageName
+
         selectWindowRoot(
+            preferredPackage = foregroundPackage,
             requireApplicationWindow = true,
             requireActive = true
         )?.let { return it }
 
         selectWindowRoot(
+            preferredPackage = foregroundPackage,
             requireApplicationWindow = true,
             requireFocused = true
         )?.let { return it }
 
-        selectWindowRoot(requireApplicationWindow = true)?.let { return it }
+        selectWindowRoot(
+            preferredPackage = foregroundPackage,
+            requireApplicationWindow = true
+        )?.let { return it }
 
         rootInActiveWindow?.let { return it }
 
-        selectWindowRoot(requireActive = true)?.let { return it }
-        selectWindowRoot(requireFocused = true)?.let { return it }
-        return selectWindowRoot()
+        selectWindowRoot(preferredPackage = foregroundPackage, requireActive = true)?.let { return it }
+        selectWindowRoot(preferredPackage = foregroundPackage, requireFocused = true)?.let { return it }
+        return selectWindowRoot(preferredPackage = foregroundPackage)
     }
 
     private fun selectWindowRoot(
+        preferredPackage: String? = null,
         requireApplicationWindow: Boolean = false,
         requireActive: Boolean = false,
         requireFocused: Boolean = false
     ): AccessibilityNodeInfo? {
-        return windows.firstOrNull { window ->
-            (!requireApplicationWindow || window.type == AccessibilityWindowInfo.TYPE_APPLICATION) &&
-                (!requireActive || window.isActive) &&
-                (!requireFocused || window.isFocused) &&
-                window.root != null
-        }?.root
+        return windows
+            .asSequence()
+            .mapNotNull { window ->
+                val root = window.root ?: return@mapNotNull null
+                if (requireApplicationWindow && window.type != AccessibilityWindowInfo.TYPE_APPLICATION) {
+                    return@mapNotNull null
+                }
+                if (requireActive && !window.isActive) {
+                    return@mapNotNull null
+                }
+                if (requireFocused && !window.isFocused) {
+                    return@mapNotNull null
+                }
+                WindowRootCandidate(
+                    root = root,
+                    packageName = root.packageName?.toString(),
+                    layer = window.layer,
+                    active = window.isActive,
+                    focused = window.isFocused
+                )
+            }
+            .sortedWith(
+                compareByDescending<WindowRootCandidate> { candidate ->
+                    preferredPackage != null && candidate.packageName == preferredPackage
+                }
+                    .thenByDescending { it.active }
+                    .thenByDescending { it.focused }
+                    .thenByDescending { it.layer }
+            )
+            .map { it.root }
+            .firstOrNull()
     }
+
+    private data class WindowRootCandidate(
+        val root: AccessibilityNodeInfo,
+        val packageName: String?,
+        val layer: Int,
+        val active: Boolean,
+        val focused: Boolean
+    )
 
     private companion object {
         const val LOG_TAG = "GhostAccessibilityCore"

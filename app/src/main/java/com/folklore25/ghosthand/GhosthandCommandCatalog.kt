@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 package com.folklore25.ghosthand
 
 data class GhosthandCommandDescriptor(
@@ -11,6 +17,13 @@ data class GhosthandCommandDescriptor(
     val selectorSupport: GhosthandSelectorSupport? = null,
     val focusRequirement: String = "none",
     val delayedAcceptance: String = "none",
+    val transportContract: String = "default",
+    val stateTruth: String = "none",
+    val changeSignal: String = "none",
+    val operatorUses: List<String> = emptyList(),
+    val referenceStability: String = "not_applicable",
+    val snapshotScope: String = "not_applicable",
+    val recommendedInteractionModel: String = "none",
     val stability: String = "stable",
     val exampleRequest: Map<String, Any?>? = null,
     val exampleResponse: Map<String, Any?>? = null
@@ -27,11 +40,13 @@ data class GhosthandCommandParam(
 
 data class GhosthandSelectorSupport(
     val aliases: List<String>,
-    val strategies: List<String>
+    val strategies: List<String>,
+    val primaryStrategies: List<String> = emptyList(),
+    val boundedAids: List<String> = emptyList()
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.2"
+    const val schemaVersion = "1.15"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -65,12 +80,27 @@ object GhosthandCommandCatalog {
             )
         ),
         GhosthandCommandDescriptor(
+            id = "foreground",
+            category = "read",
+            method = "GET",
+            path = "/foreground",
+            description = "Current foreground app/activity summary; observer context only, not the sole visible-surface truth source",
+            responseFields = listOf("packageName", "activity", "label", "timestamp"),
+            stateTruth = "observer_context",
+            operatorUses = listOf("observer_context")
+        ),
+        GhosthandCommandDescriptor(
             id = "screen",
             category = "read",
             method = "GET",
             path = "/screen",
-            description = "Current UI elements with bounds and action-ready center coordinates",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "elements"),
+            description = "Current structured actionable surface snapshot with explicit partial-output signaling when invalid-geometry or low-signal nodes are omitted",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "elements"),
+            stateTruth = "structured_actionable_surface_snapshot",
+            operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
+            referenceStability = "snapshot_ephemeral",
+            snapshotScope = "same_snapshot_only",
+            recommendedInteractionModel = "selector_reresolution",
             params = listOf(
                 GhosthandCommandParam("editable", "boolean", "query", false, "Filter to editable elements only"),
                 GhosthandCommandParam("scrollable", "boolean", "query", false, "Filter to scrollable elements only"),
@@ -83,8 +113,11 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/tree",
-            description = "Current accessibility tree snapshot",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "root"),
+            description = "Current accessibility tree snapshot with explicit trust signaling for invalid bounds, low-signal nodes, and whether the current output is structurally full",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "returnedNodeCount", "warnings", "invalidBoundsCount", "lowSignalCount", "root"),
+            referenceStability = "snapshot_ephemeral",
+            snapshotScope = "same_snapshot_only",
+            recommendedInteractionModel = "selector_reresolution",
             params = listOf(
                 GhosthandCommandParam("mode", "string", "query", false, "Tree shape to return", listOf("raw", "flat"))
             )
@@ -95,7 +128,8 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/info",
             description = "Current foreground package, activity, and tree availability",
-            responseFields = listOf("package", "activity", "label", "screen", "tree")
+            responseFields = listOf("package", "activity", "label", "screen", "tree"),
+            stateTruth = "mixed_state_summary"
         ),
         GhosthandCommandDescriptor(
             id = "focused",
@@ -104,6 +138,9 @@ object GhosthandCommandCatalog {
             path = "/focused",
             description = "Currently focused accessibility node",
             responseFields = listOf("available", "node", "reason"),
+            referenceStability = "snapshot_ephemeral",
+            snapshotScope = "same_snapshot_only",
+            recommendedInteractionModel = "selector_reresolution",
             exampleResponse = mapOf(
                 "ok" to true,
                 "data" to mapOf(
@@ -122,6 +159,7 @@ object GhosthandCommandCatalog {
             path = "/tap",
             description = "Tap exact screen coordinates",
             responseFields = listOf("performed", "backendUsed"),
+            transportContract = "prompt_completion",
             params = listOf(
                 GhosthandCommandParam("x", "int", "body", true, "Screen X coordinate"),
                 GhosthandCommandParam("y", "int", "body", true, "Screen Y coordinate")
@@ -133,23 +171,39 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/click",
-            description = "Click by nodeId or selector",
-            responseFields = listOf("performed", "backendUsed"),
+            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click now resolves to an actionable clickable target by default, retries a bounded contains-based match for text/desc before failing, and reports how selector resolution landed on the dispatched target",
+            responseFields = listOf("performed", "backendUsed", "attemptedPath", "resolution"),
+            transportContract = "prompt_completion",
+            operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector"),
+            referenceStability = "snapshot_ephemeral",
+            snapshotScope = "same_snapshot_only",
+            recommendedInteractionModel = "selector_reresolution",
             params = listOf(
                 GhosthandCommandParam("nodeId", "string", "body", false, "Snapshot-scoped node identifier"),
-                GhosthandCommandParam("text", "string", "body", false, "Exact text selector"),
-                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector"),
+                GhosthandCommandParam("text", "string", "body", false, "Exact visible text selector"),
+                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector; use when the meaningful label lives in contentDesc"),
                 GhosthandCommandParam("id", "string", "body", false, "Exact resource id selector"),
-                GhosthandCommandParam("clickable", "boolean", "body", false, "Require a clickable resolved target")
+                GhosthandCommandParam("clickable", "boolean", "body", false, "Override actionable-target resolution; default behavior is true for selector-based click")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text", "desc", "id"),
-                strategies = listOf("text", "resourceId", "contentDesc")
+                strategies = listOf("text", "resourceId", "contentDesc"),
+                primaryStrategies = listOf("text", "contentDesc", "resourceId")
             ),
-            exampleRequest = mapOf("text" to "Settings"),
+            exampleRequest = mapOf("desc" to "Settings"),
             exampleResponse = mapOf(
                 "ok" to true,
-                "data" to mapOf("performed" to true)
+                "data" to mapOf(
+                    "performed" to true,
+                    "attemptedPath" to "node_click",
+                    "resolution" to mapOf(
+                        "requestedStrategy" to "contentDesc",
+                        "effectiveStrategy" to "contentDesc",
+                        "usedContainsFallback" to false,
+                        "matchedNodeClickable" to true,
+                        "resolutionKind" to "matched_node"
+                    )
+                )
             )
         ),
         GhosthandCommandDescriptor(
@@ -157,22 +211,29 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/find",
-            description = "Find a node and return action-ready geometry",
+            description = "Find by first-class selector (text, contentDesc, resourceId) and return action-ready geometry with prompt response completion",
             responseFields = listOf("found", "matchCount", "index", "node", "text", "desc", "id", "bounds", "centerX", "centerY", "clickable", "editable", "scrollable"),
+            transportContract = "prompt_completion",
+            operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector", "index_disambiguation"),
+            referenceStability = "snapshot_ephemeral",
+            snapshotScope = "same_snapshot_only",
+            recommendedInteractionModel = "selector_reresolution",
             params = listOf(
-                GhosthandCommandParam("text", "string", "body", false, "Exact text selector"),
-                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector"),
+                GhosthandCommandParam("text", "string", "body", false, "Exact visible text selector"),
+                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector; use when the meaningful label lives in contentDesc"),
                 GhosthandCommandParam("id", "string", "body", false, "Exact resource id selector"),
-                GhosthandCommandParam("strategy", "string", "body", false, "Explicit strategy name"),
+                GhosthandCommandParam("strategy", "string", "body", false, "Explicit strategy name", selectorStrategies),
                 GhosthandCommandParam("query", "string", "body", false, "Explicit strategy query"),
                 GhosthandCommandParam("clickable", "boolean", "body", false, "Resolve up to a clickable target"),
-                GhosthandCommandParam("index", "int", "body", false, "Match index to return")
+                GhosthandCommandParam("index", "int", "body", false, "Bounded aid to select one match when a selector returns multiple results")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text", "desc", "id"),
-                strategies = selectorStrategies
+                strategies = selectorStrategies,
+                primaryStrategies = listOf("text", "contentDesc", "resourceId"),
+                boundedAids = listOf("index")
             ),
-            exampleRequest = mapOf("text" to "Settings", "clickable" to true),
+            exampleRequest = mapOf("desc" to "Settings", "clickable" to true),
             exampleResponse = mapOf(
                 "ok" to true,
                 "data" to mapOf(
@@ -202,8 +263,11 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/setText",
-            description = "Set text on a specific editable node",
+            description = "Set text on a specific editable node; nodeId is snapshot-ephemeral and should only be used within the same trusted snapshot context",
             responseFields = listOf("performed", "backendUsed"),
+            referenceStability = "snapshot_ephemeral",
+            snapshotScope = "same_snapshot_only",
+            recommendedInteractionModel = "selector_reresolution",
             params = listOf(
                 GhosthandCommandParam("nodeId", "string", "body", true, "Snapshot-scoped node identifier"),
                 GhosthandCommandParam("text", "string", "body", true, "Replacement text")
@@ -215,8 +279,11 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/scroll",
-            description = "Scroll a target node or matching container",
-            responseFields = listOf("performed", "count", "direction", "attemptedPath"),
+            description = "Scroll a target node or matching container; use contentChanged as the primary same-activity effect signal, with before/after snapshot tokens for supporting detail",
+            responseFields = listOf("performed", "count", "direction", "attemptedPath", "contentChanged", "surfaceChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity"),
+            referenceStability = "snapshot_ephemeral",
+            snapshotScope = "same_snapshot_only",
+            recommendedInteractionModel = "selector_reresolution",
             params = listOf(
                 GhosthandCommandParam("nodeId", "string", "body", false, "Snapshot-scoped node identifier"),
                 GhosthandCommandParam("target", "string", "body", false, "Text target used to locate a scroll container"),
@@ -225,7 +292,8 @@ object GhosthandCommandCatalog {
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text"),
-                strategies = listOf("text")
+                strategies = listOf("text"),
+                primaryStrategies = listOf("text")
             ),
             delayedAcceptance = "recommended",
             exampleRequest = mapOf("direction" to "down", "count" to 1)
@@ -235,11 +303,15 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/swipe",
-            description = "Swipe between two coordinates",
-            responseFields = listOf("performed", "backendUsed"),
+            description = "Swipe between two coordinates; canonical request uses from/to point objects, x1/y1/x2/y2 aliases are accepted for discoverability, and contentChanged is the primary same-activity effect signal",
+            responseFields = listOf("performed", "backendUsed", "requestShape", "contentChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity"),
             params = listOf(
                 GhosthandCommandParam("from", "point", "body", true, "Start coordinate object"),
                 GhosthandCommandParam("to", "point", "body", true, "End coordinate object"),
+                GhosthandCommandParam("x1", "int", "body", false, "Alias start X coordinate"),
+                GhosthandCommandParam("y1", "int", "body", false, "Alias start Y coordinate"),
+                GhosthandCommandParam("x2", "int", "body", false, "Alias end X coordinate"),
+                GhosthandCommandParam("y2", "int", "body", false, "Alias end Y coordinate"),
                 GhosthandCommandParam("durationMs", "long", "body", true, "Swipe duration in milliseconds")
             ),
             delayedAcceptance = "recommended",
@@ -281,7 +353,8 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/back",
             description = "Perform system back",
-            responseFields = listOf("performed")
+            responseFields = listOf("performed"),
+            transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
             id = "home",
@@ -289,7 +362,8 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/home",
             description = "Go to launcher home",
-            responseFields = listOf("performed")
+            responseFields = listOf("performed"),
+            transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
             id = "recents",
@@ -297,15 +371,18 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/recents",
             description = "Open system recents",
-            responseFields = listOf("performed")
+            responseFields = listOf("performed"),
+            transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
             id = "screenshot",
             category = "sensing",
             method = "GET",
             path = "/screenshot",
-            description = "Return current screenshot as base64 PNG",
-            responseFields = listOf("image", "width", "height")
+            description = "Return current screenshot as base64 PNG; primary visual truth for debugging and verification when structured surface output is stale, invalid, or ambiguous",
+            responseFields = listOf("image", "width", "height"),
+            stateTruth = "visual_truth",
+            operatorUses = listOf("visual_truth", "debugging", "verification")
         ),
         GhosthandCommandDescriptor(
             id = "notify_read",
@@ -347,8 +424,10 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "GET",
             path = "/wait",
-            description = "Wait for UI change",
+            description = "Wait for UI change; changed reports whether a transition was observed during the wait window, while packageName/activity report the final observed settled state",
             responseFields = listOf("changed", "elapsedMs", "snapshotToken", "packageName", "activity"),
+            stateTruth = "final_settled_state",
+            changeSignal = "transition_observed_during_window",
             params = listOf(
                 GhosthandCommandParam("timeout", "long", "query", false, "Maximum wait duration in milliseconds"),
                 GhosthandCommandParam("intervalMs", "long", "query", false, "Polling interval in milliseconds")
@@ -370,7 +449,8 @@ object GhosthandCommandCatalog {
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text", "desc", "id"),
-                strategies = selectorStrategies
+                strategies = selectorStrategies,
+                primaryStrategies = listOf("text", "contentDesc", "resourceId")
             ),
             delayedAcceptance = "required",
             exampleRequest = mapOf(
@@ -383,8 +463,15 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "GET",
             path = "/clipboard",
-            description = "Read current clipboard text",
-            responseFields = listOf("text", "reason")
+            description = "Read current clipboard text, including a one-read fallback to the last successful Ghosthand write if Android reports the clipboard empty immediately afterward",
+            responseFields = listOf("text", "reason"),
+            exampleResponse = mapOf(
+                "ok" to true,
+                "data" to mapOf(
+                    "text" to "ghosthand clip path",
+                    "reason" to "clipboard_cached_after_write"
+                )
+            )
         ),
         GhosthandCommandDescriptor(
             id = "clipboard_write",

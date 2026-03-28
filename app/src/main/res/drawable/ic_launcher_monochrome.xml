@@ -1,0 +1,6 @@
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="0dp">
+    <bitmap
+        android:gravity="center"
+        android:src="@drawable/ic_launcher_monochrome_image" />
+</inset>
