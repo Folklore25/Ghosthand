@@ -1,0 +1,41 @@
+# IDE and editor state
+*.iml
+.idea/
+.kotlin/
+
+# Local Android/Gradle state
+.gradle/
+local.properties
+
+# Build outputs
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+app/build/
+
+# OS noise
+.DS_Store
+
+# Local workflow state and unpublished project context
+.planning/
+.codex/
+.claude/
+CLAUDE.md
+ghosthand-window-latest.xml
+
+# Local-only reference and operating material
+references/
+docs/ghosthanddev/
+docs/knowledgebase/
+docs/Architecture.md
+docs/Ghosthand-Engineering-Notes.md
+docs/ROADMAP.md
+docs/RPD.md
+docs/ghostfinger-miui-accessibility-notes.md
+docs/ghosthand-execution-core-guide.md
+
+# Local guidance / assets not required for public build availability
+AGENTS.md
+app/.gitignore
+icon.png
