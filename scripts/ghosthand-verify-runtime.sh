@@ -116,6 +116,24 @@ selector_click_check() {
   echo
 }
 
+screenshot_check() {
+  echo "== screenshot =="
+  http_request GET /screenshot | head -c 1200
+  echo
+  echo
+}
+
+notify_check() {
+  echo "== notify post =="
+  http_request POST /notify '{"title":"Ghosthand","text":"notify test"}'
+  echo
+  sleep 1
+
+  echo "== notify read =="
+  http_request GET /notify
+  echo
+}
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -124,6 +142,8 @@ Usage:
   scripts/ghosthand-verify-runtime.sh smoke
   scripts/ghosthand-verify-runtime.sh focused-input
   scripts/ghosthand-verify-runtime.sh selector-click
+  scripts/ghosthand-verify-runtime.sh screenshot-check
+  scripts/ghosthand-verify-runtime.sh notify-check
   scripts/ghosthand-verify-runtime.sh wait-home
   scripts/ghosthand-verify-runtime.sh all
 
@@ -152,6 +172,12 @@ main() {
     selector-click)
       selector_click_check
       ;;
+    screenshot-check)
+      screenshot_check
+      ;;
+    notify-check)
+      notify_check
+      ;;
     wait-home)
       wait_home_check
       ;;
@@ -161,6 +187,8 @@ main() {
       smoke_check
       focused_input_check
       selector_click_check
+      screenshot_check
+      notify_check
       wait_home_check
       ;;
     *)
