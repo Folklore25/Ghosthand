@@ -9,7 +9,6 @@ import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.URLDecoder
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
@@ -107,8 +106,9 @@ class LocalApiServer(
                 val requestParts = requestLine.split(" ")
                 val method = requestParts.getOrNull(0).orEmpty()
                 val requestTarget = requestParts.getOrNull(1).orEmpty()
-                val path = requestTarget.substringBefore('?')
-                val queryParameters = parseQueryParameters(requestTarget)
+                val target = GhosthandHttp.parseRequestTarget(requestTarget)
+                val path = target.path
+                val queryParameters = target.queryParameters
                 val requestBody = readRequestBody(reader, headers["content-length"])
 
                 val response = when {
@@ -146,207 +146,11 @@ class LocalApiServer(
                     method == "GET" && path == "/notify" -> buildNotifyReadResponse(queryParameters)
                     method == "POST" && path == "/notify" -> buildNotifyPostResponse(requestBody)
                     method == "DELETE" && path == "/notify" -> buildNotifyCancelResponse(requestBody)
-                    path == "/ping" -> buildJsonResponse(
+                    GhosthandRoutePolicies.policyFor(path) != null -> buildJsonResponse(
                         statusCode = 405,
                         body = errorEnvelope(
                             code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /ping."
-                        )
-                    )
-                    path == "/health" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /health."
-                        )
-                    )
-                    path == "/commands" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /commands."
-                        )
-                    )
-                    path == "/state" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /state."
-                        )
-                    )
-                    path == "/device" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /device."
-                        )
-                    )
-                    path == "/foreground" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /foreground."
-                        )
-                    )
-                    path == "/tree" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /tree."
-                        )
-                    )
-                    path == "/find" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /find."
-                        )
-                    )
-                    path == "/tap" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /tap."
-                        )
-                    )
-                    path == "/swipe" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /swipe."
-                        )
-                    )
-                    path == "/type" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /type."
-                        )
-                    )
-                    path == "/launch" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /launch."
-                        )
-                    )
-                    path == "/stop" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /stop."
-                        )
-                    )
-                    path == "/screen" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /screen."
-                        )
-                    )
-                    path == "/screenshot" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET and POST are supported for /screenshot."
-                        )
-                    )
-                    path == "/info" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /info."
-                        )
-                    )
-                    path == "/focused" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET is supported for /focused."
-                        )
-                    )
-                    path == "/click" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /click."
-                        )
-                    )
-                    path == "/input" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /input."
-                        )
-                    )
-                    path == "/setText" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /setText."
-                        )
-                    )
-                    path == "/scroll" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /scroll."
-                        )
-                    )
-                    path == "/longpress" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /longpress."
-                        )
-                    )
-                    path == "/gesture" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /gesture."
-                        )
-                    )
-                    path == "/back" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /back."
-                        )
-                    )
-                    path == "/home" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /home."
-                        )
-                    )
-                    path == "/recents" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only POST is supported for /recents."
-                        )
-                    )
-                    path == "/clipboard" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET (read) and POST (write) are supported for /clipboard."
-                        )
-                    )
-                    path == "/wait" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET and POST are supported for /wait."
-                        )
-                    )
-                    path == "/notify" -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = "Only GET (read), POST (post), and DELETE (cancel) are supported for /notify."
+                            message = GhosthandRoutePolicies.policyFor(path)!!.methodNotAllowedMessage
                         )
                     )
                     else -> buildJsonResponse(
@@ -389,58 +193,29 @@ class LocalApiServer(
 
     private fun buildCommandsResponse(): String {
         val commands = org.json.JSONArray()
-        fun add(method: String, path: String, description: String, params: JSONObject = JSONObject()) {
+        GhosthandCommandCatalog.commands.forEach { command ->
+            val params = org.json.JSONArray()
+            command.params.forEach { param ->
+                params.put(
+                    JSONObject()
+                        .put("name", param.name)
+                        .put("type", param.type)
+                        .put("required", param.required)
+                        .put("description", param.description)
+                        .put("allowedValues", org.json.JSONArray(param.allowedValues))
+                )
+            }
+
             commands.put(
                 JSONObject()
-                    .put("method", method)
-                    .put("path", path)
-                    .put("description", description)
+                    .put("id", command.id)
+                    .put("category", command.category)
+                    .put("method", command.method)
+                    .put("path", command.path)
+                    .put("description", command.description)
                     .put("params", params)
             )
         }
-
-        add("GET", "/ping", "Health check with current Ghosthand version")
-        add("GET", "/screen", "Current UI elements with bounds and action-ready center coordinates",
-            JSONObject().put("editable", "optional boolean").put("scrollable", "optional boolean").put("clickable", "optional boolean").put("package", "optional package filter"))
-        add("GET", "/tree", "Current accessibility tree snapshot",
-            JSONObject().put("mode", "raw or flat"))
-        add("GET", "/info", "Current foreground package, activity, and tree availability")
-        add("GET", "/focused", "Currently focused accessibility node")
-        add("POST", "/tap", "Tap exact screen coordinates",
-            JSONObject().put("x", "required int").put("y", "required int"))
-        add("POST", "/click", "Click by nodeId or selector",
-            JSONObject().put("nodeId", "optional string").put("text", "optional string").put("desc", "optional string").put("id", "optional string").put("clickable", "optional boolean"))
-        add("POST", "/find", "Find a node and return action-ready geometry",
-            JSONObject().put("text", "optional string").put("desc", "optional string").put("id", "optional string").put("strategy", "optional string").put("query", "optional string").put("clickable", "optional boolean").put("index", "optional int"))
-        add("POST", "/input", "Set, append, or clear text in the current focused field",
-            JSONObject().put("text", "optional string").put("append", "optional boolean").put("clear", "optional boolean"))
-        add("POST", "/setText", "Set text on a specific editable node",
-            JSONObject().put("nodeId", "required string").put("text", "required string"))
-        add("POST", "/scroll", "Scroll a target node or matching container",
-            JSONObject().put("nodeId", "optional string").put("target", "optional text selector").put("direction", "required up/down/left/right").put("count", "optional int"))
-        add("POST", "/swipe", "Swipe between two coordinates",
-            JSONObject().put("from", newPointParam()).put("to", newPointParam()).put("durationMs", "required long"))
-        add("POST", "/longpress", "Long press at coordinates",
-            JSONObject().put("x", "required int").put("y", "required int").put("durationMs", "optional long"))
-        add("POST", "/gesture", "Composite gesture or multi-stroke dispatch",
-            JSONObject().put("type", "optional pinch_in/pinch_out").put("strokes", "optional stroke array"))
-        add("POST", "/back", "Perform system back")
-        add("POST", "/home", "Go to launcher home")
-        add("POST", "/recents", "Open system recents")
-        add("GET", "/screenshot", "Return current screenshot as base64 PNG")
-        add("GET", "/notify", "Read buffered notifications",
-            JSONObject().put("package", "optional package filter").put("exclude", "optional comma-separated packages"))
-        add("POST", "/notify", "Post a local notification",
-            JSONObject().put("title", "optional string").put("text", "required string"))
-        add("DELETE", "/notify", "Cancel a posted local notification",
-            JSONObject().put("notificationId", "required int"))
-        add("GET", "/wait", "Wait for UI change",
-            JSONObject().put("timeout", "optional long ms").put("intervalMs", "optional long ms"))
-        add("POST", "/wait", "Wait for a matching tree condition",
-            JSONObject().put("condition", "required selector object").put("timeoutMs", "optional long").put("intervalMs", "optional long"))
-        add("GET", "/clipboard", "Read current clipboard text")
-        add("POST", "/clipboard", "Write clipboard text",
-            JSONObject().put("text", "required string"))
 
         return buildJsonResponse(
             statusCode = 200,
@@ -1756,7 +1531,7 @@ class LocalApiServer(
             append("HTTP/1.1 ")
             append(statusCode)
             append(' ')
-            append(statusText(statusCode))
+            append(GhosthandHttp.statusText(statusCode))
             append("\r\n")
             append("Content-Type: application/json\r\n")
             append("Content-Length: ")
@@ -1768,67 +1543,21 @@ class LocalApiServer(
         }
     }
 
-    private fun statusText(statusCode: Int): String {
-        return when (statusCode) {
-            200 -> "OK"
-            400 -> "Bad Request"
-            404 -> "Not Found"
-            405 -> "Method Not Allowed"
-            422 -> "Unprocessable Entity"
-            503 -> "Service Unavailable"
-            500 -> "Internal Server Error"
-            else -> "Internal Server Error"
-        }
-    }
-
-    private fun parseQueryParameters(requestTarget: String): Map<String, String> {
-        val query = requestTarget.substringAfter('?', "")
-        if (query.isEmpty()) {
-            return emptyMap()
-        }
-
-        return buildMap {
-            query.split('&')
-                .filter { it.isNotEmpty() }
-                .forEach { entry ->
-                    val key = entry.substringBefore('=')
-                    if (key.isEmpty()) {
-                        return@forEach
-                    }
-
-                    put(
-                        URLDecoder.decode(key, StandardCharsets.UTF_8.name()),
-                        URLDecoder.decode(entry.substringAfter('=', ""), StandardCharsets.UTF_8.name())
-                    )
-                }
-        }
-    }
-
     private fun parseSelector(body: JSONObject): SelectorQuery? {
-        body.optString("text").trim().ifEmpty { null }?.let {
-            return SelectorQuery("text", it)
-        }
-        body.optString("desc").trim().ifEmpty { null }?.let {
-            return SelectorQuery("contentDesc", it)
-        }
-        body.optString("id").trim().ifEmpty { null }?.let {
-            return SelectorQuery("resourceId", it)
-        }
-
-        val strategy = body.optString("strategy").trim().ifEmpty { null } ?: return null
         val query = body.opt("query").let { value ->
             when {
                 value == null || value == JSONObject.NULL -> null
                 else -> value.toString()
             }
         }
-        return SelectorQuery(strategy, query)
-    }
 
-    private fun newPointParam(): JSONObject {
-        return JSONObject()
-            .put("x", "required int")
-            .put("y", "required int")
+        return GhosthandSelectors.normalize(
+            text = body.optString("text").ifBlank { null },
+            desc = body.optString("desc").ifBlank { null },
+            id = body.optString("id").ifBlank { null },
+            strategy = body.optString("strategy").ifBlank { null },
+            query = query
+        )
     }
 
     private fun readRequestBody(reader: BufferedReader, contentLengthHeader: String?): String {
@@ -1910,8 +1639,3 @@ class LocalApiServer(
         )
     }
 }
-
-private data class SelectorQuery(
-    val strategy: String,
-    val query: String?
-)

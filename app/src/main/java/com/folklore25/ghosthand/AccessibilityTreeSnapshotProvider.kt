@@ -3,7 +3,6 @@ package com.folklore25.ghosthand
 import android.content.Context
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
-import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
 
@@ -65,32 +64,11 @@ class AccessibilityTreeSnapshotProvider(
     }
 
     fun toJson(snapshot: AccessibilityTreeSnapshot): JSONObject {
-        val nodesJson = JSONArray()
-        snapshot.nodes.forEach { node ->
-            nodesJson.put(toJson(node))
-        }
-
-        return JSONObject()
-            .put("packageName", snapshot.packageName ?: JSONObject.NULL)
-            .put("activity", snapshot.activity ?: JSONObject.NULL)
-            .put("snapshotToken", snapshot.snapshotToken)
-            .put("capturedAt", snapshot.capturedAt)
-            .put("nodes", nodesJson)
+        return GhosthandApiPayloads.treePayload(snapshot)
     }
 
     fun toRawJson(snapshot: AccessibilityTreeSnapshot): JSONObject {
-        return JSONObject()
-            .put("packageName", snapshot.packageName ?: JSONObject.NULL)
-            .put("activity", snapshot.activity ?: JSONObject.NULL)
-            .put("snapshotToken", snapshot.snapshotToken)
-            .put("capturedAt", snapshot.capturedAt)
-            .put(
-                "root",
-                buildRawTreeNode(
-                    snapshot = snapshot,
-                    path = listOf(0)
-                ) ?: JSONObject.NULL
-            )
+        return GhosthandApiPayloads.rawTreePayload(snapshot)
     }
 
     fun toScreenJson(
@@ -100,80 +78,17 @@ class AccessibilityTreeSnapshotProvider(
         packageFilter: String?,
         clickableOnly: Boolean
     ): JSONObject {
-        val elements = JSONArray()
-        snapshot.nodes
-            .asSequence()
-            .filter { !editableOnly || it.editable }
-            .filter { !scrollableOnly || it.scrollable }
-            .filter { !clickableOnly || it.clickable }
-            .filter { packageFilter.isNullOrBlank() || snapshot.packageName == packageFilter }
-            .forEach { node ->
-                elements.put(
-                    JSONObject()
-                        .put("nodeId", node.nodeId)
-                        .put("text", node.text ?: "")
-                        .put("desc", node.contentDesc ?: "")
-                        .put("id", node.resourceId ?: "")
-                        .put("clickable", node.clickable)
-                        .put("editable", node.editable)
-                        .put("scrollable", node.scrollable)
-                        .put("bounds", node.bounds.toBracketString())
-                        .put("centerX", node.centerX)
-                        .put("centerY", node.centerY)
-                )
-            }
-
-        return JSONObject()
-            .put("packageName", snapshot.packageName ?: JSONObject.NULL)
-            .put("activity", snapshot.activity ?: JSONObject.NULL)
-            .put("snapshotToken", snapshot.snapshotToken)
-            .put("capturedAt", snapshot.capturedAt)
-            .put("elements", elements)
+        return GhosthandApiPayloads.screenPayload(
+            snapshot = snapshot,
+            editableOnly = editableOnly,
+            scrollableOnly = scrollableOnly,
+            packageFilter = packageFilter,
+            clickableOnly = clickableOnly
+        )
     }
 
     fun toJson(node: FlatAccessibilityNode): JSONObject {
-        return JSONObject()
-            .put("nodeId", node.nodeId)
-            .put("text", node.text ?: JSONObject.NULL)
-            .put("contentDesc", node.contentDesc ?: JSONObject.NULL)
-            .put("resourceId", node.resourceId ?: JSONObject.NULL)
-            .put("className", node.className ?: JSONObject.NULL)
-            .put("clickable", node.clickable)
-            .put("editable", node.editable)
-            .put("enabled", node.enabled)
-            .put("scrollable", node.scrollable)
-            .put("centerX", node.centerX)
-            .put("centerY", node.centerY)
-            .put("bounds", JSONObject()
-                .put("left", node.bounds.left)
-                .put("top", node.bounds.top)
-                .put("right", node.bounds.right)
-                .put("bottom", node.bounds.bottom)
-            )
-    }
-
-    private fun buildRawTreeNode(
-        snapshot: AccessibilityTreeSnapshot,
-        path: List<Int>
-    ): JSONObject? {
-        val targetNode = snapshot.nodes.firstOrNull { node ->
-            node.pathSegments() == path
-        } ?: return null
-
-        val children = JSONArray()
-        snapshot.nodes
-            .asSequence()
-            .filter { candidate ->
-                val candidatePath = candidate.pathSegments()
-                candidatePath.size == path.size + 1 &&
-                    candidatePath.dropLast(1) == path
-            }
-            .sortedBy { it.pathSegments().lastOrNull() ?: 0 }
-            .forEach { child ->
-                buildRawTreeNode(snapshot, child.pathSegments())?.let(children::put)
-            }
-
-        return toJson(targetNode).put("children", children)
+        return GhosthandApiPayloads.nodePayload(node)
     }
 
     private fun collectNodes(
@@ -293,8 +208,4 @@ data class NodeBounds(
 
 fun NodeBounds.toBracketString(): String {
     return "[$left,$top][$right,$bottom]"
-}
-
-private fun FlatAccessibilityNode.pathSegments(): List<Int> {
-    return AccessibilityNodeLocator.pathSegments(nodeId)
 }

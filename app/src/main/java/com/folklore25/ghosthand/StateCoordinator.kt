@@ -184,27 +184,7 @@ class StateCoordinator(
             index = index
         )
 
-        val payload = JSONObject()
-            .put("found", result.found)
-            .put("matchCount", result.matches.size)
-            .put("index", result.selectedIndex)
-
-        val node = result.node
-        if (node == null) {
-            return payload.put("node", JSONObject.NULL)
-        }
-
-        return payload
-            .put("node", accessibilityTreeSnapshotProvider.toJson(node))
-            .put("text", node.text ?: "")
-            .put("desc", node.contentDesc ?: "")
-            .put("id", node.resourceId ?: "")
-            .put("bounds", node.bounds.toBracketString())
-            .put("centerX", node.centerX)
-            .put("centerY", node.centerY)
-            .put("clickable", node.clickable)
-            .put("editable", node.editable)
-            .put("scrollable", node.scrollable)
+        return GhosthandApiPayloads.findPayload(result)
     }
 
     fun tapPoint(x: Int, y: Int): TapAttemptResult {
@@ -574,29 +554,28 @@ class StateCoordinator(
     fun waitForUiChange(timeoutMs: Long, intervalMs: Long): WaitUiChangeResult {
         val initialTree = getTreeSnapshotResult().snapshot
         val initialForeground = foregroundAppProvider.snapshot()
-        val initialToken = initialTree?.snapshotToken
+        val initialState = UiStateSnapshot(
+            snapshotToken = initialTree?.snapshotToken,
+            packageName = initialForeground.packageName,
+            activity = initialForeground.activity
+        )
         val startTime = System.currentTimeMillis()
         val deadline = startTime + timeoutMs.coerceAtLeast(0L)
 
         while (System.currentTimeMillis() < deadline) {
             val currentTree = getTreeSnapshotResult().snapshot
             val currentForeground = foregroundAppProvider.snapshot()
-            val currentToken = currentTree?.snapshotToken
+            val currentState = UiStateSnapshot(
+                snapshotToken = currentTree?.snapshotToken,
+                packageName = currentForeground.packageName,
+                activity = currentForeground.activity
+            )
 
-            val foregroundChanged =
-                currentForeground.packageName != initialForeground.packageName ||
-                    currentForeground.activity != initialForeground.activity
-
-            val treeChanged =
-                currentToken != null &&
-                    initialToken != null &&
-                    currentToken != initialToken
-
-            if (foregroundChanged || treeChanged) {
+            if (GhosthandWaitLogic.hasUiChanged(initialState, currentState)) {
                 return WaitUiChangeResult(
                     changed = true,
                     elapsedMs = System.currentTimeMillis() - startTime,
-                    snapshotToken = currentToken ?: initialToken,
+                    snapshotToken = currentState.snapshotToken ?: initialState.snapshotToken,
                     packageName = currentForeground.packageName,
                     activity = currentForeground.activity
                 )
@@ -610,9 +589,9 @@ class StateCoordinator(
         return WaitUiChangeResult(
             changed = false,
             elapsedMs = timeoutMs,
-            snapshotToken = initialToken,
-            packageName = initialForeground.packageName,
-            activity = initialForeground.activity
+            snapshotToken = initialState.snapshotToken,
+            packageName = initialState.packageName,
+            activity = initialState.activity
         )
     }
 
