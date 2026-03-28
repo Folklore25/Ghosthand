@@ -7,6 +7,7 @@ data class GhosthandCommandDescriptor(
     val path: String,
     val description: String,
     val params: List<GhosthandCommandParam> = emptyList(),
+    val responseFields: List<String> = emptyList(),
     val selectorSupport: GhosthandSelectorSupport? = null,
     val focusRequirement: String = "none",
     val delayedAcceptance: String = "none",
@@ -18,6 +19,7 @@ data class GhosthandCommandDescriptor(
 data class GhosthandCommandParam(
     val name: String,
     val type: String,
+    val location: String,
     val required: Boolean,
     val description: String,
     val allowedValues: List<String> = emptyList()
@@ -53,6 +55,7 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/ping",
             description = "Health check with current Ghosthand version",
+            responseFields = listOf("service", "version"),
             exampleResponse = mapOf(
                 "ok" to true,
                 "data" to mapOf(
@@ -67,11 +70,12 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/screen",
             description = "Current UI elements with bounds and action-ready center coordinates",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "elements"),
             params = listOf(
-                GhosthandCommandParam("editable", "boolean", false, "Filter to editable elements only"),
-                GhosthandCommandParam("scrollable", "boolean", false, "Filter to scrollable elements only"),
-                GhosthandCommandParam("clickable", "boolean", false, "Filter to clickable elements only"),
-                GhosthandCommandParam("package", "string", false, "Restrict results to a package name")
+                GhosthandCommandParam("editable", "boolean", "query", false, "Filter to editable elements only"),
+                GhosthandCommandParam("scrollable", "boolean", "query", false, "Filter to scrollable elements only"),
+                GhosthandCommandParam("clickable", "boolean", "query", false, "Filter to clickable elements only"),
+                GhosthandCommandParam("package", "string", "query", false, "Restrict results to a package name")
             )
         ),
         GhosthandCommandDescriptor(
@@ -80,8 +84,9 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/tree",
             description = "Current accessibility tree snapshot",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "root"),
             params = listOf(
-                GhosthandCommandParam("mode", "string", false, "Tree shape to return", listOf("raw", "flat"))
+                GhosthandCommandParam("mode", "string", "query", false, "Tree shape to return", listOf("raw", "flat"))
             )
         ),
         GhosthandCommandDescriptor(
@@ -89,7 +94,8 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/info",
-            description = "Current foreground package, activity, and tree availability"
+            description = "Current foreground package, activity, and tree availability",
+            responseFields = listOf("package", "activity", "label", "screen", "tree")
         ),
         GhosthandCommandDescriptor(
             id = "focused",
@@ -97,6 +103,7 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/focused",
             description = "Currently focused accessibility node",
+            responseFields = listOf("available", "node", "reason"),
             exampleResponse = mapOf(
                 "ok" to true,
                 "data" to mapOf(
@@ -114,9 +121,10 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/tap",
             description = "Tap exact screen coordinates",
+            responseFields = listOf("performed", "backendUsed"),
             params = listOf(
-                GhosthandCommandParam("x", "int", true, "Screen X coordinate"),
-                GhosthandCommandParam("y", "int", true, "Screen Y coordinate")
+                GhosthandCommandParam("x", "int", "body", true, "Screen X coordinate"),
+                GhosthandCommandParam("y", "int", "body", true, "Screen Y coordinate")
             ),
             exampleRequest = mapOf("x" to 540, "y" to 1200)
         ),
@@ -126,12 +134,13 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/click",
             description = "Click by nodeId or selector",
+            responseFields = listOf("performed", "backendUsed"),
             params = listOf(
-                GhosthandCommandParam("nodeId", "string", false, "Snapshot-scoped node identifier"),
-                GhosthandCommandParam("text", "string", false, "Exact text selector"),
-                GhosthandCommandParam("desc", "string", false, "Exact content description selector"),
-                GhosthandCommandParam("id", "string", false, "Exact resource id selector"),
-                GhosthandCommandParam("clickable", "boolean", false, "Require a clickable resolved target")
+                GhosthandCommandParam("nodeId", "string", "body", false, "Snapshot-scoped node identifier"),
+                GhosthandCommandParam("text", "string", "body", false, "Exact text selector"),
+                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector"),
+                GhosthandCommandParam("id", "string", "body", false, "Exact resource id selector"),
+                GhosthandCommandParam("clickable", "boolean", "body", false, "Require a clickable resolved target")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text", "desc", "id"),
@@ -149,14 +158,15 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/find",
             description = "Find a node and return action-ready geometry",
+            responseFields = listOf("found", "matchCount", "index", "node", "text", "desc", "id", "bounds", "centerX", "centerY", "clickable", "editable", "scrollable"),
             params = listOf(
-                GhosthandCommandParam("text", "string", false, "Exact text selector"),
-                GhosthandCommandParam("desc", "string", false, "Exact content description selector"),
-                GhosthandCommandParam("id", "string", false, "Exact resource id selector"),
-                GhosthandCommandParam("strategy", "string", false, "Explicit strategy name"),
-                GhosthandCommandParam("query", "string", false, "Explicit strategy query"),
-                GhosthandCommandParam("clickable", "boolean", false, "Resolve up to a clickable target"),
-                GhosthandCommandParam("index", "int", false, "Match index to return")
+                GhosthandCommandParam("text", "string", "body", false, "Exact text selector"),
+                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector"),
+                GhosthandCommandParam("id", "string", "body", false, "Exact resource id selector"),
+                GhosthandCommandParam("strategy", "string", "body", false, "Explicit strategy name"),
+                GhosthandCommandParam("query", "string", "body", false, "Explicit strategy query"),
+                GhosthandCommandParam("clickable", "boolean", "body", false, "Resolve up to a clickable target"),
+                GhosthandCommandParam("index", "int", "body", false, "Match index to return")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text", "desc", "id"),
@@ -178,10 +188,11 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/input",
             description = "Set, append, or clear text in the current focused field",
+            responseFields = listOf("performed", "backendUsed", "text", "previousText", "action"),
             params = listOf(
-                GhosthandCommandParam("text", "string", false, "Text payload"),
-                GhosthandCommandParam("append", "boolean", false, "Append to existing field content"),
-                GhosthandCommandParam("clear", "boolean", false, "Clear the field before applying text")
+                GhosthandCommandParam("text", "string", "body", false, "Text payload"),
+                GhosthandCommandParam("append", "boolean", "body", false, "Append to existing field content"),
+                GhosthandCommandParam("clear", "boolean", "body", false, "Clear the field before applying text")
             ),
             focusRequirement = "focused_editable",
             exampleRequest = mapOf("text" to "wifi", "clear" to true)
@@ -192,9 +203,10 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/setText",
             description = "Set text on a specific editable node",
+            responseFields = listOf("performed", "backendUsed"),
             params = listOf(
-                GhosthandCommandParam("nodeId", "string", true, "Snapshot-scoped node identifier"),
-                GhosthandCommandParam("text", "string", true, "Replacement text")
+                GhosthandCommandParam("nodeId", "string", "body", true, "Snapshot-scoped node identifier"),
+                GhosthandCommandParam("text", "string", "body", true, "Replacement text")
             ),
             exampleRequest = mapOf("nodeId" to "snap:abc123:path:0.1", "text" to "wifi")
         ),
@@ -204,11 +216,12 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/scroll",
             description = "Scroll a target node or matching container",
+            responseFields = listOf("performed", "count", "direction", "attemptedPath"),
             params = listOf(
-                GhosthandCommandParam("nodeId", "string", false, "Snapshot-scoped node identifier"),
-                GhosthandCommandParam("target", "string", false, "Text target used to locate a scroll container"),
-                GhosthandCommandParam("direction", "string", true, "Scroll direction", listOf("up", "down", "left", "right")),
-                GhosthandCommandParam("count", "int", false, "Repeat count")
+                GhosthandCommandParam("nodeId", "string", "body", false, "Snapshot-scoped node identifier"),
+                GhosthandCommandParam("target", "string", "body", false, "Text target used to locate a scroll container"),
+                GhosthandCommandParam("direction", "string", "body", true, "Scroll direction", listOf("up", "down", "left", "right")),
+                GhosthandCommandParam("count", "int", "body", false, "Repeat count")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text"),
@@ -223,10 +236,11 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/swipe",
             description = "Swipe between two coordinates",
+            responseFields = listOf("performed", "backendUsed"),
             params = listOf(
-                GhosthandCommandParam("from", "point", true, "Start coordinate object"),
-                GhosthandCommandParam("to", "point", true, "End coordinate object"),
-                GhosthandCommandParam("durationMs", "long", true, "Swipe duration in milliseconds")
+                GhosthandCommandParam("from", "point", "body", true, "Start coordinate object"),
+                GhosthandCommandParam("to", "point", "body", true, "End coordinate object"),
+                GhosthandCommandParam("durationMs", "long", "body", true, "Swipe duration in milliseconds")
             ),
             delayedAcceptance = "recommended",
             exampleRequest = mapOf(
@@ -241,10 +255,11 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/longpress",
             description = "Long press at coordinates",
+            responseFields = listOf("performed"),
             params = listOf(
-                GhosthandCommandParam("x", "int", true, "Screen X coordinate"),
-                GhosthandCommandParam("y", "int", true, "Screen Y coordinate"),
-                GhosthandCommandParam("durationMs", "long", false, "Press duration in milliseconds")
+                GhosthandCommandParam("x", "int", "body", true, "Screen X coordinate"),
+                GhosthandCommandParam("y", "int", "body", true, "Screen Y coordinate"),
+                GhosthandCommandParam("durationMs", "long", "body", false, "Press duration in milliseconds")
             )
         ),
         GhosthandCommandDescriptor(
@@ -253,9 +268,10 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/gesture",
             description = "Composite gesture or multi-stroke dispatch",
+            responseFields = listOf("performed"),
             params = listOf(
-                GhosthandCommandParam("type", "string", false, "Named gesture type", listOf("pinch_in", "pinch_out")),
-                GhosthandCommandParam("strokes", "stroke_array", false, "Custom stroke descriptors")
+                GhosthandCommandParam("type", "string", "body", false, "Named gesture type", listOf("pinch_in", "pinch_out")),
+                GhosthandCommandParam("strokes", "stroke_array", "body", false, "Custom stroke descriptors")
             ),
             delayedAcceptance = "recommended"
         ),
@@ -264,28 +280,32 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/back",
-            description = "Perform system back"
+            description = "Perform system back",
+            responseFields = listOf("performed")
         ),
         GhosthandCommandDescriptor(
             id = "home",
             category = "interaction",
             method = "POST",
             path = "/home",
-            description = "Go to launcher home"
+            description = "Go to launcher home",
+            responseFields = listOf("performed")
         ),
         GhosthandCommandDescriptor(
             id = "recents",
             category = "interaction",
             method = "POST",
             path = "/recents",
-            description = "Open system recents"
+            description = "Open system recents",
+            responseFields = listOf("performed")
         ),
         GhosthandCommandDescriptor(
             id = "screenshot",
             category = "sensing",
             method = "GET",
             path = "/screenshot",
-            description = "Return current screenshot as base64 PNG"
+            description = "Return current screenshot as base64 PNG",
+            responseFields = listOf("image", "width", "height")
         ),
         GhosthandCommandDescriptor(
             id = "notify_read",
@@ -293,9 +313,10 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/notify",
             description = "Read buffered notifications",
+            responseFields = listOf("notifications"),
             params = listOf(
-                GhosthandCommandParam("package", "string", false, "Restrict results to one package"),
-                GhosthandCommandParam("exclude", "csv", false, "Comma-separated packages to exclude")
+                GhosthandCommandParam("package", "string", "query", false, "Restrict results to one package"),
+                GhosthandCommandParam("exclude", "csv", "query", false, "Comma-separated packages to exclude")
             )
         ),
         GhosthandCommandDescriptor(
@@ -304,9 +325,10 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/notify",
             description = "Post a local notification",
+            responseFields = listOf("posted", "notificationId"),
             params = listOf(
-                GhosthandCommandParam("title", "string", false, "Notification title"),
-                GhosthandCommandParam("text", "string", true, "Notification body")
+                GhosthandCommandParam("title", "string", "body", false, "Notification title"),
+                GhosthandCommandParam("text", "string", "body", true, "Notification body")
             )
         ),
         GhosthandCommandDescriptor(
@@ -315,8 +337,9 @@ object GhosthandCommandCatalog {
             method = "DELETE",
             path = "/notify",
             description = "Cancel a posted local notification",
+            responseFields = listOf("canceled"),
             params = listOf(
-                GhosthandCommandParam("notificationId", "int", true, "Notification identifier")
+                GhosthandCommandParam("notificationId", "int", "body", true, "Notification identifier")
             )
         ),
         GhosthandCommandDescriptor(
@@ -325,9 +348,10 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/wait",
             description = "Wait for UI change",
+            responseFields = listOf("changed", "elapsedMs", "snapshotToken", "packageName", "activity"),
             params = listOf(
-                GhosthandCommandParam("timeout", "long", false, "Maximum wait duration in milliseconds"),
-                GhosthandCommandParam("intervalMs", "long", false, "Polling interval in milliseconds")
+                GhosthandCommandParam("timeout", "long", "query", false, "Maximum wait duration in milliseconds"),
+                GhosthandCommandParam("intervalMs", "long", "query", false, "Polling interval in milliseconds")
             ),
             delayedAcceptance = "required",
             exampleRequest = mapOf("timeout" to 3000, "intervalMs" to 200)
@@ -338,10 +362,11 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/wait",
             description = "Wait for a matching tree condition",
+            responseFields = listOf("satisfied", "elapsedMs", "node", "reason"),
             params = listOf(
-                GhosthandCommandParam("condition", "selector", true, "Selector object for the awaited condition"),
-                GhosthandCommandParam("timeoutMs", "long", false, "Maximum wait duration in milliseconds"),
-                GhosthandCommandParam("intervalMs", "long", false, "Polling interval in milliseconds")
+                GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition"),
+                GhosthandCommandParam("timeoutMs", "long", "body", false, "Maximum wait duration in milliseconds"),
+                GhosthandCommandParam("intervalMs", "long", "body", false, "Polling interval in milliseconds")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text", "desc", "id"),
@@ -358,7 +383,8 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "GET",
             path = "/clipboard",
-            description = "Read current clipboard text"
+            description = "Read current clipboard text",
+            responseFields = listOf("text", "reason")
         ),
         GhosthandCommandDescriptor(
             id = "clipboard_write",
@@ -366,8 +392,9 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/clipboard",
             description = "Write clipboard text",
+            responseFields = listOf("written"),
             params = listOf(
-                GhosthandCommandParam("text", "string", true, "Clipboard payload")
+                GhosthandCommandParam("text", "string", "body", true, "Clipboard payload")
             )
         ),
         GhosthandCommandDescriptor(
@@ -376,6 +403,7 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/commands",
             description = "Machine-readable Ghosthand capability catalog for local agents",
+            responseFields = listOf("schemaVersion", "selectorAliases", "selectorStrategies", "commands"),
             exampleResponse = mapOf(
                 "ok" to true,
                 "data" to mapOf(

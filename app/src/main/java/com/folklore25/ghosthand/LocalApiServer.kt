@@ -200,6 +200,7 @@ class LocalApiServer(
                     JSONObject()
                         .put("name", param.name)
                         .put("type", param.type)
+                        .put("location", param.location)
                         .put("required", param.required)
                         .put("description", param.description)
                         .put("allowedValues", org.json.JSONArray(param.allowedValues))
@@ -214,6 +215,7 @@ class LocalApiServer(
                     .put("path", command.path)
                     .put("description", command.description)
                     .put("params", params)
+                    .put("responseFields", org.json.JSONArray(command.responseFields))
                     .put(
                         "selectorSupport",
                         command.selectorSupport?.let { selectorSupport ->

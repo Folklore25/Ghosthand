@@ -28,6 +28,7 @@ class GhosthandCommandCatalogTest {
         val waitCondition = GhosthandCommandCatalog.commands.first { it.id == "wait_condition" }
         val selectorParam = waitCondition.params.first { it.name == "condition" }
         assertEquals("selector", selectorParam.type)
+        assertEquals("body", selectorParam.location)
         assertTrue(selectorParam.required)
 
         val clickRoute = GhosthandCommandCatalog.commands.first { it.id == "click" }
@@ -69,21 +70,43 @@ class GhosthandCommandCatalogTest {
         assertEquals(listOf("text", "desc", "id"), clickRoute.selectorSupport!!.aliases)
         assertEquals("none", clickRoute.focusRequirement)
         assertEquals("none", clickRoute.delayedAcceptance)
+        assertTrue(clickRoute.responseFields.contains("performed"))
+        assertTrue(clickRoute.responseFields.contains("backendUsed"))
         assertNotNull(clickRoute.exampleRequest)
         assertNotNull(clickRoute.exampleResponse)
 
         val inputRoute = GhosthandCommandCatalog.commands.first { it.id == "input" }
         assertEquals("focused_editable", inputRoute.focusRequirement)
         assertEquals("stable", inputRoute.stability)
+        assertTrue(inputRoute.responseFields.contains("previousText"))
+        assertTrue(inputRoute.responseFields.contains("action"))
         assertNotNull(inputRoute.exampleRequest)
         assertFalse(inputRoute.params.isEmpty())
 
         val swipeRoute = GhosthandCommandCatalog.commands.first { it.id == "swipe" }
         assertEquals("recommended", swipeRoute.delayedAcceptance)
+        assertTrue(swipeRoute.responseFields.contains("performed"))
 
         val waitConditionRoute = GhosthandCommandCatalog.commands.first { it.id == "wait_condition" }
         assertEquals("required", waitConditionRoute.delayedAcceptance)
         assertNotNull(waitConditionRoute.selectorSupport)
         assertTrue(waitConditionRoute.selectorSupport!!.strategies.contains("focused"))
+        assertTrue(waitConditionRoute.responseFields.contains("satisfied"))
+        assertTrue(waitConditionRoute.responseFields.contains("reason"))
+    }
+
+    @Test
+    fun paramsExposeMachineReadableLocationsAndCommandsExposeResponseFields() {
+        val screenRoute = GhosthandCommandCatalog.commands.first { it.id == "screen" }
+        assertTrue(screenRoute.params.all { it.location == "query" })
+        assertTrue(screenRoute.responseFields.contains("elements"))
+
+        val clipboardWriteRoute = GhosthandCommandCatalog.commands.first { it.id == "clipboard_write" }
+        assertEquals("body", clipboardWriteRoute.params.single().location)
+        assertTrue(clipboardWriteRoute.responseFields.contains("written"))
+
+        val commandsRoute = GhosthandCommandCatalog.commands.first { it.id == "commands" }
+        assertTrue(commandsRoute.responseFields.contains("schemaVersion"))
+        assertTrue(commandsRoute.responseFields.contains("commands"))
     }
 }

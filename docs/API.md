@@ -373,6 +373,7 @@ It includes:
   * `path`
   * `description`
   * `params`
+  * `responseFields`
   * `selectorSupport`
   * `focusRequirement`
   * `delayedAcceptance`
@@ -386,6 +387,8 @@ It includes:
 
 Field meaning:
 
+* `params`: every param now exposes `location` as `query` or `body`
+* `responseFields`: machine-readable list of top-level keys expected inside the `data` success payload
 * `selectorSupport`: selector aliases and strategy names supported by that command, or `null`
 * `focusRequirement`: one of `none` or `focused_editable`
 * `delayedAcceptance`: one of `none`, `recommended`, or `required`
@@ -422,11 +425,13 @@ Field meaning:
           {
             "name": "text",
             "type": "string",
+            "location": "body",
             "required": false,
             "description": "Exact text selector",
             "allowedValues": []
           }
         ],
+        "responseFields": ["performed", "backendUsed"],
         "selectorSupport": {
           "aliases": ["text", "desc", "id"],
           "strategies": ["text", "resourceId", "contentDesc"]
