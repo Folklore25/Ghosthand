@@ -1,6 +1,8 @@
 package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,7 +19,8 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.1", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.2", GhosthandCommandCatalog.schemaVersion)
+        assertNotNull(commandsRoute.exampleResponse)
     }
 
     @Test
@@ -57,5 +60,30 @@ class GhosthandCommandCatalogTest {
         assertEquals("resourceId", GhosthandCommandCatalog.selectorAliases["id"])
         assertTrue(GhosthandCommandCatalog.selectorStrategies.contains("focused"))
         assertTrue(GhosthandCommandCatalog.selectorStrategies.contains("textContains"))
+    }
+
+    @Test
+    fun interactiveCommandsExposeFocusSelectorAndAcceptanceHints() {
+        val clickRoute = GhosthandCommandCatalog.commands.first { it.id == "click" }
+        assertNotNull(clickRoute.selectorSupport)
+        assertEquals(listOf("text", "desc", "id"), clickRoute.selectorSupport!!.aliases)
+        assertEquals("none", clickRoute.focusRequirement)
+        assertEquals("none", clickRoute.delayedAcceptance)
+        assertNotNull(clickRoute.exampleRequest)
+        assertNotNull(clickRoute.exampleResponse)
+
+        val inputRoute = GhosthandCommandCatalog.commands.first { it.id == "input" }
+        assertEquals("focused_editable", inputRoute.focusRequirement)
+        assertEquals("stable", inputRoute.stability)
+        assertNotNull(inputRoute.exampleRequest)
+        assertFalse(inputRoute.params.isEmpty())
+
+        val swipeRoute = GhosthandCommandCatalog.commands.first { it.id == "swipe" }
+        assertEquals("recommended", swipeRoute.delayedAcceptance)
+
+        val waitConditionRoute = GhosthandCommandCatalog.commands.first { it.id == "wait_condition" }
+        assertEquals("required", waitConditionRoute.delayedAcceptance)
+        assertNotNull(waitConditionRoute.selectorSupport)
+        assertTrue(waitConditionRoute.selectorSupport!!.strategies.contains("focused"))
     }
 }

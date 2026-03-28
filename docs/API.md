@@ -235,8 +235,10 @@ Package name fields must use full Android package names:
 
 ### Health / State
 
+* `GET /ping`
 * `GET /health`
 * `GET /state`
+* `GET /commands`
 
 ### Device
 
@@ -247,6 +249,7 @@ Package name fields must use full Android package names:
 ### Read / Inspect (Stage 1)
 
 * `GET /screen`
+* `GET /screenshot`
 * `GET /info`
 * `GET /focused`
 
@@ -272,10 +275,12 @@ Package name fields must use full Android package names:
 
 ### Sensing / Utility
 
-* `POST /screenshot`
+* `GET /screenshot`
 * `GET /clipboard`
 * `POST /clipboard`
+* `GET /wait`
 * `POST /wait`
+* `GET /notify`
 * `POST /notify`
 * `DELETE /notify`
 
@@ -324,6 +329,125 @@ Fast readiness probe.
 
 This is a shallow health check.
 It should be cheap and safe to poll frequently.
+
+---
+
+## 7.0 `GET /ping`
+
+### Purpose
+
+Minimal liveness probe for local agents.
+
+### Success Response
+
+```json
+{
+  "ok": true,
+  "data": {
+    "service": "ghosthand",
+    "version": "1.0 (1)"
+  }
+}
+```
+
+---
+
+## 7.0b `GET /commands`
+
+### Purpose
+
+Return the machine-readable Ghosthand capability catalog for local agents.
+
+### Notes
+
+This should be treated as the runtime contract source for local mobile agents.
+It includes:
+
+* `schemaVersion`
+* `selectorAliases`
+* `selectorStrategies`
+* per-command:
+  * `id`
+  * `category`
+  * `method`
+  * `path`
+  * `description`
+  * `params`
+  * `selectorSupport`
+  * `focusRequirement`
+  * `delayedAcceptance`
+  * `stability`
+  * `exampleRequest`
+  * `exampleResponse`
+
+### Contract Notes
+
+`GET /commands` is the canonical self-description endpoint for on-device agents.
+
+Field meaning:
+
+* `selectorSupport`: selector aliases and strategy names supported by that command, or `null`
+* `focusRequirement`: one of `none` or `focused_editable`
+* `delayedAcceptance`: one of `none`, `recommended`, or `required`
+* `stability`: current contract stability marker, currently `stable`
+
+### Example Response
+
+```json
+{
+  "ok": true,
+  "data": {
+    "schemaVersion": "1.2",
+    "selectorAliases": {
+      "text": "text",
+      "desc": "contentDesc",
+      "id": "resourceId"
+    },
+    "selectorStrategies": [
+      "text",
+      "textContains",
+      "resourceId",
+      "contentDesc",
+      "contentDescContains",
+      "focused"
+    ],
+    "commands": [
+      {
+        "id": "click",
+        "category": "interaction",
+        "method": "POST",
+        "path": "/click",
+        "description": "Click by nodeId or selector",
+        "params": [
+          {
+            "name": "text",
+            "type": "string",
+            "required": false,
+            "description": "Exact text selector",
+            "allowedValues": []
+          }
+        ],
+        "selectorSupport": {
+          "aliases": ["text", "desc", "id"],
+          "strategies": ["text", "resourceId", "contentDesc"]
+        },
+        "focusRequirement": "none",
+        "delayedAcceptance": "none",
+        "stability": "stable",
+        "exampleRequest": {
+          "text": "Settings"
+        },
+        "exampleResponse": {
+          "ok": true,
+          "data": {
+            "performed": true
+          }
+        }
+      }
+    ]
+  }
+}
+```
 
 ---
 
@@ -979,22 +1103,11 @@ Use it when the caller already knows the failure class.
 
 ---
 
-## 7.15 `POST /screenshot`
+## 7.15 `GET /screenshot`
 
 ### Purpose
 
-Capture the full device screen through MediaProjection after the user grants screenshot permission in the Ghosthand app.
-
-### Request Body
-
-```json
-{
-  "width": 1080,
-  "height": 2400
-}
-```
-
-Both fields are optional. When omitted or `0`, the provider uses the device's current screen size.
+Capture the current screenshot as base64 PNG.
 
 ### Success Response
 
@@ -1002,27 +1115,16 @@ Both fields are optional. When omitted or `0`, the provider uses the device's cu
 {
   "ok": true,
   "data": {
-    "format": "png",
+    "image": "data:image/png;base64,...",
     "width": 1080,
-    "height": 2400,
-    "data": "<base64-encoded PNG>"
-  },
-  "meta": {
-    "requestId": "req_screenshot_1",
-    "timestamp": "2026-03-28T00:00:00Z"
+    "height": 2400
   }
 }
 ```
 
-### Error Codes
-
-* `400` / `BAD_REQUEST` — request body is not valid JSON
-* `503` / `PROJECTION_NOT_GRANTED` — MediaProjection permission has not been granted yet
-* `503` / `SCREENSHOT_UNAVAILABLE` — capture failed after permission was granted
-
 ### Notes
 
-This is the full-screen capture path. Users must tap the in-app screenshot-permission button once before the endpoint can succeed.
+Current preferred baseline is accessibility screenshot capability. MediaProjection and root are fallback/compatibility paths, not the normal expected baseline.
 
 ---
 
@@ -1069,7 +1171,7 @@ Capture the current window as a PNG image, returned as base64-encoded JSON.
 
 ### Notes
 
-`/screen` is the lightweight accessibility-core capture path. Use `/screenshot` when full-screen MediaProjection capture is required.
+`/screen` is the element-listing route. It returns current UI elements with action-ready geometry, not image capture.
 
 ---
 
@@ -1541,6 +1643,34 @@ Supported strategies match `/find`, including `focused`.
 
 ---
 
+## 7.30b `GET /wait`
+
+### Purpose
+
+Wait for a foreground or tree change event and return when the current UI state changes.
+
+### Query Parameters
+
+* `timeout` — optional timeout in ms
+* `intervalMs` — optional polling interval in ms
+
+### Success Response
+
+```json
+{
+  "ok": true,
+  "data": {
+    "changed": true,
+    "elapsedMs": 1024,
+    "snapshotToken": "abcd1234",
+    "packageName": "com.android.settings",
+    "activity": "com.android.settings.MiuiSettings"
+  }
+}
+```
+
+---
+
 ## 7.31 `POST /notify`
 
 ### Purpose
@@ -1604,6 +1734,39 @@ Error codes:
 
 * `400` / `INVALID_ARGUMENT` — `notificationId` missing
 * `422` / `NOTIFICATION_CANCEL_FAILED` — cancel failed
+
+---
+
+## 7.31b `GET /notify`
+
+### Purpose
+
+Read the buffered notification list for local agents.
+
+### Query Parameters
+
+* `package` — optional include filter
+* `exclude` — optional comma-separated package list to suppress noise
+
+### Success Response
+
+```json
+{
+  "ok": true,
+  "data": {
+    "notifications": [
+      {
+        "package": "com.folklore25.ghosthand",
+        "title": "Ghosthand",
+        "text": "notify test",
+        "tag": "ghosthand_notify",
+        "id": 1001,
+        "postedAt": "2026-03-28T10:00:00Z"
+      }
+    ]
+  }
+}
+```
 
 ---
 

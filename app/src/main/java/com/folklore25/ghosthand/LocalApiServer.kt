@@ -214,6 +214,19 @@ class LocalApiServer(
                     .put("path", command.path)
                     .put("description", command.description)
                     .put("params", params)
+                    .put(
+                        "selectorSupport",
+                        command.selectorSupport?.let { selectorSupport ->
+                            JSONObject()
+                                .put("aliases", org.json.JSONArray(selectorSupport.aliases))
+                                .put("strategies", org.json.JSONArray(selectorSupport.strategies))
+                        } ?: JSONObject.NULL
+                    )
+                    .put("focusRequirement", command.focusRequirement)
+                    .put("delayedAcceptance", command.delayedAcceptance)
+                    .put("stability", command.stability)
+                    .put("exampleRequest", command.exampleRequest?.let(::toJsonValue) ?: JSONObject.NULL)
+                    .put("exampleResponse", command.exampleResponse?.let(::toJsonValue) ?: JSONObject.NULL)
             )
         }
 
@@ -251,6 +264,30 @@ class LocalApiServer(
             statusCode = 200,
             body = successEnvelope(stateCoordinator.createStatePayload())
         )
+    }
+
+    private fun toJsonValue(value: Any?): Any {
+        return when (value) {
+            null -> JSONObject.NULL
+            is Map<*, *> -> JSONObject().apply {
+                value.forEach { (key, nestedValue) ->
+                    if (key != null) {
+                        put(key.toString(), toJsonValue(nestedValue))
+                    }
+                }
+            }
+            is Iterable<*> -> org.json.JSONArray().apply {
+                value.forEach { item ->
+                    put(toJsonValue(item))
+                }
+            }
+            is Array<*> -> org.json.JSONArray().apply {
+                value.forEach { item ->
+                    put(toJsonValue(item))
+                }
+            }
+            else -> value
+        }
     }
 
     private fun buildDeviceResponse(): String {

@@ -6,7 +6,13 @@ data class GhosthandCommandDescriptor(
     val method: String,
     val path: String,
     val description: String,
-    val params: List<GhosthandCommandParam> = emptyList()
+    val params: List<GhosthandCommandParam> = emptyList(),
+    val selectorSupport: GhosthandSelectorSupport? = null,
+    val focusRequirement: String = "none",
+    val delayedAcceptance: String = "none",
+    val stability: String = "stable",
+    val exampleRequest: Map<String, Any?>? = null,
+    val exampleResponse: Map<String, Any?>? = null
 )
 
 data class GhosthandCommandParam(
@@ -17,8 +23,13 @@ data class GhosthandCommandParam(
     val allowedValues: List<String> = emptyList()
 )
 
+data class GhosthandSelectorSupport(
+    val aliases: List<String>,
+    val strategies: List<String>
+)
+
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.1"
+    const val schemaVersion = "1.2"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -41,7 +52,14 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/ping",
-            description = "Health check with current Ghosthand version"
+            description = "Health check with current Ghosthand version",
+            exampleResponse = mapOf(
+                "ok" to true,
+                "data" to mapOf(
+                    "service" to "ghosthand",
+                    "version" to "1.0 (1)"
+                )
+            )
         ),
         GhosthandCommandDescriptor(
             id = "screen",
@@ -78,7 +96,17 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/focused",
-            description = "Currently focused accessibility node"
+            description = "Currently focused accessibility node",
+            exampleResponse = mapOf(
+                "ok" to true,
+                "data" to mapOf(
+                    "available" to true,
+                    "node" to mapOf(
+                        "resourceId" to "android:id/input",
+                        "focused" to true
+                    )
+                )
+            )
         ),
         GhosthandCommandDescriptor(
             id = "tap",
@@ -89,7 +117,8 @@ object GhosthandCommandCatalog {
             params = listOf(
                 GhosthandCommandParam("x", "int", true, "Screen X coordinate"),
                 GhosthandCommandParam("y", "int", true, "Screen Y coordinate")
-            )
+            ),
+            exampleRequest = mapOf("x" to 540, "y" to 1200)
         ),
         GhosthandCommandDescriptor(
             id = "click",
@@ -103,6 +132,15 @@ object GhosthandCommandCatalog {
                 GhosthandCommandParam("desc", "string", false, "Exact content description selector"),
                 GhosthandCommandParam("id", "string", false, "Exact resource id selector"),
                 GhosthandCommandParam("clickable", "boolean", false, "Require a clickable resolved target")
+            ),
+            selectorSupport = GhosthandSelectorSupport(
+                aliases = listOf("text", "desc", "id"),
+                strategies = listOf("text", "resourceId", "contentDesc")
+            ),
+            exampleRequest = mapOf("text" to "Settings"),
+            exampleResponse = mapOf(
+                "ok" to true,
+                "data" to mapOf("performed" to true)
             )
         ),
         GhosthandCommandDescriptor(
@@ -119,6 +157,19 @@ object GhosthandCommandCatalog {
                 GhosthandCommandParam("query", "string", false, "Explicit strategy query"),
                 GhosthandCommandParam("clickable", "boolean", false, "Resolve up to a clickable target"),
                 GhosthandCommandParam("index", "int", false, "Match index to return")
+            ),
+            selectorSupport = GhosthandSelectorSupport(
+                aliases = listOf("text", "desc", "id"),
+                strategies = selectorStrategies
+            ),
+            exampleRequest = mapOf("text" to "Settings", "clickable" to true),
+            exampleResponse = mapOf(
+                "ok" to true,
+                "data" to mapOf(
+                    "matchCount" to 1,
+                    "centerX" to 540,
+                    "centerY" to 640
+                )
             )
         ),
         GhosthandCommandDescriptor(
@@ -131,7 +182,9 @@ object GhosthandCommandCatalog {
                 GhosthandCommandParam("text", "string", false, "Text payload"),
                 GhosthandCommandParam("append", "boolean", false, "Append to existing field content"),
                 GhosthandCommandParam("clear", "boolean", false, "Clear the field before applying text")
-            )
+            ),
+            focusRequirement = "focused_editable",
+            exampleRequest = mapOf("text" to "wifi", "clear" to true)
         ),
         GhosthandCommandDescriptor(
             id = "set_text",
@@ -142,7 +195,8 @@ object GhosthandCommandCatalog {
             params = listOf(
                 GhosthandCommandParam("nodeId", "string", true, "Snapshot-scoped node identifier"),
                 GhosthandCommandParam("text", "string", true, "Replacement text")
-            )
+            ),
+            exampleRequest = mapOf("nodeId" to "snap:abc123:path:0.1", "text" to "wifi")
         ),
         GhosthandCommandDescriptor(
             id = "scroll",
@@ -155,7 +209,13 @@ object GhosthandCommandCatalog {
                 GhosthandCommandParam("target", "string", false, "Text target used to locate a scroll container"),
                 GhosthandCommandParam("direction", "string", true, "Scroll direction", listOf("up", "down", "left", "right")),
                 GhosthandCommandParam("count", "int", false, "Repeat count")
-            )
+            ),
+            selectorSupport = GhosthandSelectorSupport(
+                aliases = listOf("text"),
+                strategies = listOf("text")
+            ),
+            delayedAcceptance = "recommended",
+            exampleRequest = mapOf("direction" to "down", "count" to 1)
         ),
         GhosthandCommandDescriptor(
             id = "swipe",
@@ -167,6 +227,12 @@ object GhosthandCommandCatalog {
                 GhosthandCommandParam("from", "point", true, "Start coordinate object"),
                 GhosthandCommandParam("to", "point", true, "End coordinate object"),
                 GhosthandCommandParam("durationMs", "long", true, "Swipe duration in milliseconds")
+            ),
+            delayedAcceptance = "recommended",
+            exampleRequest = mapOf(
+                "from" to mapOf("x" to 540, "y" to 1700),
+                "to" to mapOf("x" to 540, "y" to 500),
+                "durationMs" to 300
             )
         ),
         GhosthandCommandDescriptor(
@@ -190,7 +256,8 @@ object GhosthandCommandCatalog {
             params = listOf(
                 GhosthandCommandParam("type", "string", false, "Named gesture type", listOf("pinch_in", "pinch_out")),
                 GhosthandCommandParam("strokes", "stroke_array", false, "Custom stroke descriptors")
-            )
+            ),
+            delayedAcceptance = "recommended"
         ),
         GhosthandCommandDescriptor(
             id = "back",
@@ -261,7 +328,9 @@ object GhosthandCommandCatalog {
             params = listOf(
                 GhosthandCommandParam("timeout", "long", false, "Maximum wait duration in milliseconds"),
                 GhosthandCommandParam("intervalMs", "long", false, "Polling interval in milliseconds")
-            )
+            ),
+            delayedAcceptance = "required",
+            exampleRequest = mapOf("timeout" to 3000, "intervalMs" to 200)
         ),
         GhosthandCommandDescriptor(
             id = "wait_condition",
@@ -273,6 +342,15 @@ object GhosthandCommandCatalog {
                 GhosthandCommandParam("condition", "selector", true, "Selector object for the awaited condition"),
                 GhosthandCommandParam("timeoutMs", "long", false, "Maximum wait duration in milliseconds"),
                 GhosthandCommandParam("intervalMs", "long", false, "Polling interval in milliseconds")
+            ),
+            selectorSupport = GhosthandSelectorSupport(
+                aliases = listOf("text", "desc", "id"),
+                strategies = selectorStrategies
+            ),
+            delayedAcceptance = "required",
+            exampleRequest = mapOf(
+                "condition" to mapOf("text" to "Settings"),
+                "timeoutMs" to 3000
             )
         ),
         GhosthandCommandDescriptor(
@@ -297,7 +375,20 @@ object GhosthandCommandCatalog {
             category = "introspection",
             method = "GET",
             path = "/commands",
-            description = "Machine-readable Ghosthand capability catalog for local agents"
+            description = "Machine-readable Ghosthand capability catalog for local agents",
+            exampleResponse = mapOf(
+                "ok" to true,
+                "data" to mapOf(
+                    "schemaVersion" to schemaVersion,
+                    "commands" to listOf(
+                        mapOf(
+                            "id" to "click",
+                            "method" to "POST",
+                            "path" to "/click"
+                        )
+                    )
+                )
+            )
         )
     )
 }
