@@ -1,0 +1,68 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-28T13:26:49.853Z",
+  "phase": "10",
+  "phase_name": "Phase 10 agent integration and scenario hardening",
+  "phase_dir": ".planning/phases/10-agent-integration-scenario-hardening",
+  "plan": 1,
+  "task": 2,
+  "total_tasks": 3,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Agent contract usability",
+      "status": "done",
+      "commit": "14931fc"
+    },
+    {
+      "id": 2,
+      "name": "Scenario hardening",
+      "status": "in_progress",
+      "progress": "Scenario 01 (`scenario-settings-search-back`) and the real Scenario 02 (`scenario-settings-home-screenshot`) are implemented in scripts/ghosthand-verify-runtime.sh and both passed on-device. The runtime verification workflow doc was updated to reflect Scenario 01 and Scenario 02, but those changes are not committed yet."
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 3,
+      "name": "On-device operator integration",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [
+    {
+      "description": "No new runtime blocker is open from Scenario 01 or Scenario 02; current remaining work is Phase 10 scenario/operator hardening only",
+      "type": "technical",
+      "workaround": "Continue from the current accepted Phase 09 baseline and the now-proven scenario runner layer."
+    },
+    {
+      "description": "On this ROM, runtime restore may still require the app-owned runtime start control before /ping is available",
+      "type": "technical",
+      "workaround": "Use the restore-runtime flow already encoded in scripts/ghosthand-verify-runtime.sh."
+    }
+  ],
+  "human_actions_pending": [],
+  "decisions": [
+    {
+      "decision": "Phase 09 stays frozen and accepted unless a real regression appears",
+      "rationale": "Phase 10 work should harden agent usability and scenarios, not reopen endpoint-level polish.",
+      "phase": "10"
+    },
+    {
+      "decision": "Use Settings-based low-variance scenarios first",
+      "rationale": "System surfaces are repeatable and reduce scenario noise while the scenario layer is being built.",
+      "phase": "10"
+    },
+    {
+      "decision": "Scenario 02 screenshot confirmation uses waited-for launcher transition plus materially different screenshot response size",
+      "rationale": "The route already returns PNG data reliably, and response-size difference is the stable low-risk visual confirmation rule on this device.",
+      "phase": "10"
+    }
+  ],
+  "uncommitted_files": [
+    "docs/Runtime-Verification-Workflow.md",
+    "scripts/ghosthand-verify-runtime.sh"
+  ],
+  "next_action": "Resume by reviewing the uncommitted Scenario 02 runner and workflow doc changes, then continue Phase 10 Stage 2 with Scenario 03 (`notification read -> navigation`) only, keeping the scope bounded and preserving the accepted Phase 09 baseline.",
+  "context_notes": "Phase 10 has started. Stage 1 is done through the /commands contract hardening commit. Stage 2 is active: Scenario 01 passed on-device, and the real Scenario 02 was corrected, implemented, and passed on-device using the chain Settings -> baseline screenshot -> /home + /wait -> home screenshot with screenshot-confirmed evidence. The repo is clean except for the runner/doc updates for these scenario additions."
+}
