@@ -17,6 +17,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
+        assertEquals("1.1", GhosthandCommandCatalog.schemaVersion)
     }
 
     @Test
@@ -47,5 +48,14 @@ class GhosthandCommandCatalogTest {
                 policy!!.allowedMethods.contains(command.method)
             )
         }
+    }
+
+    @Test
+    fun selectorMetadataIsExplicitForAgents() {
+        assertEquals("text", GhosthandCommandCatalog.selectorAliases["text"])
+        assertEquals("contentDesc", GhosthandCommandCatalog.selectorAliases["desc"])
+        assertEquals("resourceId", GhosthandCommandCatalog.selectorAliases["id"])
+        assertTrue(GhosthandCommandCatalog.selectorStrategies.contains("focused"))
+        assertTrue(GhosthandCommandCatalog.selectorStrategies.contains("textContains"))
     }
 }

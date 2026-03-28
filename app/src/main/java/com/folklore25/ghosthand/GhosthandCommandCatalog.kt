@@ -18,6 +18,23 @@ data class GhosthandCommandParam(
 )
 
 object GhosthandCommandCatalog {
+    const val schemaVersion = "1.1"
+
+    val selectorAliases: Map<String, String> = linkedMapOf(
+        "text" to "text",
+        "desc" to "contentDesc",
+        "id" to "resourceId"
+    )
+
+    val selectorStrategies: List<String> = listOf(
+        "text",
+        "textContains",
+        "resourceId",
+        "contentDesc",
+        "contentDescContains",
+        "focused"
+    )
+
     val commands: List<GhosthandCommandDescriptor> = listOf(
         GhosthandCommandDescriptor(
             id = "ping",

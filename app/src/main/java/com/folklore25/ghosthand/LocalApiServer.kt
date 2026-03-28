@@ -219,7 +219,23 @@ class LocalApiServer(
 
         return buildJsonResponse(
             statusCode = 200,
-            body = successEnvelope(JSONObject().put("commands", commands))
+            body = successEnvelope(
+                JSONObject()
+                    .put("schemaVersion", GhosthandCommandCatalog.schemaVersion)
+                    .put(
+                        "selectorAliases",
+                        JSONObject().apply {
+                            GhosthandCommandCatalog.selectorAliases.forEach { (alias, strategy) ->
+                                put(alias, strategy)
+                            }
+                        }
+                    )
+                    .put(
+                        "selectorStrategies",
+                        org.json.JSONArray(GhosthandCommandCatalog.selectorStrategies)
+                    )
+                    .put("commands", commands)
+            )
         )
     }
 
