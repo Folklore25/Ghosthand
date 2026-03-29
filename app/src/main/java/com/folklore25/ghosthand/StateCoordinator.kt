@@ -207,7 +207,7 @@ class StateCoordinator(
         clickableOnly: Boolean = false,
         index: Int = 0
     ): JSONObject {
-        val result = accessibilityNodeFinder.findNodes(
+        val result = findResult(
             snapshot = snapshot,
             strategy = strategy,
             query = query,
@@ -216,6 +216,22 @@ class StateCoordinator(
         )
 
         return GhosthandApiPayloads.findPayload(result)
+    }
+
+    fun findResult(
+        snapshot: AccessibilityTreeSnapshot,
+        strategy: String,
+        query: String?,
+        clickableOnly: Boolean = false,
+        index: Int = 0
+    ): FindNodeResult {
+        return accessibilityNodeFinder.findNodes(
+            snapshot = snapshot,
+            strategy = strategy,
+            query = query,
+            clickableOnly = clickableOnly,
+            index = index
+        )
     }
 
     fun tapPoint(x: Int, y: Int): TapAttemptResult {

@@ -202,6 +202,17 @@ object GhosthandApiPayloads {
             "index" to result.selectedIndex
         )
 
+        result.missHint?.let { hint ->
+            payload["searchedSurface"] = hint.searchedSurface
+            payload["matchSemantics"] = hint.matchSemantics
+            if (hint.suggestedAlternateSurfaces.isNotEmpty()) {
+                payload["suggestedAlternateSurfaces"] = hint.suggestedAlternateSurfaces
+            }
+            if (hint.suggestedAlternateStrategies.isNotEmpty()) {
+                payload["suggestedAlternateStrategies"] = hint.suggestedAlternateStrategies
+            }
+        }
+
         val node = result.node
         if (node == null) {
             payload["node"] = null

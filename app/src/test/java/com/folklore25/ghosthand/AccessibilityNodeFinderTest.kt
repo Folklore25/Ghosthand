@@ -117,6 +117,75 @@ class AccessibilityNodeFinderTest {
         assertEquals(1, result.clickResolution?.ancestorDepth)
     }
 
+    @Test
+    fun exactTextMissHintsThatVisiblePrefixMayNeedContains() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", text = "Vibe Coding... more", clickable = false)
+            )
+        )
+
+        val result = finder.findNodes(
+            snapshot = snapshot,
+            strategy = "text",
+            query = "Vibe Coding",
+            clickableOnly = false,
+            index = 0
+        )
+
+        assertFalse(result.found)
+        assertEquals("text", result.missHint?.searchedSurface)
+        assertEquals("exact", result.missHint?.matchSemantics)
+        assertEquals("visible_text_is_part_of_a_longer_text_block", result.missHint?.likelyMissReason)
+        assertTrue(result.missHint?.suggestedAlternateStrategies?.contains("textContains") == true)
+    }
+
+    @Test
+    fun exactTextMissHintsThatLabelMayLiveInContentDescription() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(
+                node("p0@tsnap", clickable = false),
+                FlatAccessibilityNode(
+                    nodeId = "p0.0@tsnap",
+                    text = null,
+                    contentDesc = "Settings",
+                    resourceId = null,
+                    className = "android.widget.ImageView",
+                    clickable = false,
+                    editable = false,
+                    enabled = true,
+                    focused = false,
+                    scrollable = false,
+                    centerX = 0,
+                    centerY = 0,
+                    bounds = NodeBounds(0, 0, 10, 10)
+                )
+            )
+        )
+
+        val result = finder.findNodes(
+            snapshot = snapshot,
+            strategy = "text",
+            query = "Settings",
+            clickableOnly = false,
+            index = 0
+        )
+
+        assertFalse(result.found)
+        assertEquals("meaningful_label_may_live_in_content_description", result.missHint?.likelyMissReason)
+        assertTrue(result.missHint?.suggestedAlternateSurfaces?.contains("contentDesc") == true)
+        assertTrue(result.missHint?.suggestedAlternateStrategies?.contains("contentDescContains") == true)
+    }
+
     private fun node(
         nodeId: String,
         text: String? = null,

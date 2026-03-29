@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.17"
+    const val schemaVersion = "1.18"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -211,8 +211,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/find",
-            description = "Find by first-class selector (text, contentDesc, resourceId) and return action-ready geometry with prompt response completion; successful responses may include compact disclosure when selector-surface assumptions are easy to misread",
-            responseFields = listOf("found", "matchCount", "index", "node", "text", "desc", "id", "bounds", "centerX", "centerY", "clickable", "editable", "scrollable", "disclosure"),
+            description = "Find by first-class selector surface (text, contentDesc, resourceId); exact strategies stay exact, contains strategies stay explicit, and miss responses may include bounded selector-surface hints plus compact disclosure when exact misses are easy to misread",
+            responseFields = listOf("found", "matchCount", "index", "node", "text", "desc", "id", "bounds", "centerX", "centerY", "clickable", "editable", "scrollable", "searchedSurface", "matchSemantics", "suggestedAlternateSurfaces", "suggestedAlternateStrategies", "disclosure"),
             transportContract = "prompt_completion",
             operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector", "index_disambiguation"),
             referenceStability = "snapshot_ephemeral",

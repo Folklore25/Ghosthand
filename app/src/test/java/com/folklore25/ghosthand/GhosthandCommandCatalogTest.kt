@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.17", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.18", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -191,9 +191,15 @@ class GhosthandCommandCatalogTest {
         assertTrue(findRoute.operatorUses.contains("content_desc_selector"))
         assertTrue(findRoute.operatorUses.contains("index_disambiguation"))
         assertTrue(findRoute.responseFields.contains("disclosure"))
+        assertTrue(findRoute.responseFields.contains("searchedSurface"))
+        assertTrue(findRoute.responseFields.contains("matchSemantics"))
+        assertTrue(findRoute.responseFields.contains("suggestedAlternateSurfaces"))
+        assertTrue(findRoute.responseFields.contains("suggestedAlternateStrategies"))
         assertEquals("snapshot_ephemeral", findRoute.referenceStability)
         assertEquals("same_snapshot_only", findRoute.snapshotScope)
         assertEquals("selector_reresolution", findRoute.recommendedInteractionModel)
+        assertTrue(findRoute.description.contains("exact strategies stay exact"))
+        assertTrue(findRoute.description.contains("contains strategies stay explicit"))
 
         val homeRoute = GhosthandCommandCatalog.commands.first { it.id == "home" }
         assertEquals("prompt_completion", homeRoute.transportContract)

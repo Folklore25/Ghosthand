@@ -55,12 +55,42 @@ class LocalApiServerDisclosureTest {
         val disclosure = buildFindDisclosure(
             strategy = "text",
             clickableOnly = true,
-            found = false
+            result = FindNodeResult(
+                found = false,
+                node = null,
+                missHint = FindMissHint(
+                    searchedSurface = "text",
+                    matchSemantics = "exact"
+                )
+            )
         )
 
         assertNotNull(disclosure)
         assertEquals("discoverability", disclosure!!.kind)
         assertTrue(disclosure.summary.contains("clickable=true"))
+    }
+
+    @Test
+    fun findDisclosureExplainsExactTextMissOnLongerTextBlock() {
+        val disclosure = buildFindDisclosure(
+            strategy = "text",
+            clickableOnly = false,
+            result = FindNodeResult(
+                found = false,
+                node = null,
+                missHint = FindMissHint(
+                    searchedSurface = "text",
+                    matchSemantics = "exact",
+                    likelyMissReason = "visible_text_is_part_of_a_longer_text_block",
+                    suggestedAlternateStrategies = listOf("textContains")
+                )
+            )
+        )
+
+        assertNotNull(disclosure)
+        assertTrue(disclosure!!.summary.contains("exact text"))
+        assertEquals("/screen-visible text always matches exact /find text.", disclosure.assumptionToCorrect)
+        assertTrue(disclosure.nextBestActions.first().contains("textContains"))
     }
 
     @Test

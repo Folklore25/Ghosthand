@@ -302,10 +302,23 @@ class GhosthandApiPayloadsTest {
     @Test
     fun findPayloadUsesNullNodeWhenNoMatchExists() {
         val payload = GhosthandApiPayloads.findFields(
-            FindNodeResult(found = false, node = null, matches = emptyList(), selectedIndex = 0)
+            FindNodeResult(
+                found = false,
+                node = null,
+                matches = emptyList(),
+                selectedIndex = 0,
+                missHint = FindMissHint(
+                    searchedSurface = "text",
+                    matchSemantics = "exact",
+                    suggestedAlternateStrategies = listOf("textContains")
+                )
+            )
         )
         assertEquals(null, payload["node"])
         assertEquals(0, payload["matchCount"])
+        assertEquals("text", payload["searchedSurface"])
+        assertEquals("exact", payload["matchSemantics"])
+        assertEquals(listOf("textContains"), payload["suggestedAlternateStrategies"])
     }
 
     @Test

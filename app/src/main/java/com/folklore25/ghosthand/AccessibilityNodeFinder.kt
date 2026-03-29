@@ -59,7 +59,16 @@ class AccessibilityNodeFinder {
             found = matchedNode != null,
             node = matchedNode,
             matches = effectiveMatches,
-            selectedIndex = selectedIndex
+            selectedIndex = selectedIndex,
+            missHint = if (matchedNode == null) {
+                buildFindMissHint(
+                    snapshot = snapshot,
+                    strategy = normalizedStrategy,
+                    query = normalizedQuery
+                )
+            } else {
+                null
+            }
         )
     }
 
@@ -142,6 +151,15 @@ class AccessibilityNodeFinder {
                         resolutionKind = "matched_node",
                         ancestorDepth = null
                     )
+                },
+                missHint = if (matchedNode == null) {
+                    buildFindMissHint(
+                        snapshot = snapshot,
+                        strategy = normalizedStrategy,
+                        query = normalizedQuery
+                    )
+                } else {
+                    null
                 }
             )
         }
@@ -175,8 +193,161 @@ class AccessibilityNodeFinder {
                     resolutionKind = match.resolutionKind,
                     ancestorDepth = match.ancestorDepth
                 )
+            },
+            missHint = if (selectedMatch == null) {
+                buildFindMissHint(
+                    snapshot = snapshot,
+                    strategy = normalizedStrategy,
+                    query = normalizedQuery
+                )
+            } else {
+                null
             }
         )
+    }
+
+    private fun buildFindMissHint(
+        snapshot: AccessibilityTreeSnapshot,
+        strategy: String,
+        query: String?
+    ): FindMissHint? {
+        if (query.isNullOrBlank()) {
+            return null
+        }
+
+        val searchedSurface = searchedSurfaceForStrategy(strategy)
+        if (searchedSurface == "focused") {
+            return null
+        }
+
+        val matchSemantics = matchSemanticsForStrategy(strategy)
+        val hint = when (strategy) {
+            "text" -> when {
+                snapshot.nodes.any { it.text?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "visible_text_is_part_of_a_longer_text_block",
+                        suggestedAlternateStrategies = listOf("textContains")
+                    )
+                snapshot.nodes.any { it.contentDesc?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "meaningful_label_may_live_in_content_description",
+                        suggestedAlternateSurfaces = listOf("contentDesc"),
+                        suggestedAlternateStrategies = listOf("contentDescContains")
+                    )
+                snapshot.nodes.any { it.resourceId?.contains(query, ignoreCase = true) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "resource_id_may_be_easier_to_target_than_visible_text",
+                        suggestedAlternateSurfaces = listOf("resourceId")
+                    )
+                else ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics
+                    )
+            }
+            "textContains" -> when {
+                snapshot.nodes.any { it.contentDesc?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "meaningful_label_may_live_in_content_description",
+                        suggestedAlternateSurfaces = listOf("contentDesc"),
+                        suggestedAlternateStrategies = listOf("contentDescContains")
+                    )
+                else ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics
+                    )
+            }
+            "contentDesc" -> when {
+                snapshot.nodes.any { it.contentDesc?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "visible_desc_is_part_of_a_longer_content_description",
+                        suggestedAlternateStrategies = listOf("contentDescContains")
+                    )
+                snapshot.nodes.any { it.text?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "meaningful_label_may_live_in_text",
+                        suggestedAlternateSurfaces = listOf("text"),
+                        suggestedAlternateStrategies = listOf("textContains")
+                    )
+                else ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics
+                    )
+            }
+            "contentDescContains" -> when {
+                snapshot.nodes.any { it.text?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "meaningful_label_may_live_in_text",
+                        suggestedAlternateSurfaces = listOf("text"),
+                        suggestedAlternateStrategies = listOf("textContains")
+                    )
+                else ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics
+                    )
+            }
+            "resourceId" -> when {
+                snapshot.nodes.any { it.text?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "visible_label_is_not_the_same_as_a_resource_id",
+                        suggestedAlternateSurfaces = listOf("text"),
+                        suggestedAlternateStrategies = listOf("textContains")
+                    )
+                snapshot.nodes.any { it.contentDesc?.contains(query) == true } ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics,
+                        likelyMissReason = "visible_label_is_not_the_same_as_a_resource_id",
+                        suggestedAlternateSurfaces = listOf("contentDesc"),
+                        suggestedAlternateStrategies = listOf("contentDescContains")
+                    )
+                else ->
+                    FindMissHint(
+                        searchedSurface = searchedSurface,
+                        matchSemantics = matchSemantics
+                    )
+            }
+            else -> null
+        }
+
+        return hint
+    }
+
+    private fun searchedSurfaceForStrategy(strategy: String): String {
+        return when (strategy) {
+            "text", "textContains" -> "text"
+            "contentDesc", "contentDescContains" -> "contentDesc"
+            "resourceId" -> "resourceId"
+            "focused" -> "focused"
+            else -> strategy
+        }
+    }
+
+    private fun matchSemanticsForStrategy(strategy: String): String {
+        return when (strategy) {
+            "textContains", "contentDescContains" -> "contains"
+            "focused" -> "state"
+            else -> "exact"
+        }
     }
 
     private fun resolveClickableTarget(
@@ -215,7 +386,16 @@ data class FindNodeResult(
     val node: FlatAccessibilityNode?,
     val matches: List<FlatAccessibilityNode> = emptyList(),
     val selectedIndex: Int = 0,
-    val clickResolution: ClickSelectorResolution? = null
+    val clickResolution: ClickSelectorResolution? = null,
+    val missHint: FindMissHint? = null
+)
+
+data class FindMissHint(
+    val searchedSurface: String,
+    val matchSemantics: String,
+    val likelyMissReason: String? = null,
+    val suggestedAlternateSurfaces: List<String> = emptyList(),
+    val suggestedAlternateStrategies: List<String> = emptyList()
 )
 
 data class ClickSelectorResolution(
