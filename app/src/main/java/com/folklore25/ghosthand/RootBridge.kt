@@ -278,6 +278,7 @@ class RootBridge {
         val PACKAGE_NAME_REGEX = Regex("^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+$")
         val ACTIVITY_NAME_REGEX = Regex("^[A-Za-z0-9_.$]+$")
         val SU_CANDIDATES = listOf(
+            "/debug_ramdisk/su",
             "/apex/com.android.runtime/bin/su",
             "/system/bin/su",
             "/system/xbin/su",
@@ -292,6 +293,7 @@ class RootBridge {
             "/debug_ramdisk/su"
         )
         val MAGISK_DISCOVERY_PATHS = listOf(
+            "/debug_ramdisk/magisk",
             "/apex/com.android.runtime/bin/magisk",
             "/system/bin/magisk"
         )
