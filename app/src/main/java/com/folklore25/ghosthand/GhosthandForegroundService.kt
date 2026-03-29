@@ -58,11 +58,16 @@ class GhosthandForegroundService : Service() {
     }
 
     override fun onDestroy() {
-        localApiServer.stop()
-        GhosthandServiceRegistry.unregister()
-        RuntimeStateStore.markServiceStopped()
-        Log.i(LOG_TAG, "Foreground service destroyed")
-        super.onDestroy()
+        try {
+            localApiServer.stop()
+        } catch (error: Exception) {
+            Log.e(LOG_TAG, "Failed to stop LocalApiServer during service teardown", error)
+        } finally {
+            GhosthandServiceRegistry.unregister()
+            RuntimeStateStore.markServiceStopped()
+            Log.i(LOG_TAG, "Foreground service destroyed")
+            super.onDestroy()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

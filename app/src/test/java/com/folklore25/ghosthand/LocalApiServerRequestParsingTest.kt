@@ -16,6 +16,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class LocalApiServerRequestParsingTest {
     @Test
@@ -75,6 +76,7 @@ class LocalApiServerRequestParsingTest {
         assertTrue(secondClient.closed)
         assertTrue(serverExecutor.isShutdown)
         assertTrue(clientExecutor.isShutdown)
+        assertTrue(resources.awaitStopped(1, TimeUnit.SECONDS))
         assertFalse(resources.hasActiveClients())
     }
 

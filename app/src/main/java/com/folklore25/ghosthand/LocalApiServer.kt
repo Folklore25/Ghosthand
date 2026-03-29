@@ -191,6 +191,12 @@ internal class LocalApiServerResources(
         clientExecutor.shutdownNow()
         serverExecutor.shutdownNow()
     }
+
+    fun awaitStopped(timeout: Long, unit: TimeUnit): Boolean {
+        val clientStopped = clientExecutor.awaitTermination(timeout, unit)
+        val serverStopped = serverExecutor.awaitTermination(timeout, unit)
+        return clientStopped && serverStopped && !hasActiveClients() && serverSocket == null
+    }
 }
 
 class LocalApiServer(
@@ -268,6 +274,9 @@ class LocalApiServer(
             return
         }
         resources.stopAll()
+        if (!resources.awaitStopped(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            Log.w(LOG_TAG, "Timed out waiting for LocalApiServer executors to stop")
+        }
     }
 
     private fun handleClient(socket: Socket, localResources: LocalApiServerResources) {
@@ -1757,6 +1766,7 @@ class LocalApiServer(
         const val CLIENT_READ_TIMEOUT_MS = 5_000
         const val CLIENT_POOL_SIZE = 4
         const val CLIENT_QUEUE_CAPACITY = 16
+        const val SHUTDOWN_TIMEOUT_MS = 2_000L
         private const val TREE_MODE_RAW = "raw"
         private const val TREE_MODE_FLAT = "flat"
         private const val DEFAULT_TREE_MODE = TREE_MODE_RAW
