@@ -21,6 +21,7 @@ Ghosthand is moving from an accepted runtime and operator-validation baseline in
 - [x] **Phase 16: Release Polish Closeout** - Close the remaining update-interaction loop, delete stale product copy/resources, and finish the final 1.0 release-surface polish without reopening the accepted architecture. (completed 2026-03-30)
 - [x] **Phase 17: Agent Perspective Reconciliation 01** - Reconcile the latest zero-context OpenClaw exploratory evaluation against accepted repo truth, preserve the useful signal, reject misclassifications, and narrow the next platform-owned direction honestly. (completed 2026-03-30)
 - [ ] **Phase 18: Launch Handoff Audit 01** - Audit whether Ghosthand actually lacks a clean app launch/open primitive, or whether launch capability already exists but is only under-expressive or poorly exposed.
+- [ ] **Phase 19: Home Surface Copy And Affordance Polish 01** - Polish the current 1.0 UI with a refined info-affordance system, calmer title/version/update presentation, dedicated update modal flow, permissions top-bar cleanup, and final product copy cleanup without reopening the accepted architecture.
 
 ## Phase Details
 
@@ -186,6 +187,24 @@ Plans:
 - [ ] 18-01: Live launch/open capability audit and final classification
 - [ ] 18-02: Planning/state truth update and narrow next-target definition
 
+### Phase 19: Home Surface Copy And Affordance Polish 01
+**Goal**: Tighten the current 1.0 product surface through bounded UI polish only: refined info affordances, a cleaner title/version/update presentation, dedicated update modal interaction, permissions top-bar cleanup, and final visible copy normalization.
+**Depends on**: Phase 18
+**Success Criteria** (what must be TRUE):
+  1. [UIP-01] All visible feature/module explanation buttons use a custom small outlined circular info affordance rather than the default Android system icon.
+  2. [UIP-02] The home title/version/update area feels calmer and more balanced than the current title + badge + action cluster.
+  3. [UIP-03] Update interaction opens a dedicated modal/dialog/sheet that shows current version, latest version, and a state-appropriate bottom action.
+  4. [UIP-04] The update modal uses a solid yellow bottom action only when an update is actually available.
+  5. [UIP-05] The permissions page top-left back button is removed and the page header remains visually balanced.
+  6. [UIP-06] Visible developer-ish or awkward copy in the touched surfaces is cleaned up in EN and zh-CN.
+  7. [UIP-07] The project still compiles after the polish pass.
+**Plans**: 3 plans
+
+Plans:
+- [ ] 19-01: Custom info-affordance system and reusable style resources
+- [ ] 19-02: Home title/version/update redesign with dedicated update modal
+- [ ] 19-03: Permissions top-bar cleanup, copy cleanup, and final UI verification
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -201,3 +220,4 @@ Plans:
 | 16. Release Polish Closeout | 2/2 | Complete | 2026-03-30 |
 | 17. Agent Perspective Reconciliation 01 | 2/2 | Complete | 2026-03-30 |
 | 18. Launch Handoff Audit 01 | 0/2 | Planned | - |
+| 19. Home Surface Copy And Affordance Polish 01 | 0/3 | Planned | - |
