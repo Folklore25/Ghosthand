@@ -121,11 +121,7 @@ class StateCoordinator(
             )
             .put("permissions", JSONObject()
                 .put("implemented", true)
-                .put("usageAccess", permissionSnapshot.usageAccess ?: JSONObject.NULL)
                 .put("accessibility", accessibilitySnapshot.enabled)
-                .put("notifications", permissionSnapshot.notifications ?: JSONObject.NULL)
-                .put("overlay", permissionSnapshot.overlay ?: JSONObject.NULL)
-                .put("writeSecureSettings", permissionSnapshot.writeSecureSettings ?: JSONObject.NULL)
                 .put("capabilities", JSONObject()
                     .put(
                         "accessibility",
@@ -136,6 +132,12 @@ class StateCoordinator(
                         GovernedCapabilityPayloads.screenshotToJson(capabilityAccess.screenshot)
                     )
                 )
+            )
+            .put("systemPermissions", JSONObject()
+                .put("usageAccess", permissionSnapshot.usageAccess ?: JSONObject.NULL)
+                .put("notifications", permissionSnapshot.notifications ?: JSONObject.NULL)
+                .put("overlay", permissionSnapshot.overlay ?: JSONObject.NULL)
+                .put("writeSecureSettings", permissionSnapshot.writeSecureSettings ?: JSONObject.NULL)
             )
     }
 

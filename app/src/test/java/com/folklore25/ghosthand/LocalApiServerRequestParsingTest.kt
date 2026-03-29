@@ -20,9 +20,46 @@ import java.util.concurrent.TimeUnit
 
 class LocalApiServerRequestParsingTest {
     @Test
+    fun readRequestParsesValidRequest() {
+        val input = ByteArrayInputStream(
+            (
+                "POST /tap?package=com.example HTTP/1.1\r\n" +
+                    "Content-Length: 7\r\n" +
+                    "\r\n" +
+                    "{\"x\":1}"
+                ).toByteArray(StandardCharsets.UTF_8)
+        )
+
+        val request = LocalApiServerProtocol.readRequest(input)
+
+        assertEquals("POST", request.method)
+        assertEquals("/tap", request.path)
+        assertEquals("com.example", request.queryParameters["package"])
+        assertEquals("{\"x\":1}", request.body)
+    }
+
+    @Test
     fun readRequestRejectsMalformedHeaderLine() {
         val input = ByteArrayInputStream(
             "GET /health HTTP/1.1\r\nBroken-Header\r\n\r\n".toByteArray(StandardCharsets.UTF_8)
+        )
+
+        val error = expectParseFailure {
+            LocalApiServerProtocol.readRequest(input)
+        }
+
+        assertEquals(400, error.statusCode)
+        assertEquals("BAD_REQUEST", error.errorCode)
+    }
+
+    @Test
+    fun readRequestRejectsInvalidContentLength() {
+        val input = ByteArrayInputStream(
+            (
+                "POST /tap HTTP/1.1\r\n" +
+                    "Content-Length: nope\r\n" +
+                    "\r\n"
+                ).toByteArray(StandardCharsets.UTF_8)
         )
 
         val error = expectParseFailure {

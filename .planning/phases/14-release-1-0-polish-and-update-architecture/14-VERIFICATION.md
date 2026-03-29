@@ -1,28 +1,15 @@
 ---
 phase: 14-release-1-0-polish-and-update-architecture
 verified: 2026-03-30T00:00:00Z
-status: human_needed
+status: passed
 score: 5/5 must-haves verified
-human_verification:
-  - test: "Home update module reads clearly"
-    expected: "The home surface shows installed version, latest release state, and a clear status without looking like a leftover utility strip."
-    why_human: "Final product hierarchy and visual reading order need human inspection."
-  - test: "Explanation affordances feel consistent"
-    expected: "Home, permissions, and diagnostics modules expose the same info affordance and open a consistent explanation surface."
-    why_human: "Consistency of visual affordances and explanation presentation is a product-surface judgment."
-  - test: "GitHub handoff opens the expected destination"
-    expected: "When an update is available, the CTA opens the GitHub release destination for full APK update rather than implying in-app installation."
-    why_human: "External app handoff behavior requires device-side validation."
-  - test: "Final EN and zh-CN copy reads as product copy"
-    expected: "Active product surfaces no longer read like planning/debug iteration text in either locale."
-    why_human: "Final language quality needs direct human review."
 ---
 
 # Phase 14: Release 1.0 Polish And Update Architecture Verification Report
 
 **Phase Goal:** Polish the accepted 1.0 product surface with real GitHub-release update state, reusable in-app explanations, cleaned product copy, and bounded implementation cleanup without reopening the major UI or permission architecture.
 **Verified:** 2026-03-30T00:00:00Z
-**Status:** human_needed
+**Status:** passed
 
 ## Goal Achievement
 
@@ -63,9 +50,9 @@ human_verification:
 | Requirement | Status | Blocking Issue |
 |-------------|--------|----------------|
 | `POL-01` Real GitHub latest-release comparison and in-product update state | ✓ SATISFIED | - |
-| `POL-02` Update flow guides the user to GitHub for full APK update | ✓ SATISFIED | Human device-side handoff check still pending |
-| `POL-03` Product-facing copy cleaned and aligned | ✓ SATISFIED | Human language-quality review still pending |
-| `POL-04` Reusable explanation affordance exists | ✓ SATISFIED | Human consistency review still pending |
+| `POL-02` Update flow guides the user to GitHub for full APK update | ✓ SATISFIED | User waived manual verification gate |
+| `POL-03` Product-facing copy cleaned and aligned | ✓ SATISFIED | User waived manual verification gate |
+| `POL-04` Reusable explanation affordance exists | ✓ SATISFIED | User waived manual verification gate |
 | `POL-05` Accepted 1.0 direction is tightened with cleaner implementation and successful compile | ✓ SATISFIED | - |
 
 ## Anti-Patterns Found
@@ -74,36 +61,18 @@ None blocking. The bounded polish remained inside the accepted architecture and 
 
 ## Human Verification Required
 
-### 1. Home update module reads clearly
-**Test:** Inspect the home surface.
-**Expected:** Installed version, latest release state, and update status read as one coherent product module.
-**Why human:** Final hierarchy and visual balance are product judgments.
-
-### 2. Explanation affordances feel consistent
-**Test:** Open the info affordances on home, permissions, and diagnostics.
-**Expected:** They use one consistent explanation surface and feel like one shared pattern.
-**Why human:** Visual consistency and affordance quality require direct inspection.
-
-### 3. GitHub handoff opens the expected destination
-**Test:** Trigger the update CTA when an update is available.
-**Expected:** The CTA opens the GitHub release destination for the full APK update.
-**Why human:** External handoff behavior is device-side.
-
-### 4. Final EN and zh-CN copy reads as product copy
-**Test:** Inspect active surfaces in both locales if available.
-**Expected:** No active copy reads like planning/debug iteration text.
-**Why human:** Final copy quality requires human judgment.
+None — the remaining manual checks were explicitly waived by user instruction.
 
 ## Gaps Summary
 
-No code-level gaps were found. Remaining work is limited to manual product verification of the polished surface.
+**No gaps found.** Phase goal achieved. Manual verification was explicitly waived.
 
 ## Verification Metadata
 
 **Verification approach:** Goal-backward against Phase 14 success criteria  
 **Must-haves source:** `.planning/ROADMAP.md` plus `14-01/02/03-PLAN.md`  
 **Automated checks:** 4 passed, 0 failed  
-**Human checks required:** 4  
+**Human checks required:** 0  
 **Total verification time:** inline session
 
 ---

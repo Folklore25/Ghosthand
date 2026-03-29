@@ -7,6 +7,7 @@
 package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -60,5 +61,19 @@ class StateCoordinatorStatePayloadTest {
         val system = fields["system"] as Map<*, *>
         assertTrue(system["accessibilityCaptureReady"] as Boolean)
         assertEquals(false, system["mediaProjectionGranted"] as Boolean)
+    }
+
+    @Test
+    fun permissionsPayloadSeparatesGovernedCapabilitiesFromSystemPermissionDiagnostics() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/StateCoordinator.kt"
+        )
+
+        assertTrue(coordinator.contains(".put(\"permissions\", JSONObject()"))
+        assertTrue(coordinator.contains(".put(\"capabilities\", JSONObject()"))
+        assertFalse(coordinator.contains(".put(\"permissions\", JSONObject()\n                .put(\"implemented\", true)\n                .put(\"usageAccess\""))
+        assertTrue(coordinator.contains(".put(\"systemPermissions\", JSONObject()"))
+        assertTrue(coordinator.contains(".put(\"usageAccess\", permissionSnapshot.usageAccess"))
     }
 }

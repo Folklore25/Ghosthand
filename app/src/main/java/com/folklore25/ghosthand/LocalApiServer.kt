@@ -174,7 +174,8 @@ internal class LocalApiServerResources(
     fun stopAll() {
         try {
             serverSocket?.close()
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(LocalApiServer.LOG_TAG, "component=LocalApiServerResources operation=closeServerSocket failure=${error.javaClass.simpleName}", error)
         } finally {
             serverSocket = null
         }
@@ -182,7 +183,8 @@ internal class LocalApiServerResources(
         activeClients.toList().forEach { client ->
             try {
                 client.close()
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                Log.w(LocalApiServer.LOG_TAG, "component=LocalApiServerResources operation=closeClientSocket failure=${error.javaClass.simpleName}", error)
             } finally {
                 activeClients.remove(client)
             }
@@ -353,7 +355,10 @@ class LocalApiServer(
                     writer.flush()
                 }
             } catch (error: LocalApiServerRequestException) {
-                Log.w(LOG_TAG, "Rejected malformed request: ${error.message}")
+                Log.w(
+                    LOG_TAG,
+                    "component=LocalApiServer operation=handleClient status=${error.statusCode} code=${error.errorCode} failure=${error.javaClass.simpleName} message=${error.message}"
+                )
                 writeResponse(
                     client,
                     buildJsonResponse(
@@ -365,7 +370,10 @@ class LocalApiServer(
                     )
                 )
             } catch (error: SocketTimeoutException) {
-                Log.w(LOG_TAG, "Client read timed out")
+                Log.w(
+                    LOG_TAG,
+                    "component=LocalApiServer operation=handleClient failure=${error.javaClass.simpleName} message=Client read timed out"
+                )
                 writeResponse(
                     client,
                     buildJsonResponse(
@@ -377,7 +385,11 @@ class LocalApiServer(
                     )
                 )
             } catch (error: Exception) {
-                Log.e(LOG_TAG, "Request handling failure", error)
+                Log.e(
+                    LOG_TAG,
+                    "component=LocalApiServer operation=handleClient failure=${error.javaClass.simpleName}",
+                    error
+                )
                 writeResponse(
                     client,
                     buildJsonResponse(
@@ -416,7 +428,11 @@ class LocalApiServer(
                 writer.flush()
             }
         } catch (error: Exception) {
-            Log.w(LOG_TAG, "Failed to write HTTP response", error)
+            Log.w(
+                LOG_TAG,
+                "component=LocalApiServer operation=writeResponse failure=${error.javaClass.simpleName}",
+                error
+            )
         }
     }
 
@@ -580,17 +596,8 @@ class LocalApiServer(
     }
 
     private fun buildFindResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/find")
+            ?: return badJsonBodyResponse()
 
         val selector = parseSelector(body)
         if (selector == null) {
@@ -673,17 +680,8 @@ class LocalApiServer(
     }
 
     private fun buildTapResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/tap")
+            ?: return badJsonBodyResponse()
 
         val backend = body.optString("backend", DEFAULT_BACKEND).ifBlank { DEFAULT_BACKEND }
         when (backend) {
@@ -803,17 +801,8 @@ class LocalApiServer(
     }
 
     private fun buildSwipeResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/swipe")
+            ?: return badJsonBodyResponse()
 
         val backend = body.optString("backend", DEFAULT_BACKEND).ifBlank { DEFAULT_BACKEND }
         when (backend) {
@@ -906,17 +895,8 @@ class LocalApiServer(
     }
 
     private fun buildTypeResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/type")
+            ?: return badJsonBodyResponse()
 
         val backend = body.optString("backend", DEFAULT_BACKEND).ifBlank { DEFAULT_BACKEND }
         when (backend) {
@@ -1040,11 +1020,8 @@ class LocalApiServer(
     }
 
     private fun buildScreenshotResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/screenshot")
+            ?: return badJsonBodyResponse()
 
         val width = body.optIntOrNull("width") ?: 0
         val height = body.optIntOrNull("height") ?: 0
@@ -1087,17 +1064,8 @@ class LocalApiServer(
     }
 
     private fun buildClickResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/click")
+            ?: return badJsonBodyResponse()
 
         val nodeId = body.optString("nodeId").trim()
         val clickResult = if (nodeId.isNotEmpty()) {
@@ -1155,17 +1123,8 @@ class LocalApiServer(
     }
 
     private fun buildInputResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/input")
+            ?: return badJsonBodyResponse()
 
         val clear = body.optBoolean("clear", false)
         val append = body.optBoolean("append", false)
@@ -1236,17 +1195,8 @@ class LocalApiServer(
     }
 
     private fun buildSetTextResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/setText")
+            ?: return badJsonBodyResponse()
 
         val nodeId = body.optString("nodeId").trim()
         if (nodeId.isEmpty()) {
@@ -1320,11 +1270,8 @@ class LocalApiServer(
     }
 
     private fun buildScrollResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/scroll")
+            ?: return badJsonBodyResponse()
 
         val direction = body.optString("direction", "up").trim().lowercase()
         if (direction !in setOf("up", "down", "left", "right")) {
@@ -1389,11 +1336,8 @@ class LocalApiServer(
     }
 
     private fun buildLongpressResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/longpress")
+            ?: return badJsonBodyResponse()
 
         val x = body.optIntOrNull("x")
         val y = body.optIntOrNull("y")
@@ -1415,11 +1359,8 @@ class LocalApiServer(
     }
 
     private fun buildGestureResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/gesture")
+            ?: return badJsonBodyResponse()
 
         val type = body.optString("type").trim().lowercase()
         if (type == "pinch_in" || type == "pinch_out") {
@@ -1509,11 +1450,8 @@ class LocalApiServer(
     }
 
     private fun buildClipboardWriteResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/clipboard")
+            ?: return badJsonBodyResponse()
 
         if (!body.has("text")) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "text is required."))
@@ -1550,11 +1488,8 @@ class LocalApiServer(
     }
 
     private fun buildWaitResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/wait")
+            ?: return badJsonBodyResponse()
 
         val condition = body.optJSONObject("condition")
             ?: return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "condition is required."))
@@ -1625,11 +1560,8 @@ class LocalApiServer(
     }
 
     private fun buildNotifyPostResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/notify")
+            ?: return badJsonBodyResponse()
         val title = body.optString("title", "").trim()
         val text = body.optString("text", "").trim()
         if (text.isEmpty()) {
@@ -1646,11 +1578,8 @@ class LocalApiServer(
     }
 
     private fun buildNotifyCancelResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(400, errorEnvelope("BAD_REQUEST", "Request body must be valid JSON."))
-        }
+        val body = parseJsonBodyOrNull(requestBody, "/notify")
+            ?: return badJsonBodyResponse()
         val notificationId = body.optIntOrNull("notificationId")
         if (notificationId == null) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "notificationId is required."))
@@ -1730,6 +1659,26 @@ class LocalApiServer(
     private fun JSONObject.optLongOrNull(key: String): Long? {
         val value = opt(key)
         return if (value is Number) value.toLong() else null
+    }
+
+    private fun parseJsonBodyOrNull(requestBody: String, endpoint: String): JSONObject? {
+        return try {
+            JSONObject(requestBody.ifBlank { "{}" })
+        } catch (error: JSONException) {
+            Log.w(
+                LOG_TAG,
+                "component=LocalApiServer operation=parseJsonBody endpoint=$endpoint failure=${error.javaClass.simpleName}",
+                error
+            )
+            null
+        }
+    }
+
+    private fun badJsonBodyResponse(): String {
+        return buildJsonResponse(
+            400,
+            errorEnvelope("BAD_REQUEST", "Request body must be valid JSON.")
+        )
     }
 
     private fun createResources(): LocalApiServerResources {
