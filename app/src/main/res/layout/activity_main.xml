@@ -47,17 +47,57 @@
                     android:textColor="@color/gh_text_primary" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/homeVersionBadge"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_status_chip"
-                android:paddingStart="10dp"
-                android:paddingTop="6dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="6dp"
-                android:text="@string/runtime_placeholder_unknown"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                android:gravity="end"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/homeVersionBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/homeUpdateButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="@string/home_update_action_refresh"
+                        android:textAllCaps="false"
+                        android:textColor="@color/gh_brand_primary"
+                        app:cornerRadius="18dp"
+                        app:strokeColor="@color/gh_surface_stroke" />
+
+                    <ImageButton
+                        android:id="@+id/homeUpdateInfoButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginStart="6dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/common_info"
+                        android:padding="4dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        android:tint="@color/gh_brand_primary" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
@@ -70,106 +110,10 @@
             android:textColor="@color/gh_text_secondary" />
 
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/homeUpdateCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/gh_surface_card"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/gh_surface_stroke"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/home_update_title"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-                        android:textColor="@color/gh_text_primary" />
-
-                    <ImageButton
-                        android:id="@+id/homeUpdateInfoButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/common_info"
-                        android:padding="4dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        android:tint="@color/gh_brand_primary" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/home_update_subtitle"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                    android:textColor="@color/gh_text_secondary" />
-
-                <TextView
-                    android:id="@+id/homeUpdateInstalledValue"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="@string/runtime_placeholder_unknown"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                    android:textColor="@color/gh_text_primary" />
-
-                <TextView
-                    android:id="@+id/homeUpdateLatestValue"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/runtime_placeholder_unknown"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                    android:textColor="@color/gh_text_primary" />
-
-                <TextView
-                    android:id="@+id/homeUpdateStatusValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_status_chip"
-                    android:paddingStart="12dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="12dp"
-                    android:paddingBottom="6dp"
-                    android:text="@string/runtime_placeholder_unknown"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/homeUpdateButton"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:text="@string/home_update_action_refresh"
-                    android:textAllCaps="false"
-                    android:textColor="@color/gh_brand_primary"
-                    android:visibility="gone"
-                    app:cornerRadius="18dp"
-                    app:strokeColor="@color/gh_surface_stroke" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
             android:id="@+id/runtimeCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="18dp"
             app:cardBackgroundColor="@color/gh_surface_card"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
@@ -225,91 +169,114 @@
                     android:textColor="@color/gh_text_primary" />
 
                 <LinearLayout
+                    android:id="@+id/homeRuntimeSignalsStack"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
-                    android:orientation="horizontal"
-                    android:weightSum="3">
+                    android:orientation="vertical">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:gravity="center_vertical"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/api_server_running_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/homeApiStatusValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/api_server_running_label"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                                android:textColor="@color/gh_text_secondary" />
+
+                            <TextView
+                                android:id="@+id/homeApiStatusValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_status_chip"
+                                android:paddingStart="12dp"
+                                android:paddingTop="6dp"
+                                android:paddingEnd="12dp"
+                                android:paddingBottom="6dp"
+                                android:text="@string/runtime_placeholder_unknown"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/service_running_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/homeServiceStatusValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/service_running_label"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                                android:textColor="@color/gh_text_secondary" />
+
+                            <TextView
+                                android:id="@+id/homeServiceStatusValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_status_chip"
+                                android:paddingStart="12dp"
+                                android:paddingTop="6dp"
+                                android:paddingEnd="12dp"
+                                android:paddingBottom="6dp"
+                                android:text="@string/runtime_placeholder_unknown"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/accessibility_card_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/homeAccessibilityStatusValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/accessibility_card_label"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                                android:textColor="@color/gh_text_secondary" />
+
+                            <TextView
+                                android:id="@+id/homeAccessibilityStatusValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_status_chip"
+                                android:paddingStart="12dp"
+                                android:paddingTop="6dp"
+                                android:paddingEnd="12dp"
+                                android:paddingBottom="6dp"
+                                android:text="@string/runtime_placeholder_unknown"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
 

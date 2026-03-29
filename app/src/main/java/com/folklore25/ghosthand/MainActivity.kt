@@ -25,9 +25,6 @@ class MainActivity : AppCompatActivity() {
         val binder = HomeScreenBinder(
             context = this,
             versionBadge = views.versionBadge,
-            updateInstalledValue = views.updateInstalledValue,
-            updateLatestValue = views.updateLatestValue,
-            updateStatusValue = views.updateStatusValue,
             updateButton = views.updateButton,
             runtimeStatusValue = views.runtimeStatusValue,
             runtimeApiChip = views.runtimeApiChip,

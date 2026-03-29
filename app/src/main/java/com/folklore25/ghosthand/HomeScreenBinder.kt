@@ -15,9 +15,6 @@ import androidx.appcompat.app.AppCompatActivity
 internal class HomeScreenBinder(
     private val context: Context,
     private val versionBadge: TextView,
-    private val updateInstalledValue: TextView,
-    private val updateLatestValue: TextView,
-    private val updateStatusValue: TextView,
     private val updateButton: Button,
     private val runtimeStatusValue: TextView,
     private val runtimeApiChip: TextView,
@@ -34,14 +31,10 @@ internal class HomeScreenBinder(
     fun bind(state: HomeScreenUiState) {
         versionBadge.text = state.versionBadgeText
         UiStatusSupport.styleChip(context, versionBadge, StatusTone.Neutral)
-        updateInstalledValue.text = state.updateSummary.installedVersionText
-        updateLatestValue.text = state.updateSummary.latestReleaseText
-        updateStatusValue.text = state.updateSummary.statusText
-        UiStatusSupport.styleChip(context, updateStatusValue, state.updateSummary.statusTone)
         if (state.updateSummary.actionMode == UpdateActionMode.NONE ||
             state.updateSummary.actionLabel == null
         ) {
-            updateButton.visibility = View.GONE
+            updateButton.visibility = View.INVISIBLE
         } else {
             updateButton.visibility = View.VISIBLE
             updateButton.text = state.updateSummary.actionLabel
@@ -80,9 +73,6 @@ internal class HomeScreenBinder(
 
 internal data class HomeScreenViews(
     val versionBadge: TextView,
-    val updateInstalledValue: TextView,
-    val updateLatestValue: TextView,
-    val updateStatusValue: TextView,
     val updateButton: Button,
     val runtimeStatusValue: TextView,
     val runtimeApiChip: TextView,
@@ -106,9 +96,6 @@ internal data class HomeScreenViews(
         fun bind(activity: android.app.Activity): HomeScreenViews {
             return HomeScreenViews(
                 versionBadge = activity.findViewById(R.id.homeVersionBadge),
-                updateInstalledValue = activity.findViewById(R.id.homeUpdateInstalledValue),
-                updateLatestValue = activity.findViewById(R.id.homeUpdateLatestValue),
-                updateStatusValue = activity.findViewById(R.id.homeUpdateStatusValue),
                 updateButton = activity.findViewById(R.id.homeUpdateButton),
                 runtimeStatusValue = activity.findViewById(R.id.homeRuntimeStatusValue),
                 runtimeApiChip = activity.findViewById(R.id.homeApiStatusValue),

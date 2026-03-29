@@ -85,9 +85,9 @@
     <string name="home_update_status_up_to_date">Up to date</string>
     <string name="home_update_status_available">Update available</string>
     <string name="home_update_status_failed">Update check unavailable</string>
-    <string name="home_update_action_checking">Checking…</string>
-    <string name="home_update_action_download">Open GitHub release</string>
-    <string name="home_update_action_refresh">Check again</string>
+    <string name="home_update_action_checking">Checking</string>
+    <string name="home_update_action_download">Update</string>
+    <string name="home_update_action_refresh">Re-check</string>
     <string name="home_update_refresh_started">Checking GitHub release again</string>
     <string name="home_runtime_title">Primary Controls</string>
     <string name="home_runtime_subtitle">Start the local runtime here. Capability authorization and policy stay on the permissions page.</string>

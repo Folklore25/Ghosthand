@@ -36,7 +36,7 @@ class ScreenUiStateMapperTest {
         assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
         assertEquals("Latest: 1.1.0", uiState.updateSummary.latestReleaseText)
         assertEquals("Update available", uiState.updateSummary.statusText)
-        assertEquals("Open GitHub release", uiState.updateSummary.actionLabel)
+        assertEquals("Update", uiState.updateSummary.actionLabel)
         assertTrue(uiState.updateSummary.actionEnabled)
         assertEquals(UpdateActionMode.OPEN_RELEASE, uiState.updateSummary.actionMode)
     }
@@ -61,7 +61,7 @@ class ScreenUiStateMapperTest {
         )
 
         assertEquals("Up to date", uiState.updateSummary.statusText)
-        assertEquals("Check again", uiState.updateSummary.actionLabel)
+        assertEquals("Re-check", uiState.updateSummary.actionLabel)
         assertTrue(uiState.updateSummary.actionEnabled)
         assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
     }
@@ -82,7 +82,7 @@ class ScreenUiStateMapperTest {
         assertEquals("Unable to read latest release metadata.", uiState.updateSummary.statusText)
         assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
         assertEquals("Latest: Not available yet", uiState.updateSummary.latestReleaseText)
-        assertEquals("Check again", uiState.updateSummary.actionLabel)
+        assertEquals("Re-check", uiState.updateSummary.actionLabel)
         assertTrue(uiState.updateSummary.actionEnabled)
         assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
     }
@@ -101,7 +101,7 @@ class ScreenUiStateMapperTest {
 
         assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
         assertEquals("Checking GitHub release", uiState.updateSummary.statusText)
-        assertEquals("Checking…", uiState.updateSummary.actionLabel)
+        assertEquals("Checking", uiState.updateSummary.actionLabel)
         assertFalse(uiState.updateSummary.actionEnabled)
         assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
     }
@@ -196,9 +196,9 @@ class ScreenUiStateMapperTest {
                 R.string.home_update_status_up_to_date -> "Up to date"
                 R.string.home_update_status_available -> "Update available"
                 R.string.home_update_status_failed -> "Update check unavailable"
-                R.string.home_update_action_checking -> "Checking…"
-                R.string.home_update_action_download -> "Open GitHub release"
-                R.string.home_update_action_refresh -> "Check again"
+                R.string.home_update_action_checking -> "Checking"
+                R.string.home_update_action_download -> "Update"
+                R.string.home_update_action_refresh -> "Re-check"
                 R.string.service_button_running_label -> "Runtime Active"
                 R.string.service_button_label -> "Start Runtime"
                 R.string.home_permissions_summary_template -> "usable=${args[0]}/${args[1]} allowed=${args[2]}"

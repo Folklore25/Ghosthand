@@ -81,9 +81,9 @@
     <string name="home_update_status_up_to_date">已是最新版本</string>
     <string name="home_update_status_available">有可用更新</string>
     <string name="home_update_status_failed">暂时无法检查更新</string>
-    <string name="home_update_action_checking">检查中…</string>
-    <string name="home_update_action_download">打开 GitHub 发行页</string>
-    <string name="home_update_action_refresh">重新检查</string>
+    <string name="home_update_action_checking">检查中</string>
+    <string name="home_update_action_download">更新</string>
+    <string name="home_update_action_refresh">重查</string>
     <string name="home_update_refresh_started">正在重新检查 GitHub 发行版</string>
     <string name="home_runtime_title">主要控制</string>
     <string name="home_runtime_subtitle">在这里启动本地运行时；能力授权与使用策略集中保留在权限页。</string>
