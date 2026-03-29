@@ -30,7 +30,7 @@
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
                 android:textColor="@color/gh_text_primary" />
 
-            <ImageButton
+            <TextView
                 android:id="@+id/permissionsInfoButton"
                 style="@style/Widget_Ghosthand_InfoButton"
                 android:contentDescription="@string/common_info"
@@ -109,7 +109,7 @@
                             android:textColor="@color/gh_text_secondary" />
                     </LinearLayout>
 
-                    <ImageButton
+                    <TextView
                         android:id="@+id/accessibilityInfoButton"
                         style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
@@ -246,7 +246,7 @@
                             android:textColor="@color/gh_text_secondary" />
                     </LinearLayout>
 
-                    <ImageButton
+                    <TextView
                         android:id="@+id/screenshotInfoButton"
                         style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"

@@ -74,7 +74,8 @@
     <string name="status_api_failed">Local API server failed: %1$s</string>
     <string name="common_back">Back</string>
     <string name="common_info">More information</string>
-    <string name="home_subtitle">Local runtime control, governed permissions, and diagnostics.</string>
+    <string name="common_info_short">info</string>
+    <string name="home_subtitle">Human, this app is not built for YOU.</string>
     <string name="home_update_title">Updates</string>
     <string name="home_update_subtitle">Ghosthand compares this build with the latest GitHub release and hands full updates off to GitHub.</string>
     <string name="home_update_installed_template">Installed: %1$s</string>

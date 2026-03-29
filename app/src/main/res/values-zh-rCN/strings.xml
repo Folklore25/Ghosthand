@@ -70,7 +70,8 @@
     <string name="status_api_failed">本地 API 服务启动失败：%1$s</string>
     <string name="common_back">返回</string>
     <string name="common_info">更多信息</string>
-    <string name="home_subtitle">本地运行时控制、权限治理与诊断信息。</string>
+    <string name="common_info_short">info</string>
+    <string name="home_subtitle">Human, this app is not built for YOU.</string>
     <string name="home_update_title">更新</string>
     <string name="home_update_subtitle">Ghosthand 会对比当前版本与 GitHub 最新发行版，并把完整更新明确交给 GitHub 完成。</string>
     <string name="home_update_installed_template">当前版本：%1$s</string>

@@ -38,7 +38,7 @@ class DiagnosticsActivity : AppCompatActivity() {
         val helperResultValue: TextView = findViewById(R.id.diagnosticsHelperResultValue)
         val runHelperButton: com.google.android.material.button.MaterialButton = findViewById(R.id.diagnosticsRunHelperButton)
 
-        findViewById<android.widget.ImageButton>(R.id.diagnosticsInfoButton).setOnClickListener {
+        findViewById<TextView>(R.id.diagnosticsInfoButton).setOnClickListener {
             ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Diagnostics)
         }
 

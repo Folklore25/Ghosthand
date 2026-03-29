@@ -29,7 +29,7 @@
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
                 android:textColor="@color/gh_text_primary" />
 
-            <ImageButton
+            <TextView
                 android:id="@+id/diagnosticsInfoButton"
                 style="@style/Widget_Ghosthand_InfoButton"
                 android:contentDescription="@string/common_info"

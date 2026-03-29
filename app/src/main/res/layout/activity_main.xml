@@ -97,7 +97,7 @@
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                         android:textColor="@color/gh_text_primary" />
 
-                    <ImageButton
+                    <TextView
                         android:id="@+id/homeRuntimeInfoButton"
                         style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
@@ -278,7 +278,7 @@
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                         android:textColor="@color/gh_text_primary" />
 
-                    <ImageButton
+                    <TextView
                         android:id="@+id/homePermissionsInfoButton"
                         style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
@@ -425,7 +425,7 @@
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                         android:textColor="@color/gh_text_primary" />
 
-                    <ImageButton
+                    <TextView
                         android:id="@+id/homeDiagnosticsInfoButton"
                         style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"

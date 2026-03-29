@@ -81,13 +81,13 @@ class PermissionsActivity : AppCompatActivity() {
             authorizeButton = findViewById(R.id.screenshotAuthorizeButton)
         )
 
-        findViewById<android.widget.ImageButton>(R.id.permissionsInfoButton).setOnClickListener {
+        findViewById<TextView>(R.id.permissionsInfoButton).setOnClickListener {
             ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Permissions)
         }
-        findViewById<android.widget.ImageButton>(R.id.accessibilityInfoButton).setOnClickListener {
+        findViewById<TextView>(R.id.accessibilityInfoButton).setOnClickListener {
             ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Accessibility)
         }
-        findViewById<android.widget.ImageButton>(R.id.screenshotInfoButton).setOnClickListener {
+        findViewById<TextView>(R.id.screenshotInfoButton).setOnClickListener {
             ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Screenshot)
         }
         accessibilityCardViews.authorizeButton.setOnClickListener { openAccessibilitySettings() }

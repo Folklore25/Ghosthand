@@ -79,9 +79,9 @@ internal data class HomeScreenViews(
     val diagnosticsForegroundValue: TextView,
     val managePermissionsButton: Button,
     val openDiagnosticsButton: Button,
-    val runtimeInfoButton: android.widget.ImageButton,
-    val permissionsInfoButton: android.widget.ImageButton,
-    val diagnosticsInfoButton: android.widget.ImageButton
+    val runtimeInfoButton: TextView,
+    val permissionsInfoButton: TextView,
+    val diagnosticsInfoButton: TextView
 ) {
     companion object {
         fun bind(activity: android.app.Activity): HomeScreenViews {
