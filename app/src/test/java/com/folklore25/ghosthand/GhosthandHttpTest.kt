@@ -8,6 +8,7 @@ package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.fail
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
@@ -62,5 +63,40 @@ class GhosthandHttpTest {
             body,
             GhosthandHttp.readUtf8Body(input, body.toByteArray(StandardCharsets.UTF_8).size.toString())
         )
+    }
+
+    @Test
+    fun readUtf8BodyRejectsInvalidContentLength() {
+        val error = expectBodyReadFailure {
+            GhosthandHttp.readUtf8Body(ByteArrayInputStream(ByteArray(0)), "nope", maxBodyBytes = 1024)
+        }
+
+        assertEquals(400, error.statusCode)
+        assertEquals("BAD_REQUEST", error.errorCode)
+    }
+
+    @Test
+    fun readUtf8BodyRejectsTruncatedBodies() {
+        val error = expectBodyReadFailure {
+            GhosthandHttp.readUtf8Body(
+                ByteArrayInputStream("abc".toByteArray(StandardCharsets.UTF_8)),
+                "5",
+                maxBodyBytes = 1024
+            )
+        }
+
+        assertEquals(400, error.statusCode)
+        assertEquals("BAD_REQUEST", error.errorCode)
+    }
+
+    private fun expectBodyReadFailure(block: () -> Unit): LocalApiServerRequestException {
+        try {
+            block()
+        } catch (error: LocalApiServerRequestException) {
+            return error
+        }
+
+        fail("Expected LocalApiServerRequestException")
+        throw AssertionError("unreachable")
     }
 }
