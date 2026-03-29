@@ -36,6 +36,74 @@ class ScreenUiStateMapperTest {
         assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
         assertEquals("Latest: 1.1.0", uiState.updateSummary.latestReleaseText)
         assertEquals("Update available", uiState.updateSummary.statusText)
+        assertEquals("Open GitHub release", uiState.updateSummary.actionLabel)
+        assertTrue(uiState.updateSummary.actionEnabled)
+        assertEquals(UpdateActionMode.OPEN_RELEASE, uiState.updateSummary.actionMode)
+    }
+
+    @Test
+    fun upToDateStateStillOffersManualRecheck() {
+        val uiState = HomeScreenUiStateFactory.create(
+            sampleRuntimeState(),
+            UpdateUiStateFactory.fromReleaseCheck(
+                GitHubReleaseCheckResult.UpToDate(
+                    installedVersion = InstalledAppVersion("1.1.0", 2),
+                    latestRelease = GitHubReleaseInfo(
+                        tagName = "v1.1.0",
+                        name = "1.1.0",
+                        htmlUrl = "https://github.com/folklore25/ghosthand/releases/tag/v1.1.0",
+                        publishedAt = "2026-03-30T00:00:00Z",
+                        apkAssetUrl = null
+                    )
+                )
+            ),
+            FakeTextLookup
+        )
+
+        assertEquals("Up to date", uiState.updateSummary.statusText)
+        assertEquals("Check again", uiState.updateSummary.actionLabel)
+        assertTrue(uiState.updateSummary.actionEnabled)
+        assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
+    }
+
+    @Test
+    fun failedCheckStillOffersRetryAndShowsInstalledVersion() {
+        val uiState = HomeScreenUiStateFactory.create(
+            sampleRuntimeState(),
+            UpdateUiStateFactory.fromReleaseCheck(
+                GitHubReleaseCheckResult.Failed(
+                    installedVersion = InstalledAppVersion("1.0.0", 1),
+                    reason = "Unable to read latest release metadata."
+                )
+            ),
+            FakeTextLookup
+        )
+
+        assertEquals("Unable to read latest release metadata.", uiState.updateSummary.statusText)
+        assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
+        assertEquals("Latest: Not available yet", uiState.updateSummary.latestReleaseText)
+        assertEquals("Check again", uiState.updateSummary.actionLabel)
+        assertTrue(uiState.updateSummary.actionEnabled)
+        assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
+    }
+
+    @Test
+    fun checkingStateShowsDisabledRefreshWhileKeepingInstalledVersion() {
+        val uiState = HomeScreenUiStateFactory.create(
+            sampleRuntimeState(),
+            UpdateUiStateFactory.fromReleaseCheck(
+                GitHubReleaseCheckResult.Checking(
+                    installedVersion = InstalledAppVersion("1.0.0", 1)
+                )
+            ),
+            FakeTextLookup
+        )
+
+        assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
+        assertEquals("Checking GitHub release", uiState.updateSummary.statusText)
+        assertEquals("Checking…", uiState.updateSummary.actionLabel)
+        assertFalse(uiState.updateSummary.actionEnabled)
+        assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
     }
 
     @Test
@@ -128,8 +196,9 @@ class ScreenUiStateMapperTest {
                 R.string.home_update_status_up_to_date -> "Up to date"
                 R.string.home_update_status_available -> "Update available"
                 R.string.home_update_status_failed -> "Update check unavailable"
+                R.string.home_update_action_checking -> "Checking…"
                 R.string.home_update_action_download -> "Open GitHub release"
-                R.string.home_update_action_refresh -> "No release link available"
+                R.string.home_update_action_refresh -> "Check again"
                 R.string.service_button_running_label -> "Runtime Active"
                 R.string.service_button_label -> "Start Runtime"
                 R.string.home_permissions_summary_template -> "usable=${args[0]}/${args[1]} allowed=${args[2]}"

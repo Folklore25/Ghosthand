@@ -7,10 +7,24 @@
 package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class UpdateUiStateMapperTest {
+    @Test
+    fun checkingStateKeepsInstalledVersionVisible() {
+        val uiState = UpdateUiStateFactory.fromReleaseCheck(
+            GitHubReleaseCheckResult.Checking(
+                installedVersion = InstalledAppVersion(versionName = "1.0", versionCode = 1)
+            )
+        )
+
+        assertEquals(UpdateStatus.CHECKING, uiState.status)
+        assertEquals("1.0", uiState.installedVersionText)
+        assertNull(uiState.latestReleaseText)
+    }
+
     @Test
     fun installedVersionMatchingLatestReleaseMapsToUpToDateWithoutInstallCta() {
         val uiState = UpdateUiStateFactory.fromReleaseCheck(
@@ -63,5 +77,6 @@ class UpdateUiStateMapperTest {
 
         assertEquals(UpdateStatus.CHECK_FAILED, uiState.status)
         assertNull(uiState.actionUrl)
+        assertFalse(uiState.installedVersionText.isBlank())
     }
 }

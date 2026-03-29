@@ -38,13 +38,15 @@ internal class HomeScreenBinder(
         updateLatestValue.text = state.updateSummary.latestReleaseText
         updateStatusValue.text = state.updateSummary.statusText
         UiStatusSupport.styleChip(context, updateStatusValue, state.updateSummary.statusTone)
-        if (state.updateSummary.actionLabel == null) {
+        if (state.updateSummary.actionMode == UpdateActionMode.NONE ||
+            state.updateSummary.actionLabel == null
+        ) {
             updateButton.visibility = View.GONE
         } else {
             updateButton.visibility = View.VISIBLE
             updateButton.text = state.updateSummary.actionLabel
         }
-        updateButton.isEnabled = state.updateSummary.actionUrl != null
+        updateButton.isEnabled = state.updateSummary.actionEnabled
 
         runtimeStatusValue.text = state.runtimeSummary.statusText
         runtimeApiChip.text = state.runtimeSummary.apiStatusText
@@ -163,12 +165,17 @@ internal class HomeScreenActions(
             android.widget.Toast.makeText(activity, R.string.service_requested, android.widget.Toast.LENGTH_SHORT).show()
         }
         views.updateButton.setOnClickListener {
-            val actionUrl = runtimeViewModel.homeScreenState.value?.updateSummary?.actionUrl
-            if (actionUrl == null) {
-                runtimeViewModel.refreshReleaseInfo()
-                android.widget.Toast.makeText(activity, R.string.home_update_refresh_started, android.widget.Toast.LENGTH_SHORT).show()
-            } else {
-                activity.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(actionUrl)))
+            val updateSummary = runtimeViewModel.homeScreenState.value?.updateSummary ?: return@setOnClickListener
+            when (updateSummary.actionMode) {
+                UpdateActionMode.NONE -> Unit
+                UpdateActionMode.REFRESH -> {
+                    runtimeViewModel.refreshReleaseInfo()
+                    android.widget.Toast.makeText(activity, R.string.home_update_refresh_started, android.widget.Toast.LENGTH_SHORT).show()
+                }
+                UpdateActionMode.OPEN_RELEASE -> {
+                    val actionUrl = updateSummary.actionUrl ?: return@setOnClickListener
+                    activity.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(actionUrl)))
+                }
             }
         }
         views.managePermissionsButton.setOnClickListener {

@@ -23,7 +23,9 @@ internal data class GitHubReleaseInfo(
 }
 
 internal sealed interface GitHubReleaseCheckResult {
-    data object Checking : GitHubReleaseCheckResult
+    data class Checking(
+        val installedVersion: InstalledAppVersion?
+    ) : GitHubReleaseCheckResult
 
     data class UpToDate(
         val installedVersion: InstalledAppVersion,

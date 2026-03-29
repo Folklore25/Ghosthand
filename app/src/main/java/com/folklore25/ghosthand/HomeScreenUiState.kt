@@ -30,6 +30,12 @@ internal data class DiagnosticsSummaryUiState(
     val foregroundText: String
 )
 
+internal enum class UpdateActionMode {
+    NONE,
+    REFRESH,
+    OPEN_RELEASE
+}
+
 internal data class UpdateSummaryUiState(
     val titleText: String,
     val subtitleText: String,
@@ -38,6 +44,8 @@ internal data class UpdateSummaryUiState(
     val statusText: String,
     val statusTone: StatusTone,
     val actionLabel: String?,
+    val actionEnabled: Boolean,
+    val actionMode: UpdateActionMode,
     val actionUrl: String?
 )
 
@@ -181,12 +189,29 @@ internal object HomeScreenUiStateFactory {
             UpdateStatus.CHECK_FAILED -> StatusTone.Danger
         }
 
-        val actionLabel = if (updateUiState.status == UpdateStatus.UPDATE_AVAILABLE &&
-            !updateUiState.actionUrl.isNullOrBlank()
-        ) {
-            textLookup.getString(R.string.home_update_action_download)
-        } else {
-            null
+        val actionLabel = when (updateUiState.status) {
+            UpdateStatus.CHECKING -> textLookup.getString(R.string.home_update_action_checking)
+            UpdateStatus.UP_TO_DATE,
+            UpdateStatus.CHECK_FAILED -> textLookup.getString(R.string.home_update_action_refresh)
+            UpdateStatus.UPDATE_AVAILABLE -> textLookup.getString(R.string.home_update_action_download)
+        }
+
+        val actionEnabled = when (updateUiState.status) {
+            UpdateStatus.CHECKING -> false
+            UpdateStatus.UP_TO_DATE,
+            UpdateStatus.CHECK_FAILED -> true
+            UpdateStatus.UPDATE_AVAILABLE -> !updateUiState.actionUrl.isNullOrBlank()
+        }
+
+        val actionMode = when (updateUiState.status) {
+            UpdateStatus.CHECKING -> UpdateActionMode.REFRESH
+            UpdateStatus.UP_TO_DATE,
+            UpdateStatus.CHECK_FAILED -> UpdateActionMode.REFRESH
+            UpdateStatus.UPDATE_AVAILABLE -> if (updateUiState.actionUrl.isNullOrBlank()) {
+                UpdateActionMode.NONE
+            } else {
+                UpdateActionMode.OPEN_RELEASE
+            }
         }
 
         return UpdateSummaryUiState(
@@ -203,6 +228,8 @@ internal object HomeScreenUiStateFactory {
             statusText = statusText,
             statusTone = statusTone,
             actionLabel = actionLabel,
+            actionEnabled = actionEnabled,
+            actionMode = actionMode,
             actionUrl = updateUiState.actionUrl
         )
     }

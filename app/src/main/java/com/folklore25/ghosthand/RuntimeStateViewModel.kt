@@ -21,7 +21,9 @@ class RuntimeStateViewModel(
     private val capabilityPolicyStore = CapabilityPolicyStore(application)
     private val releaseRepository = GitHubReleaseRepository(application)
     private val updateState = MutableLiveData<UpdateUiState>().apply {
-        value = UpdateUiStateFactory.fromReleaseCheck(GitHubReleaseCheckResult.Checking)
+        value = UpdateUiStateFactory.fromReleaseCheck(
+            GitHubReleaseCheckResult.Checking(releaseRepository.installedAppVersion())
+        )
     }
 
     val runtimeState: LiveData<RuntimeState> = RuntimeStateStore.observe()
@@ -62,7 +64,9 @@ class RuntimeStateViewModel(
     }
 
     fun refreshReleaseInfo() {
-        updateState.value = UpdateUiStateFactory.fromReleaseCheck(GitHubReleaseCheckResult.Checking)
+        updateState.value = UpdateUiStateFactory.fromReleaseCheck(
+            GitHubReleaseCheckResult.Checking(releaseRepository.installedAppVersion())
+        )
         thread(name = "ghosthand-release-check", isDaemon = true) {
             val result = releaseRepository.checkForUpdate()
             updateState.postValue(UpdateUiStateFactory.fromReleaseCheck(result))

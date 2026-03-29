@@ -26,7 +26,7 @@ internal object UpdateUiStateFactory {
         return when (result) {
             is GitHubReleaseCheckResult.Checking -> UpdateUiState(
                 status = UpdateStatus.CHECKING,
-                installedVersionText = "",
+                installedVersionText = result.installedVersion?.versionName.orEmpty(),
                 latestReleaseText = null,
                 actionUrl = null
             )

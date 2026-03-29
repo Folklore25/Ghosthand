@@ -15,9 +15,10 @@ Ghosthand is moving from an accepted runtime and operator-validation baseline in
 - [ ] **Phase 11: Product Friction Remediation** - Reduce zero-context operator friction without weakening platform truth.
 - [ ] **Phase 12: Release 1.0 Productization** - Rebuild governed capability consent and restructure the operator UI for a truthful 1.0 surface.
 - [x] **Phase 13: Remove Root From Ghosthand Product Surface And Runtime** - Remove root entirely so the app, runtime, and UI stay focused on the supported non-root local path. (completed 2026-03-29)
-- [ ] **Phase 14: Release 1.0 Polish And Update Architecture** - Add real GitHub-release update state, reusable feature explanations, and final product-copy polish without reopening the major UI architecture.
-- [ ] **Phase 14.1: Release 1.0 Technical Debt Cleanup** - Clean the lingering copy/resource debt, unify the explanation system, thin MainActivity further, and keep diagnostics-only fields out of product permission language.
-- [ ] **Phase 15: Stability And Engineering Hardening** - Harden backup boundaries, local API resource limits, async policy I/O, diagnostics logging, test coverage, and engineering hygiene without changing product direction.
+- [x] **Phase 14: Release 1.0 Polish And Update Architecture** - Add real GitHub-release update state, reusable feature explanations, and final product-copy polish without reopening the major UI architecture. (completed 2026-03-30)
+- [x] **Phase 14.1: Release 1.0 Technical Debt Cleanup** - Clean the lingering copy/resource debt, unify the explanation system, thin MainActivity further, and keep diagnostics-only fields out of product permission language. (completed 2026-03-30)
+- [x] **Phase 15: Stability And Engineering Hardening** - Harden backup boundaries, local API resource limits, async policy I/O, diagnostics logging, test coverage, and engineering hygiene without changing product direction. (completed 2026-03-29)
+- [x] **Phase 16: Release Polish Closeout** - Close the remaining update-interaction loop, delete stale product copy/resources, and finish the final 1.0 release-surface polish without reopening the accepted architecture. (completed 2026-03-30)
 
 ## Phase Details
 
@@ -87,7 +88,7 @@ Plans:
 Plans:
 - [x] 13-01-PLAN.md — Remove root from governed capability/runtime/API and tests
 - [x] 13-02-PLAN.md — Remove root from UI and screen-state surfaces
-- [ ] 13-03-PLAN.md — Remove root from docs, planning truth, and final verification
+- [x] 13-03-PLAN.md — Remove root from docs, planning truth, and final verification
 
 ### Phase 14: Release 1.0 Polish And Update Architecture
 **Goal**: Polish the accepted 1.0 product surface with real GitHub-release update state, reusable in-app explanations, cleaned product copy, and bounded implementation cleanup without reopening the major UI or permission architecture.
@@ -102,8 +103,8 @@ Plans:
 
 Plans:
 - [x] 14-01: Update/version architecture and runtime release-state integration
-- [ ] 14-02: Product copy cleanup and reusable explanation pattern
-- [ ] 14-03: Bounded 1.0 surface polish and implementation cleanup
+- [x] 14-02: Product copy cleanup and reusable explanation pattern
+- [x] 14-03: Bounded 1.0 surface polish and implementation cleanup
 
 ### Phase 14.1: Release 1.0 Technical Debt Cleanup
 **Goal**: Remove the remaining Phase 14 technical debt by cleaning the active string system, unifying the explanation/help pattern, further reducing MainActivity binding weight, and keeping diagnostics-only permission detail out of product governance language.
@@ -117,8 +118,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 14.1-01: Copy/resource consolidation and unified explanation system cleanup
-- [ ] 14.1-02: MainActivity thinning and product-vs-diagnostics permission-surface cleanup
+- [x] 14.1-01: Copy/resource consolidation and unified explanation system cleanup
+- [x] 14.1-02: MainActivity thinning and product-vs-diagnostics permission-surface cleanup
 
 ### Phase 15: Stability And Engineering Hardening
 **Goal**: Tighten the Android loopback API and foreground-service baseline into a robust engineering substrate by fixing backup defaults, bounding local API resources, removing blocking policy I/O from hot paths, improving diagnostics, adding meaningful tests, and cleaning engineering debris.
@@ -135,7 +136,23 @@ Plans:
 Plans:
 - [x] 15-01: Backup-boundary and engineering-hygiene hardening
 - [x] 15-02: Local API resource-bounds, malformed-input handling, and shutdown correctness
-- [ ] 15-03: Async capability-policy I/O, observability hardening, tests, and final verification
+- [x] 15-03: Async capability-policy I/O, observability hardening, tests, and final verification
+
+### Phase 16: Release Polish Closeout
+**Goal**: Close the remaining release-level polish issues by finishing the update card interaction loop, refining version/update surface behavior, deleting stale copy/resources, and doing only the bounded code cleanup needed to support those polish fixes.
+**Depends on**: Phase 15
+**Success Criteria** (what must be TRUE):
+  1. [RPC-01] Update UI behavior is complete across all meaningful states.
+  2. [RPC-02] Up-to-date state still allows re-check and failed-check state still allows retry.
+  3. [RPC-03] Update-available state clearly hands off to GitHub full update and surfaces installed/latest versions cleanly.
+  4. [RPC-04] Remaining weird/dev/process-like copy and obsolete update-era resources are removed or consolidated.
+  5. [RPC-05] The accepted 1.0 front-end direction is preserved and the result is more coherent, not more improvised.
+  6. [RPC-06] Build verification is completed as part of the phase.
+**Plans**: TBD
+
+Plans:
+- [x] 16-01: Update-state interaction closeout and version surface refinement
+- [x] 16-02: Resource/copy cleanup and bounded polish support cleanup
 
 ## Progress
 
@@ -146,6 +163,7 @@ Plans:
 | 11. Product Friction Remediation | 0/1 | In progress | - |
 | 12. Release 1.0 Productization | 3/3 | In progress | - |
 | 13. Remove Root From Ghosthand Product Surface And Runtime | 2/3 | Complete    | 2026-03-29 |
-| 14. Release 1.0 Polish And Update Architecture | 1/3 | In Progress|  |
-| 14.1. Release 1.0 Technical Debt Cleanup | 0/2 | Not started | - |
-| 15. Stability And Engineering Hardening | 2/3 | In Progress|  |
+| 14. Release 1.0 Polish And Update Architecture | 3/3 | Complete | 2026-03-30 |
+| 14.1. Release 1.0 Technical Debt Cleanup | 2/2 | Complete | 2026-03-30 |
+| 15. Stability And Engineering Hardening | 3/3 | Complete | 2026-03-30 |
+| 16. Release Polish Closeout | 2/2 | Complete | 2026-03-30 |

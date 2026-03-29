@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-03-29T18:15:18.330Z"
+status: complete
+last_updated: "2026-03-30T00:00:00Z"
 progress:
   total_phases: 8
-  completed_phases: 4
-  total_plans: 16
-  completed_plans: 13
+  completed_phases: 7
+  total_plans: 20
+  completed_plans: 19
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 11 documentation alignment / platform-truth consolidation** — align repo truth, platform-vs-skill boundaries, and licensing markers with the accepted substrate direction.
+Current focus: **Phase 16 release polish closeout completed** — the remaining work is final 1.0 release review rather than additional product-surface redesign.
 
 ## Current Position
 
-Phase: 14.1 (release-1-0-technical-debt-cleanup) — EXECUTING
-Plan: 2 of 2
+Phase: 16 (release-polish-closeout) — COMPLETE
+Plan: All plans complete
 
-- **Phase:** 14
+- **Phase:** 16
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase complete — ready for verification
+- **Status:** Phase complete
 
 ## Progress
 
@@ -43,10 +43,12 @@ Plan: 2 of 2
 - Phase 10 Stage 7: **DONE** — acceptance-audit checklist, evidence bundle structure, decision classes, and repo-truth promotion rules are codified into a canonical guide
 - Phase 10 Stage 8: **DONE** — evidence package structure, storage rules, packaging rules, and archival discipline are codified into a canonical guide and template
 - Phase 10 Stage 9: **DONE** — evidence index structure, milestone summary structure, and update rules are codified into a canonical guide and templates
-- Phase 11 P1: **IN PROGRESS** — the Phase 11 P0 remediation bucket is effectively complete; Reddit remains the primary real-task friction source, same-activity content-advance feedback is materially clearer, and the current P1 cut is reducing `/click(text)` brittleness on wrapper-driven surfaces through bounded child-text reconciliation
-- Phase 11 documentation alignment: **IN PROGRESS** — repo truth now needs to reflect that inspectable wrapper resolution is accepted P1 evidence and that remaining friction is increasingly about selector-surface choice plus future skill-layer discipline
+- Phase 14: **DONE IN CODE** — update/version state, explanation affordances, and bounded polish landed on the accepted 1.0 surface
+- Phase 14.1: **DONE IN CODE** — remaining technical debt on copy, explanation unification, MainActivity weight, and product-vs-diagnostics permission language was cleaned
+- Phase 15: **DONE IN CODE** — stability hardening landed across backup boundaries, loopback API bounds, async capability-policy I/O, diagnostics logging, and tests
+- Phase 16: **DONE IN CODE** — update interaction, version visibility, stale update-era resources, and final release-polish cleanup are closed
 
-Overall: Ghosthand is operating from an accepted Phase 09 baseline, a Phase 10 operator-validation and evidence framework that remains canonical in the main repo, and a Phase 11 remediation pass that also remains in the main repo as platform-substrate improvement work
+Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-polished 1.0 product surface ready for final review.
 
 ## Decisions
 
