@@ -65,7 +65,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="@string/home_subtitle_v3"
+            android:text="@string/home_subtitle"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
             android:textColor="@color/gh_text_secondary" />
 
@@ -141,6 +141,7 @@
                     android:text="@string/home_update_action_refresh"
                     android:textAllCaps="false"
                     android:textColor="@color/gh_brand_primary"
+                    android:visibility="gone"
                     app:cornerRadius="18dp"
                     app:strokeColor="@color/gh_surface_stroke" />
             </LinearLayout>
@@ -174,7 +175,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="@string/home_runtime_subtitle_v2"
+                    android:text="@string/home_runtime_subtitle"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                     android:textColor="@color/gh_text_secondary" />
 

@@ -123,7 +123,12 @@ class MainActivity : AppCompatActivity() {
         updateLatestValue.text = state.updateSummary.latestReleaseText
         updateStatusValue.text = state.updateSummary.statusText
         UiStatusSupport.styleChip(this, updateStatusValue, state.updateSummary.statusTone)
-        updateButton.text = state.updateSummary.actionLabel ?: getString(R.string.home_update_action_refresh)
+        if (state.updateSummary.actionLabel == null) {
+            updateButton.visibility = android.view.View.GONE
+        } else {
+            updateButton.visibility = android.view.View.VISIBLE
+            updateButton.text = state.updateSummary.actionLabel
+        }
         updateButton.isEnabled = state.updateSummary.actionUrl != null
         runtimeStatusValue.text = state.runtimeSummary.statusText
         runtimeApiChip.text = state.runtimeSummary.apiStatusText
