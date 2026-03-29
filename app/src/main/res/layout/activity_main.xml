@@ -29,19 +29,9 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/homeEyebrow"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_eyebrow"
-                    android:textAllCaps="true"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Overline"
-                    android:textColor="@color/gh_brand_primary" />
-
-                <TextView
                     android:id="@+id/homeTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
                     android:text="@string/home_title"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline3"
                     android:textColor="@color/gh_text_primary" />
@@ -85,17 +75,6 @@
                         android:textColor="@color/gh_brand_primary"
                         app:cornerRadius="18dp"
                         app:strokeColor="@color/gh_surface_stroke" />
-
-                    <ImageButton
-                        android:id="@+id/homeUpdateInfoButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_marginStart="6dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/common_info"
-                        android:padding="4dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        android:tint="@color/gh_brand_primary" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -142,11 +121,11 @@
 
                     <ImageButton
                         android:id="@+id/homeRuntimeInfoButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/common_info"
-                        android:padding="4dp"
+                        android:padding="2dp"
                         android:src="@android:drawable/ic_dialog_info"
                         android:tint="@color/gh_brand_primary" />
                 </LinearLayout>
@@ -327,11 +306,11 @@
 
                     <ImageButton
                         android:id="@+id/homePermissionsInfoButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/common_info"
-                        android:padding="4dp"
+                        android:padding="2dp"
                         android:src="@android:drawable/ic_dialog_info"
                         android:tint="@color/gh_brand_primary" />
                 </LinearLayout>
@@ -478,11 +457,11 @@
 
                     <ImageButton
                         android:id="@+id/homeDiagnosticsInfoButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/common_info"
-                        android:padding="4dp"
+                        android:padding="2dp"
                         android:src="@android:drawable/ic_dialog_info"
                         android:tint="@color/gh_brand_primary" />
                 </LinearLayout>

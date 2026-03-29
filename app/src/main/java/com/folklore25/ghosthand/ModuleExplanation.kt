@@ -10,7 +10,6 @@ internal enum class ModuleExplanation(
     val titleRes: Int,
     val bodyRes: Int
 ) {
-    Update(R.string.explanation_update_title, R.string.explanation_update_body),
     Runtime(R.string.explanation_runtime_title, R.string.explanation_runtime_body),
     Permissions(R.string.explanation_permissions_title, R.string.explanation_permissions_body),
     Accessibility(R.string.explanation_accessibility_title, R.string.explanation_accessibility_body),

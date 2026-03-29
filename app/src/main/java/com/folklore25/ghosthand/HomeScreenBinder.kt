@@ -87,7 +87,6 @@ internal data class HomeScreenViews(
     val diagnosticsForegroundValue: TextView,
     val managePermissionsButton: Button,
     val openDiagnosticsButton: Button,
-    val updateInfoButton: android.widget.ImageButton,
     val runtimeInfoButton: android.widget.ImageButton,
     val permissionsInfoButton: android.widget.ImageButton,
     val diagnosticsInfoButton: android.widget.ImageButton
@@ -116,7 +115,6 @@ internal data class HomeScreenViews(
                 diagnosticsForegroundValue = activity.findViewById(R.id.homeDiagnosticsForegroundValue),
                 managePermissionsButton = activity.findViewById(R.id.openPermissionsButton),
                 openDiagnosticsButton = activity.findViewById(R.id.openDiagnosticsButton),
-                updateInfoButton = activity.findViewById(R.id.homeUpdateInfoButton),
                 runtimeInfoButton = activity.findViewById(R.id.homeRuntimeInfoButton),
                 permissionsInfoButton = activity.findViewById(R.id.homePermissionsInfoButton),
                 diagnosticsInfoButton = activity.findViewById(R.id.homeDiagnosticsInfoButton)
@@ -131,9 +129,6 @@ internal class HomeScreenActions(
     private val views: HomeScreenViews
 ) {
     fun bind() {
-        views.updateInfoButton.setOnClickListener {
-            ModuleExplanationDialogFragment.show(activity.supportFragmentManager, ModuleExplanation.Update)
-        }
         views.runtimeInfoButton.setOnClickListener {
             ModuleExplanationDialogFragment.show(activity.supportFragmentManager, ModuleExplanation.Runtime)
         }

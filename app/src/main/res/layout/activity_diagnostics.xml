@@ -41,11 +41,11 @@
 
             <ImageButton
                 android:id="@+id/diagnosticsInfoButton"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/common_info"
-                android:padding="4dp"
+                android:padding="2dp"
                 android:src="@android:drawable/ic_dialog_info"
                 android:tint="@color/gh_brand_primary" />
         </LinearLayout>

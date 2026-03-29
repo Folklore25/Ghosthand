@@ -15,7 +15,6 @@ class ExplanationContentTest {
     fun explanationCatalogCoversRelevantModules() {
         assertEquals(
             setOf(
-                ModuleExplanation.Update,
                 ModuleExplanation.Runtime,
                 ModuleExplanation.Permissions,
                 ModuleExplanation.Accessibility,
@@ -34,7 +33,6 @@ class ExplanationContentTest {
         )
 
         listOf(
-            "explanation_update_body",
             "explanation_runtime_body",
             "explanation_permissions_body",
             "explanation_accessibility_body",

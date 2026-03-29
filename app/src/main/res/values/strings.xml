@@ -74,8 +74,7 @@
     <string name="status_api_failed">Local API server failed: %1$s</string>
     <string name="common_back">Back</string>
     <string name="common_info">More information</string>
-    <string name="home_eyebrow">Operator Surface</string>
-    <string name="home_subtitle">Runtime control, capability consent, and diagnostics in one operator surface.</string>
+    <string name="home_subtitle">Human, this app is not built for YOU.</string>
     <string name="home_update_title">Updates</string>
     <string name="home_update_subtitle">Check the latest GitHub release here, then complete the full APK update on GitHub.</string>
     <string name="home_update_installed_template">Installed: %1$s</string>
@@ -131,8 +130,6 @@
     <string name="diagnostics_recovery_title">Recovery Tools</string>
     <string name="diagnostics_recovery_subtitle">Keep advanced recovery available without making it the default product surface.</string>
     <string name="home_version_badge_template">v%1$s</string>
-    <string name="explanation_update_title">Updates</string>
-    <string name="explanation_update_body">This section shows the version installed on this device and compares it with the latest GitHub release. It controls release awareness only and does not install anything for you. It may need internet access to refresh the latest release state. Ghosthand and OpenClaw do not gain any new runtime capability from this section; it only hands you off to GitHub for a full APK update.</string>
     <string name="explanation_runtime_title">Runtime</string>
     <string name="explanation_runtime_body">This section controls whether the local Ghosthand runtime is active. It controls the foreground service and the local API availability for OpenClaw. It may need foreground-service permission and the normal Android runtime environment to start correctly. Ghosthand and OpenClaw can use the runtime only when it is active.</string>
     <string name="explanation_permissions_title">Permissions</string>
