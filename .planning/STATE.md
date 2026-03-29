@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
+status: planning
 last_updated: "2026-03-30T00:00:00Z"
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 8
-  total_plans: 22
+  total_plans: 24
   completed_plans: 21
 ---
 
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 17 agent-perspective reconciliation completed** — the exploratory run is now reconciled into repo truth and the next direction is narrowed honestly.
+Current focus: **Phase 18 launch handoff audit** — determine whether a clean app launch/open primitive is truly missing, only under-expressive, or already present but poorly exposed.
 
 ## Current Position
 
-Phase: 17 (agent-perspective-reconciliation-01) — COMPLETE
-Plan: All plans complete
+Phase: 18 (launch-handoff-audit-01) — PLANNED
+Plan: 2 plans defined
 
-- **Phase:** 17
+- **Phase:** 18
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase complete
+- **Status:** Ready to execute launch/open truth audit
 
 ## Progress
 
@@ -48,8 +48,9 @@ Plan: All plans complete
 - Phase 15: **DONE IN CODE** — stability hardening landed across backup boundaries, loopback API bounds, async capability-policy I/O, diagnostics logging, and tests
 - Phase 16: **DONE IN CODE** — update interaction, version visibility, stale update-era resources, and final release-polish cleanup are closed
 - Phase 17: **DONE IN DOCS** — exploratory OpenClaw feedback is now reconciled into repo truth through explicit issue classification instead of reactive defect inflation
+- Phase 18: **PLANNED** — launch/open handoff will be audited against the live runtime/catalog/docs before any new primitive is proposed
 
-Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-polished 1.0 product surface. The latest exploratory agent feedback is now reconciled into repo truth without broadening into architecture churn.
+Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-polished 1.0 product surface. The next work is a narrow truth audit of app launch/open handoff, not generic app-control expansion.
 
 ## Decisions
 

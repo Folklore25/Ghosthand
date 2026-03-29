@@ -20,6 +20,7 @@ Ghosthand is moving from an accepted runtime and operator-validation baseline in
 - [x] **Phase 15: Stability And Engineering Hardening** - Harden backup boundaries, local API resource limits, async policy I/O, diagnostics logging, test coverage, and engineering hygiene without changing product direction. (completed 2026-03-29)
 - [x] **Phase 16: Release Polish Closeout** - Close the remaining update-interaction loop, delete stale product copy/resources, and finish the final 1.0 release-surface polish without reopening the accepted architecture. (completed 2026-03-30)
 - [x] **Phase 17: Agent Perspective Reconciliation 01** - Reconcile the latest zero-context OpenClaw exploratory evaluation against accepted repo truth, preserve the useful signal, reject misclassifications, and narrow the next platform-owned direction honestly. (completed 2026-03-30)
+- [ ] **Phase 18: Launch Handoff Audit 01** - Audit whether Ghosthand actually lacks a clean app launch/open primitive, or whether launch capability already exists but is only under-expressive or poorly exposed.
 
 ## Phase Details
 
@@ -170,6 +171,21 @@ Plans:
 - [x] 17-01: Exploratory report reconciliation note and four-bucket issue classification
 - [x] 17-02: Planning/state truth update and narrow next-direction definition
 
+### Phase 18: Launch Handoff Audit 01
+**Goal**: Determine truthfully whether Ghosthand currently has a clean app launch/open primitive, whether it exists only partially or weakly exposed, or whether it is genuinely absent.
+**Depends on**: Phase 17
+**Success Criteria** (what must be TRUE):
+  1. [LHA-01] The live runtime/API/catalog/docs are audited for launch/open-related capability rather than relying on historical assumptions.
+  2. [LHA-02] Launch/open status is classified exactly once as one of: already exists with weak discoverability, partially exists and under-expressive, or genuinely absent.
+  3. [LHA-03] Historical/stale references are kept distinct from live runtime truth.
+  4. [LHA-04] A narrow next implementation target is defined only if the audit justifies it.
+  5. [LHA-05] The audit does not broaden into generic app-control architecture.
+**Plans**: 2 plans
+
+Plans:
+- [ ] 18-01: Live launch/open capability audit and final classification
+- [ ] 18-02: Planning/state truth update and narrow next-target definition
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -184,3 +200,4 @@ Plans:
 | 15. Stability And Engineering Hardening | 3/3 | Complete | 2026-03-30 |
 | 16. Release Polish Closeout | 2/2 | Complete | 2026-03-30 |
 | 17. Agent Perspective Reconciliation 01 | 2/2 | Complete | 2026-03-30 |
+| 18. Launch Handoff Audit 01 | 0/2 | Planned | - |
