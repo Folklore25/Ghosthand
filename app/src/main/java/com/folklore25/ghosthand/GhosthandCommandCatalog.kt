@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.16"
+    const val schemaVersion = "1.17"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -94,8 +94,8 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/screen",
-            description = "Current structured actionable surface snapshot with explicit partial-output signaling when invalid-geometry or low-signal nodes are omitted",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "elements"),
+            description = "Current structured actionable surface snapshot with explicit partial-output signaling when invalid-geometry or low-signal nodes are omitted; successful responses may include a compact disclosure when reduced output is easy to misread",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "elements", "disclosure"),
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
             referenceStability = "snapshot_ephemeral",
@@ -171,8 +171,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/click",
-            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click now resolves to an actionable clickable target by default, retries a bounded contains-based match for text/desc before failing, and reports how selector resolution landed on the dispatched target",
-            responseFields = listOf("performed", "backendUsed", "attemptedPath", "resolution"),
+            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click now resolves to an actionable clickable target by default, retries a bounded contains-based match for text/desc before failing, reports how selector resolution landed on the dispatched target, and may include compact disclosure when selector/actionability assumptions are easy to misread",
+            responseFields = listOf("performed", "backendUsed", "attemptedPath", "resolution", "disclosure"),
             transportContract = "prompt_completion",
             operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector"),
             referenceStability = "snapshot_ephemeral",
@@ -211,8 +211,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/find",
-            description = "Find by first-class selector (text, contentDesc, resourceId) and return action-ready geometry with prompt response completion",
-            responseFields = listOf("found", "matchCount", "index", "node", "text", "desc", "id", "bounds", "centerX", "centerY", "clickable", "editable", "scrollable"),
+            description = "Find by first-class selector (text, contentDesc, resourceId) and return action-ready geometry with prompt response completion; successful responses may include compact disclosure when selector-surface assumptions are easy to misread",
+            responseFields = listOf("found", "matchCount", "index", "node", "text", "desc", "id", "bounds", "centerX", "centerY", "clickable", "editable", "scrollable", "disclosure"),
             transportContract = "prompt_completion",
             operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector", "index_disambiguation"),
             referenceStability = "snapshot_ephemeral",
@@ -280,7 +280,7 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/scroll",
             description = "Scroll a target node or matching container; use contentChanged as the primary same-activity effect signal, with before/after snapshot tokens for supporting detail",
-            responseFields = listOf("performed", "count", "direction", "attemptedPath", "contentChanged", "surfaceChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity"),
+            responseFields = listOf("performed", "count", "direction", "attemptedPath", "contentChanged", "surfaceChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
             referenceStability = "snapshot_ephemeral",
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
@@ -304,7 +304,7 @@ object GhosthandCommandCatalog {
             method = "POST",
             path = "/swipe",
             description = "Swipe between two coordinates; canonical request uses from/to point objects, x1/y1/x2/y2 aliases are accepted for discoverability, and contentChanged is the primary same-activity effect signal",
-            responseFields = listOf("performed", "backendUsed", "requestShape", "contentChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity"),
+            responseFields = listOf("performed", "backendUsed", "requestShape", "contentChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
             params = listOf(
                 GhosthandCommandParam("from", "point", "body", true, "Start coordinate object"),
                 GhosthandCommandParam("to", "point", "body", true, "End coordinate object"),
@@ -447,8 +447,8 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "GET",
             path = "/wait",
-            description = "Wait for UI change; changed reports whether a transition was observed during the wait window, while packageName/activity report the final observed settled state",
-            responseFields = listOf("changed", "elapsedMs", "snapshotToken", "packageName", "activity"),
+            description = "Wait for UI change; changed reports whether a transition was observed during the wait window, while packageName/activity report the final observed settled state; successful responses may include compact disclosure when wait semantics are easy to overread",
+            responseFields = listOf("changed", "elapsedMs", "snapshotToken", "packageName", "activity", "disclosure"),
             stateTruth = "final_settled_state",
             changeSignal = "transition_observed_during_window",
             params = listOf(
@@ -463,8 +463,8 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "POST",
             path = "/wait",
-            description = "Wait for a matching tree condition",
-            responseFields = listOf("satisfied", "elapsedMs", "node", "reason"),
+            description = "Wait for a matching tree condition; successful responses may include compact disclosure when condition-wait semantics are easy to confuse with settle waiting",
+            responseFields = listOf("satisfied", "elapsedMs", "node", "reason", "disclosure"),
             params = listOf(
                 GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition"),
                 GhosthandCommandParam("timeoutMs", "long", "body", false, "Maximum wait duration in milliseconds"),

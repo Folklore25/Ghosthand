@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.16", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.17", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -87,6 +87,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(clickRoute.responseFields.contains("backendUsed"))
         assertTrue(clickRoute.responseFields.contains("attemptedPath"))
         assertTrue(clickRoute.responseFields.contains("resolution"))
+        assertTrue(clickRoute.responseFields.contains("disclosure"))
         assertTrue(clickRoute.description.contains("clickable target by default"))
         assertTrue(clickRoute.description.contains("reports how selector resolution landed"))
         assertTrue(clickRoute.description.contains("contentDesc"))
@@ -108,6 +109,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(swipeRoute.responseFields.contains("contentChanged"))
         assertTrue(swipeRoute.responseFields.contains("beforeSnapshotToken"))
         assertTrue(swipeRoute.responseFields.contains("afterSnapshotToken"))
+        assertTrue(swipeRoute.responseFields.contains("disclosure"))
         val swipeParamNames = swipeRoute.params.map { it.name }
         assertTrue(swipeParamNames.contains("from"))
         assertTrue(swipeParamNames.contains("to"))
@@ -122,11 +124,13 @@ class GhosthandCommandCatalogTest {
         assertTrue(waitConditionRoute.selectorSupport!!.strategies.contains("focused"))
         assertTrue(waitConditionRoute.responseFields.contains("satisfied"))
         assertTrue(waitConditionRoute.responseFields.contains("reason"))
+        assertTrue(waitConditionRoute.responseFields.contains("disclosure"))
 
         val waitUiRoute = GhosthandCommandCatalog.commands.first { it.id == "wait_ui_change" }
         assertTrue(waitUiRoute.description.contains("final observed settled state"))
         assertTrue(waitUiRoute.responseFields.contains("packageName"))
         assertTrue(waitUiRoute.responseFields.contains("activity"))
+        assertTrue(waitUiRoute.responseFields.contains("disclosure"))
         assertEquals("final_settled_state", waitUiRoute.stateTruth)
         assertEquals("transition_observed_during_window", waitUiRoute.changeSignal)
     }
@@ -144,6 +148,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(screenRoute.responseFields.contains("omittedInvalidBoundsCount"))
         assertTrue(screenRoute.responseFields.contains("omittedLowSignalCount"))
         assertTrue(screenRoute.responseFields.contains("omittedNodeCount"))
+        assertTrue(screenRoute.responseFields.contains("disclosure"))
         assertEquals("structured_actionable_surface_snapshot", screenRoute.stateTruth)
         assertTrue(screenRoute.operatorUses.contains("structured_actionable_surface_snapshot"))
         assertTrue(screenRoute.operatorUses.contains("selector_planning"))
@@ -185,6 +190,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("prompt_completion", findRoute.transportContract)
         assertTrue(findRoute.operatorUses.contains("content_desc_selector"))
         assertTrue(findRoute.operatorUses.contains("index_disambiguation"))
+        assertTrue(findRoute.responseFields.contains("disclosure"))
         assertEquals("snapshot_ephemeral", findRoute.referenceStability)
         assertEquals("same_snapshot_only", findRoute.snapshotScope)
         assertEquals("selector_reresolution", findRoute.recommendedInteractionModel)
@@ -235,5 +241,6 @@ class GhosthandCommandCatalogTest {
         assertTrue(scrollRoute.responseFields.contains("surfaceChanged"))
         assertTrue(scrollRoute.responseFields.contains("beforeSnapshotToken"))
         assertTrue(scrollRoute.responseFields.contains("afterSnapshotToken"))
+        assertTrue(scrollRoute.responseFields.contains("disclosure"))
     }
 }

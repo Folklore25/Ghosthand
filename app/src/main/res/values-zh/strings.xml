@@ -135,6 +135,11 @@
     <string name="update_dialog_status_label">状态</string>
     <string name="update_dialog_footnote">检测到更新后，Ghosthand 会打开 GitHub 发行页完成完整更新。</string>
     <string name="update_dialog_action_retry">检查更新</string>
+    <string name="first_launch_title">首次启动确认</string>
+    <string name="first_launch_notice">关闭此弹窗，即表示您已知晓并理解：本软件仅作为 OpenClaw 类 Agent 的辅助工具存在。因您本地 Agent 导致的任何数据损失、财产损失或其他后果，作者概不负责。</string>
+    <string name="first_launch_exit">退出</string>
+    <string name="first_launch_agree">同意</string>
+    <string name="first_launch_agree_countdown">同意（%1$d）</string>
     <string name="explanation_runtime_title">运行时</string>
     <string name="explanation_runtime_body">此模块控制 Ghosthand 本地运行时是否处于活动状态。它负责前台服务和本地 API 的可用性。启动时可能需要前台服务能力和正常的 Android 运行环境。只有运行时处于活动状态时，Ghosthand 和 OpenClaw 才能使用它。</string>
     <string name="explanation_permissions_title">权限</string>

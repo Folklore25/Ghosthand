@@ -139,6 +139,11 @@
     <string name="update_dialog_status_label">Status</string>
     <string name="update_dialog_footnote">When an update is available, Ghosthand opens the GitHub release page for the full update.</string>
     <string name="update_dialog_action_retry">Check again</string>
+    <string name="first_launch_title">First Launch Acknowledgement</string>
+    <string name="first_launch_notice">Closing this dialog means you acknowledge and understand that this software exists only as a supporting tool for OpenClaw-like agents. The author is not responsible for any data loss, property loss, or other consequences caused by your local agent.</string>
+    <string name="first_launch_exit">Exit</string>
+    <string name="first_launch_agree">Agree</string>
+    <string name="first_launch_agree_countdown">Agree (%1$d)</string>
     <string name="explanation_runtime_title">Runtime</string>
     <string name="explanation_runtime_body">This section controls whether the local Ghosthand runtime is active. It controls the foreground service and the local API availability for OpenClaw. It may need foreground-service permission and the normal Android runtime environment to start correctly. Ghosthand and OpenClaw can use the runtime only when it is active.</string>
     <string name="explanation_permissions_title">Permissions</string>

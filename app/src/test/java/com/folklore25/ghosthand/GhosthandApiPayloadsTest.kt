@@ -8,10 +8,46 @@ package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GhosthandApiPayloadsTest {
+    @Test
+    fun disclosureJsonSerializesCompactDisclosureShape() {
+        val disclosure = GhosthandDisclosure(
+            kind = "discoverability",
+            summary = "This route only searched the requested selector surface.",
+            assumptionToCorrect = "Visible labels always live on the same selector surface.",
+            nextBestActions = listOf("Retry with desc.", "Retry with text.")
+        )
+
+        val fields = GhosthandApiPayloads.disclosureFields(disclosure)
+
+        assertEquals("discoverability", fields["kind"])
+        assertEquals("This route only searched the requested selector surface.", fields["summary"])
+        assertEquals(
+            "Visible labels always live on the same selector surface.",
+            fields["assumptionToCorrect"]
+        )
+        assertEquals(2, (fields["nextBestActions"] as List<*>).size)
+    }
+
+    @Test
+    fun disclosureFieldsAllowOmittedOptionalAssumption() {
+        val disclosure = GhosthandDisclosure(
+            kind = "ambiguity",
+            summary = "The gesture dispatched, but visible-state change was not observed."
+        )
+
+        val fields = GhosthandApiPayloads.disclosureFields(disclosure)
+
+        assertEquals("ambiguity", fields["kind"])
+        assertEquals("The gesture dispatched, but visible-state change was not observed.", fields["summary"])
+        assertNull(fields["assumptionToCorrect"])
+        assertTrue((fields["nextBestActions"] as List<*>).isEmpty())
+    }
+
     @Test
     fun screenPayloadIncludesActionReadyGeometryAndFilters() {
         val snapshot = snapshot(

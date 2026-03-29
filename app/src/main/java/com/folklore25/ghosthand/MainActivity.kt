@@ -7,10 +7,13 @@
 package com.folklore25.ghosthand
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : AppCompatActivity() {
+    private val acknowledgementStore by lazy { FirstLaunchAcknowledgementStore.getInstance(this) }
+
     override fun onResume() {
         super.onResume()
         RuntimeStateStore.refreshRuntimeSnapshot(this)
@@ -19,6 +22,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val homeContent = findViewById<View>(R.id.homeContentScroll)
+        homeContent.visibility = View.INVISIBLE
 
         val runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
         val views = HomeScreenViews.bind(this)
@@ -42,6 +47,16 @@ class MainActivity : AppCompatActivity() {
 
         runtimeViewModel.homeScreenState.observe(this) { state ->
             binder.bind(state)
+        }
+
+        acknowledgementStore.loadAcknowledged { acknowledged ->
+            if (isFinishing || isDestroyed) {
+                return@loadAcknowledged
+            }
+            homeContent.visibility = View.VISIBLE
+            if (!acknowledged && !supportFragmentManager.isStateSaved) {
+                FirstLaunchAcknowledgementDialogFragment.show(supportFragmentManager)
+            }
         }
     }
 }

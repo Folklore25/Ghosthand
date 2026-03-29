@@ -9,6 +9,13 @@ package com.folklore25.ghosthand
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class GhosthandDisclosure(
+    val kind: String,
+    val summary: String,
+    val assumptionToCorrect: String? = null,
+    val nextBestActions: List<String> = emptyList()
+)
+
 object GhosthandApiPayloads {
     fun treePayload(snapshot: AccessibilityTreeSnapshot): JSONObject {
         return fieldsToJson(treeFields(snapshot))
@@ -225,6 +232,19 @@ object GhosthandApiPayloads {
             "resolutionKind" to resolution.resolutionKind,
             "ancestorDepth" to resolution.ancestorDepth
         )
+    }
+
+    fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> {
+        return linkedMapOf(
+            "kind" to disclosure.kind,
+            "summary" to disclosure.summary,
+            "assumptionToCorrect" to disclosure.assumptionToCorrect,
+            "nextBestActions" to disclosure.nextBestActions
+        )
+    }
+
+    fun disclosureJson(disclosure: GhosthandDisclosure): JSONObject {
+        return fieldsToJson(disclosureFields(disclosure))
     }
 
     private fun buildRawTreeFields(

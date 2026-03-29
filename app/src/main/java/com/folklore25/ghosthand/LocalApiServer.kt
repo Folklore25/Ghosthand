@@ -646,16 +646,24 @@ class LocalApiServer(
             return buildTreeUnavailableResponse(treeSnapshotResult.reason)
         }
 
+        val clickableOnly = body.optBoolean("clickable", false)
+        val payload = stateCoordinator.createFindPayload(
+            snapshot = treeSnapshotResult.snapshot
+                ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT),
+            strategy = selector.strategy,
+            query = selector.query,
+            clickableOnly = clickableOnly,
+            index = body.optIntOrNull("index") ?: 0
+        )
+
         return buildJsonResponse(
             statusCode = 200,
             body = successEnvelope(
-                stateCoordinator.createFindPayload(
-                    snapshot = treeSnapshotResult.snapshot
-                        ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT),
+                data = payload,
+                disclosure = buildFindDisclosure(
                     strategy = selector.strategy,
-                    query = selector.query,
-                    clickableOnly = body.optBoolean("clickable", false),
-                    index = body.optIntOrNull("index") ?: 0
+                    clickableOnly = clickableOnly,
+                    found = payload.optBoolean("found", false)
                 )
             )
         )
@@ -867,7 +875,7 @@ class LocalApiServer(
             swipeResult.performed -> buildJsonResponse(
                 statusCode = 200,
                 body = successEnvelope(
-                    JSONObject()
+                    data = JSONObject()
                         .put("performed", true)
                         .put("backendUsed", swipeResult.backendUsed)
                         .put("requestShape", swipeCoordinates.requestShape)
@@ -875,7 +883,12 @@ class LocalApiServer(
                         .put("beforeSnapshotToken", observation.beforeSnapshotToken)
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity)
+                        .put("finalActivity", observation.finalActivity),
+                    disclosure = buildMotionDisclosure(
+                        route = "/swipe",
+                        performed = swipeResult.performed,
+                        surfaceChanged = observation.surfaceChanged
+                    )
                 )
             )
             swipeResult.failureReason == SwipeFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
@@ -980,16 +993,19 @@ class LocalApiServer(
         val snapshot = treeSnapshotResult.snapshot
             ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT)
 
+        val payload = stateCoordinator.createScreenPayload(
+            snapshot = snapshot,
+            editableOnly = queryParameters["editable"] == "true",
+            scrollableOnly = queryParameters["scrollable"] == "true",
+            packageFilter = queryParameters["package"],
+            clickableOnly = queryParameters["clickable"] == "true"
+        )
+
         return buildJsonResponse(
             statusCode = 200,
             body = successEnvelope(
-                stateCoordinator.createScreenPayload(
-                    snapshot = snapshot,
-                    editableOnly = queryParameters["editable"] == "true",
-                    scrollableOnly = queryParameters["scrollable"] == "true",
-                    packageFilter = queryParameters["package"],
-                    clickableOnly = queryParameters["clickable"] == "true"
-                )
+                data = payload,
+                disclosure = buildScreenDisclosure(payload)
             )
         )
     }
@@ -1094,10 +1110,20 @@ class LocalApiServer(
             "event=click_request nodeId=$nodeId clickPath=${clickResult.attemptedPath} success=${clickResult.performed} failure=${clickResult.failureReason?.name ?: "none"} resolutionKind=${clickResult.selectorResolution?.resolutionKind ?: "none"} requestedStrategy=${clickResult.selectorResolution?.requestedStrategy ?: "none"} effectiveStrategy=${clickResult.selectorResolution?.effectiveStrategy ?: "none"}"
         )
 
+        val selectorStrategy = if (nodeId.isEmpty()) parseSelector(body)?.strategy else null
+        val clickableOnly = if (nodeId.isEmpty()) clickSelectorRequiresClickableTarget(body) else false
+
         return when {
             clickResult.performed -> buildJsonResponse(
                 statusCode = 200,
-                body = successEnvelope(GhosthandApiPayloads.clickPayload(clickResult))
+                body = successEnvelope(
+                    data = GhosthandApiPayloads.clickPayload(clickResult),
+                    disclosure = buildClickDisclosure(
+                        strategy = selectorStrategy,
+                        clickableOnly = clickableOnly,
+                        result = clickResult
+                    )
+                )
             )
             clickResult.failureReason == ClickFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
                 statusCode = 503,
@@ -1110,7 +1136,12 @@ class LocalApiServer(
                 statusCode = 422,
                 body = errorEnvelope(
                     code = "NODE_NOT_FOUND",
-                    message = "Click target node was not found."
+                    message = "Click target node was not found.",
+                    disclosure = buildClickDisclosure(
+                        strategy = selectorStrategy,
+                        clickableOnly = clickableOnly,
+                        result = clickResult
+                    )
                 )
             )
             else -> buildJsonResponse(
@@ -1312,7 +1343,7 @@ class LocalApiServer(
             result.performed -> buildJsonResponse(
                 200,
                 successEnvelope(
-                    JSONObject()
+                    data = JSONObject()
                         .put("performed", true)
                         .put("count", result.performedCount)
                         .put("direction", direction)
@@ -1322,7 +1353,12 @@ class LocalApiServer(
                         .put("beforeSnapshotToken", observation.beforeSnapshotToken)
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity)
+                        .put("finalActivity", observation.finalActivity),
+                    disclosure = buildMotionDisclosure(
+                        route = "/scroll",
+                        performed = result.performed,
+                        surfaceChanged = observation.surfaceChanged
+                    )
                 )
             )
             result.failureReason == ScrollFailureReason.ACCESSIBILITY_UNAVAILABLE ->
@@ -1523,12 +1559,13 @@ class LocalApiServer(
         return buildJsonResponse(
             200,
             successEnvelope(
-                JSONObject()
+                data = JSONObject()
                     .put("changed", result.changed)
                     .put("elapsedMs", result.elapsedMs)
                     .put("snapshotToken", result.snapshotToken ?: JSONObject.NULL)
                     .put("packageName", result.packageName ?: JSONObject.NULL)
-                    .put("activity", result.activity ?: JSONObject.NULL)
+                    .put("activity", result.activity ?: JSONObject.NULL),
+                disclosure = buildWaitUiChangeDisclosure(result)
             )
         )
     }
@@ -1569,21 +1606,26 @@ class LocalApiServer(
         val result = stateCoordinator.waitForCondition(strategy, query, timeoutMs, intervalMs)
 
         return if (result.satisfied) {
-            buildJsonResponse(200, successEnvelope(JSONObject()
-                .put("satisfied", true)
-                .put("elapsedMs", result.elapsedMs)
-                .put("node", result.node?.let { node ->
-                    JSONObject()
-                        .put("nodeId", node.nodeId)
-                        .put("text", node.text ?: JSONObject.NULL)
-                        .put("contentDesc", node.contentDesc ?: JSONObject.NULL)
-                        .put("resourceId", node.resourceId ?: JSONObject.NULL)
-                } ?: JSONObject.NULL)))
+            buildJsonResponse(200, successEnvelope(
+                data = JSONObject()
+                    .put("satisfied", true)
+                    .put("elapsedMs", result.elapsedMs)
+                    .put("node", result.node?.let { node ->
+                        JSONObject()
+                            .put("nodeId", node.nodeId)
+                            .put("text", node.text ?: JSONObject.NULL)
+                            .put("contentDesc", node.contentDesc ?: JSONObject.NULL)
+                            .put("resourceId", node.resourceId ?: JSONObject.NULL)
+                    } ?: JSONObject.NULL)
+            ))
         } else {
-            buildJsonResponse(200, successEnvelope(JSONObject()
-                .put("satisfied", false)
-                .put("elapsedMs", result.elapsedMs)
-                .put("reason", result.attemptedPath)))
+            buildJsonResponse(200, successEnvelope(
+                data = JSONObject()
+                    .put("satisfied", false)
+                    .put("elapsedMs", result.elapsedMs)
+                    .put("reason", result.attemptedPath),
+                disclosure = buildWaitConditionDisclosure(strategy, result)
+            ))
         }
     }
 
@@ -1638,14 +1680,22 @@ class LocalApiServer(
         }
     }
 
-    private fun successEnvelope(data: JSONObject): JSONObject {
+    private fun successEnvelope(data: JSONObject, disclosure: GhosthandDisclosure? = null): JSONObject {
         return JSONObject()
             .put("ok", true)
             .put("data", data)
+            .apply {
+                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
+            }
             .put("meta", buildMeta())
     }
 
-    private fun errorEnvelope(code: String, message: String, details: JSONObject = JSONObject()): JSONObject {
+    private fun errorEnvelope(
+        code: String,
+        message: String,
+        details: JSONObject = JSONObject(),
+        disclosure: GhosthandDisclosure? = null
+    ): JSONObject {
         return JSONObject()
             .put("ok", false)
             .put("error", JSONObject()
@@ -1653,6 +1703,9 @@ class LocalApiServer(
                 .put("message", message)
                 .put("details", details)
             )
+            .apply {
+                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
+            }
             .put("meta", buildMeta())
     }
 
@@ -1955,6 +2008,192 @@ internal fun observeActionSurfaceChange(
     Thread.sleep(300L)
     val afterSnapshot = snapshotProvider()
     return observeScrollSurfaceChange(beforeSnapshot, afterSnapshot)
+}
+
+internal fun buildWaitUiChangeDisclosure(
+    result: StateCoordinator.WaitUiChangeResult
+): GhosthandDisclosure? {
+    if (result.changed) {
+        return null
+    }
+    return GhosthandDisclosure(
+        kind = "discoverability",
+        summary = "GET /wait reports whether a transition was observed during the wait window, not whether the current screen is unusable.",
+        assumptionToCorrect = "`changed=false` means the action failed.",
+        nextBestActions = listOf(
+            "Use /screen to inspect the final settled surface.",
+            "Use /tree if you need fuller structural truth."
+        )
+    )
+}
+
+internal fun buildWaitConditionDisclosure(
+    strategy: String,
+    result: StateCoordinator.WaitConditionResult
+): GhosthandDisclosure? {
+    if (result.satisfied) {
+        return null
+    }
+    return GhosthandDisclosure(
+        kind = "discoverability",
+        summary = "POST /wait only waits for a matching selector condition; it is not the generic settle-wait route.",
+        assumptionToCorrect = "POST /wait behaves like GET /wait.",
+        nextBestActions = listOf(
+            "Use GET /wait when you need a settle window after an action.",
+            "Use /find with ${selectorAliasForStrategy(strategy)} when you need to inspect selector availability first."
+        )
+    )
+}
+
+internal fun buildFindDisclosure(
+    strategy: String,
+    clickableOnly: Boolean,
+    found: Boolean
+): GhosthandDisclosure? {
+    if (found) {
+        return null
+    }
+    if (clickableOnly) {
+        return GhosthandDisclosure(
+            kind = "discoverability",
+            summary = "This lookup only returned actionable targets because `clickable=true` was enabled.",
+            assumptionToCorrect = "A visible label must itself be directly clickable to be discoverable.",
+            nextBestActions = listOf(
+                "Retry /find without clickable=true to inspect child labels first.",
+                alternateSelectorAction(strategy)
+            )
+        )
+    }
+    return GhosthandDisclosure(
+        kind = "discoverability",
+        summary = "This lookup only searched the requested selector surface.",
+        assumptionToCorrect = "Visible labels always live on the same selector surface.",
+        nextBestActions = listOf(alternateSelectorAction(strategy))
+    )
+}
+
+internal fun buildClickDisclosure(
+    strategy: String?,
+    clickableOnly: Boolean,
+    result: ClickAttemptResult
+): GhosthandDisclosure? {
+    val resolution = result.selectorResolution
+    if (result.performed && resolution != null) {
+        if (resolution.usedContainsFallback || resolution.resolutionKind != "matched_node") {
+            val summary = when {
+                resolution.usedContainsFallback && resolution.resolutionKind == "clickable_ancestor" ->
+                    "Ghosthand widened the selector match and dispatched the click on a clickable ancestor."
+                resolution.resolutionKind == "clickable_ancestor" ->
+                    "Ghosthand matched a child label and dispatched the click on its clickable ancestor."
+                resolution.usedContainsFallback ->
+                    "Ghosthand widened the selector match with a bounded contains fallback before clicking."
+                else ->
+                    "Ghosthand used bounded selector reconciliation before dispatching the click."
+            }
+            return GhosthandDisclosure(
+                kind = "fallback",
+                summary = summary,
+                assumptionToCorrect = "The matched visible label is always the directly clickable node.",
+                nextBestActions = listOf(
+                    "Use /find if you need to inspect the matched node before clicking.",
+                    alternateSelectorAction(strategy ?: resolution.requestedStrategy)
+                )
+            )
+        }
+        return null
+    }
+
+    if (!result.performed && result.failureReason == ClickFailureReason.NODE_NOT_FOUND && strategy != null) {
+        return GhosthandDisclosure(
+            kind = "discoverability",
+            summary = if (clickableOnly) {
+                "Selector-based click only searched for actionable targets on the requested selector surface."
+            } else {
+                "Selector-based click only searched the requested selector surface."
+            },
+            assumptionToCorrect = if (clickableOnly) {
+                "The visible label is always directly actionable on the same node."
+            } else {
+                "The requested selector surface is the only place the label can live."
+            },
+            nextBestActions = listOf(
+                if (clickableOnly) {
+                    "Use /find without clickable=true to inspect the matched node first."
+                } else {
+                    "Use /find to inspect whether the label is present on a different surface."
+                },
+                alternateSelectorAction(strategy)
+            )
+        )
+    }
+    return null
+}
+
+internal fun buildScreenDisclosure(payload: JSONObject): GhosthandDisclosure? {
+    return buildScreenDisclosure(
+        partialOutput = payload.optBoolean("partialOutput", false),
+        foregroundStableDuringCapture = payload.optBoolean("foregroundStableDuringCapture", true)
+    )
+}
+
+internal fun buildScreenDisclosure(
+    partialOutput: Boolean,
+    foregroundStableDuringCapture: Boolean
+): GhosthandDisclosure? {
+    val unstableCapture = !foregroundStableDuringCapture
+    if (!partialOutput && !unstableCapture) {
+        return null
+    }
+    return GhosthandDisclosure(
+        kind = if (partialOutput) "shaped_output" else "constraint",
+        summary = if (partialOutput) {
+            "This /screen result is a reduced actionable view; omitted elements are not proof of absence."
+        } else {
+            "This /screen capture completed under foreground drift, so absence should be treated cautiously."
+        },
+        assumptionToCorrect = "Anything not returned by /screen was not present.",
+        nextBestActions = listOf(
+            "Use /tree when you need fuller structural truth.",
+            "Use /screenshot when visual truth and structured output disagree."
+        )
+    )
+}
+
+internal fun buildMotionDisclosure(
+    route: String,
+    performed: Boolean,
+    surfaceChanged: Boolean
+): GhosthandDisclosure? {
+    if (!performed || surfaceChanged) {
+        return null
+    }
+    return GhosthandDisclosure(
+        kind = "ambiguity",
+        summary = "$route dispatched successfully, but Ghosthand did not observe visible-state change yet.",
+        assumptionToCorrect = "`performed=true` proves the content advanced.",
+        nextBestActions = listOf(
+            "Use GET /wait to allow the surface to settle.",
+            "Use /screen to confirm whether visible content actually changed."
+        )
+    )
+}
+
+private fun selectorAliasForStrategy(strategy: String): String {
+    return when (strategy) {
+        "contentDesc", "contentDescContains" -> "desc"
+        "resourceId" -> "id"
+        "focused" -> "focused"
+        else -> "text"
+    }
+}
+
+private fun alternateSelectorAction(strategy: String): String {
+    return when (strategy) {
+        "text", "textContains" -> "Retry with desc if the meaningful label lives in content descriptions."
+        "contentDesc", "contentDescContains" -> "Retry with text if the visible label is rendered as text."
+        "resourceId" -> "Retry with text or desc if you only know the visible label."
+        else -> "Retry with text, desc, or id based on the surface you can actually observe."
+    }
 }
 
 private fun jsonOptIntOrNull(json: JSONObject, key: String): Int? {
