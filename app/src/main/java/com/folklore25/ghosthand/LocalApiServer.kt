@@ -324,6 +324,7 @@ class LocalApiServer(
                     method == "POST" && path == "/scroll" -> buildScrollResponse(requestBody)
                     method == "POST" && path == "/longpress" -> buildLongpressResponse(requestBody)
                     method == "POST" && path == "/gesture" -> buildGestureResponse(requestBody)
+                    method == "POST" && path == "/launch" -> buildLaunchResponse(requestBody)
                     method == "POST" && path == "/back" -> buildGlobalActionResponse("back", AccessibilityService.GLOBAL_ACTION_BACK)
                     method == "POST" && path == "/home" -> buildGlobalActionResponse("home", AccessibilityService.GLOBAL_ACTION_HOME)
                     method == "POST" && path == "/recents" -> buildGlobalActionResponse("recents", AccessibilityService.GLOBAL_ACTION_RECENTS)
@@ -1433,6 +1434,51 @@ class LocalApiServer(
         }
     }
 
+    private fun buildLaunchResponse(requestBody: String): String {
+        val body = parseJsonBodyOrNull(requestBody, "/launch")
+            ?: return badJsonBodyResponse()
+        val packageName = body.optString("packageName").trim()
+        if (packageName.isEmpty()) {
+            return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "packageName is required."))
+        }
+
+        val result = stateCoordinator.launchApp(packageName)
+        val details = JSONObject()
+            .put("launched", result.launched)
+            .put("packageName", result.packageName)
+            .put("label", result.label ?: JSONObject.NULL)
+            .put("strategy", result.strategy)
+            .put("reason", result.reason)
+
+        return when (result.reason) {
+            "launched" -> buildJsonResponse(200, successEnvelope(details))
+            "package_not_installed" -> buildJsonResponse(
+                404,
+                errorEnvelope(
+                    "PACKAGE_NOT_FOUND",
+                    "Package is not installed: ${result.packageName}.",
+                    details
+                )
+            )
+            "launch_intent_unavailable" -> buildJsonResponse(
+                422,
+                errorEnvelope(
+                    "NO_LAUNCH_INTENT",
+                    "Package is installed but does not expose a standard launch intent: ${result.packageName}.",
+                    details
+                )
+            )
+            else -> buildJsonResponse(
+                503,
+                errorEnvelope(
+                    "LAUNCH_FAILED",
+                    "Launch attempt failed for package ${result.packageName}.",
+                    details.put("error", result.error ?: JSONObject.NULL)
+                )
+            )
+        }
+    }
+
     private fun buildClipboardReadResponse(): String {
         val result = stateCoordinator.readClipboard()
         return if (result.available) {
@@ -1599,13 +1645,13 @@ class LocalApiServer(
             .put("meta", buildMeta())
     }
 
-    private fun errorEnvelope(code: String, message: String): JSONObject {
+    private fun errorEnvelope(code: String, message: String, details: JSONObject = JSONObject()): JSONObject {
         return JSONObject()
             .put("ok", false)
             .put("error", JSONObject()
                 .put("code", code)
                 .put("message", message)
-                .put("details", JSONObject())
+                .put("details", details)
             )
             .put("meta", buildMeta())
     }

@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.15", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.16", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -191,6 +191,16 @@ class GhosthandCommandCatalogTest {
 
         val homeRoute = GhosthandCommandCatalog.commands.first { it.id == "home" }
         assertEquals("prompt_completion", homeRoute.transportContract)
+
+        val launchRoute = GhosthandCommandCatalog.commands.first { it.id == "launch" }
+        assertEquals("prompt_completion", launchRoute.transportContract)
+        assertEquals("/launch", launchRoute.path)
+        assertEquals(
+            listOf("launched", "packageName", "label", "strategy", "reason"),
+            launchRoute.responseFields
+        )
+        assertEquals("packageName", launchRoute.params.single().name)
+        assertEquals("body", launchRoute.params.single().location)
 
         val infoRoute = GhosthandCommandCatalog.commands.first { it.id == "info" }
         assertEquals("mixed_state_summary", infoRoute.stateTruth)

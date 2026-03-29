@@ -299,6 +299,7 @@ The Ghosthand app may show release/update state in the operator surface by compa
 
 ### Gestures / System
 
+* `POST /launch`
 * `POST /scroll`
 * `POST /longpress`
 * `POST /gesture`
@@ -1700,21 +1701,74 @@ Dispatch an arbitrary multi-stroke gesture.
 
 ---
 
-## 7.25 `POST /back`
+## 7.25 `POST /launch`
+
+### Purpose
+
+Launch an installed app by package name through the standard Android package launch intent path.
+
+### Request Body
+
+```json
+{
+  "packageName": "com.android.settings"
+}
+```
+
+### Success Response
+
+```json
+{
+  "ok": true,
+  "data": {
+    "launched": true,
+    "packageName": "com.android.settings",
+    "label": "Settings",
+    "strategy": "package_launch_intent",
+    "reason": "launched"
+  }
+}
+```
+
+### Failure Cases
+
+- HTTP `404` + `PACKAGE_NOT_FOUND`
+  - the package is not installed
+- HTTP `422` + `NO_LAUNCH_INTENT`
+  - the package is installed but does not expose a standard launch intent
+- HTTP `503` + `LAUNCH_FAILED`
+  - Ghosthand found a launch intent but the launch attempt failed
+
+Failure responses include `error.details` with:
+
+- `launched`
+- `packageName`
+- `label`
+- `strategy`
+- `reason`
+- `error` when a launch attempt throws
+
+### Notes
+
+- This route is intentionally narrow: package-name launch only.
+- It does not accept component names, deep links, extras, or a generic intent DSL.
+- It does not fake success when a package is missing or has no launcher intent.
+
+## 7.26 `POST /back`
 
 Perform `GLOBAL_ACTION_BACK`. No request body required.
 
-## 7.26 `POST /home`
+## 7.27 `POST /home`
 
 Perform `GLOBAL_ACTION_HOME`. No request body required.
 
-## 7.27 `POST /recents`
+## 7.28 `POST /recents`
 
 Perform `GLOBAL_ACTION_RECENTS`. No request body required.
 
 ---
 
-## 7.28 `GET /clipboard`
+## 7.29 `GET /clipboard`
 
 ### Purpose
 
@@ -1755,7 +1809,7 @@ This endpoint returns `200` for present, empty, and narrow fallback-after-write 
 
 ---
 
-## 7.29 `POST /clipboard`
+## 7.30 `POST /clipboard`
 
 ### Purpose
 

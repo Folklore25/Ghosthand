@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.15"
+    const val schemaVersion = "1.16"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -346,6 +346,29 @@ object GhosthandCommandCatalog {
                 GhosthandCommandParam("strokes", "stroke_array", "body", false, "Custom stroke descriptors")
             ),
             delayedAcceptance = "recommended"
+        ),
+        GhosthandCommandDescriptor(
+            id = "launch",
+            category = "interaction",
+            method = "POST",
+            path = "/launch",
+            description = "Launch an installed app by package name through the standard Android package launch intent path",
+            responseFields = listOf("launched", "packageName", "label", "strategy", "reason"),
+            transportContract = "prompt_completion",
+            params = listOf(
+                GhosthandCommandParam("packageName", "string", "body", true, "Installed Android package name to launch")
+            ),
+            exampleRequest = mapOf("packageName" to "com.android.settings"),
+            exampleResponse = mapOf(
+                "ok" to true,
+                "data" to mapOf(
+                    "launched" to true,
+                    "packageName" to "com.android.settings",
+                    "label" to "Settings",
+                    "strategy" to "package_launch_intent",
+                    "reason" to "launched"
+                )
+            )
         ),
         GhosthandCommandDescriptor(
             id = "back",
