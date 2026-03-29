@@ -14,11 +14,14 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 enum class GhosthandCapability(
@@ -53,11 +56,38 @@ private val Context.capabilityPolicyDataStore: DataStore<Preferences> by prefere
 )
 
 class CapabilityPolicyStore internal constructor(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
     constructor(context: Context) : this(context.applicationContext.capabilityPolicyDataStore)
 
+    private val snapshotState = MutableStateFlow(CapabilityPolicySnapshot())
+
+    init {
+        scope.launch {
+            observeDataStore().collect { snapshot ->
+                snapshotState.value = snapshot
+            }
+        }
+    }
+
     fun observe(): Flow<CapabilityPolicySnapshot> {
+        return snapshotState
+    }
+
+    fun snapshot(): CapabilityPolicySnapshot = snapshotState.value
+
+    fun isAllowed(capability: GhosthandCapability): Boolean = snapshot().allowed(capability)
+
+    fun setAllowed(capability: GhosthandCapability, allowed: Boolean) {
+        scope.launch {
+            dataStore.edit { prefs ->
+                prefs[preferenceKey(capability)] = allowed
+            }
+        }
+    }
+
+    private fun observeDataStore(): Flow<CapabilityPolicySnapshot> {
         return dataStore.data
             .catch { error ->
                 if (error is IOException) {
@@ -67,18 +97,6 @@ class CapabilityPolicyStore internal constructor(
                 }
             }
             .map(::toSnapshot)
-    }
-
-    fun snapshot(): CapabilityPolicySnapshot = runBlocking { observe().first() }
-
-    fun isAllowed(capability: GhosthandCapability): Boolean = snapshot().allowed(capability)
-
-    fun setAllowed(capability: GhosthandCapability, allowed: Boolean) {
-        runBlocking {
-            dataStore.edit { prefs ->
-                prefs[preferenceKey(capability)] = allowed
-            }
-        }
     }
 
     private fun toSnapshot(preferences: Preferences): CapabilityPolicySnapshot {
@@ -91,6 +109,7 @@ class CapabilityPolicyStore internal constructor(
     companion object {
         internal const val DATASTORE_NAME = "ghosthand_capability_policy"
         internal const val LEGACY_SHARED_PREFERENCES_NAME = "ghosthand_capability_policy"
+        private const val LOG_TAG = "CapabilityPolicy"
         private const val PREFS_PREFIX = "capability"
 
         internal fun preferenceKey(capability: GhosthandCapability) =

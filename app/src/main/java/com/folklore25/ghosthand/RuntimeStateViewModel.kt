@@ -11,6 +11,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 
 class RuntimeStateViewModel(
@@ -39,6 +41,11 @@ class RuntimeStateViewModel(
     }
 
     init {
+        viewModelScope.launch {
+            capabilityPolicyStore.observe().collect {
+                RuntimeStateStore.refreshRuntimeSnapshot(getApplication())
+            }
+        }
         refreshReleaseInfo()
     }
 
@@ -48,7 +55,6 @@ class RuntimeStateViewModel(
 
     fun setCapabilityPolicy(capability: GhosthandCapability, allowed: Boolean) {
         capabilityPolicyStore.setAllowed(capability, allowed)
-        RuntimeStateStore.refreshRuntimeSnapshot(getApplication())
     }
 
     fun recordTapProbeTap(source: String) {

@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -30,7 +32,16 @@ class CapabilityPolicyStoreTest {
         store.setAllowed(GhosthandCapability.Accessibility, true)
         store.setAllowed(GhosthandCapability.Screenshot, false)
 
-        val snapshot = store.snapshot()
+        val snapshot = runBlocking {
+            repeat(20) {
+                val value = store.snapshot()
+                if (value.accessibilityAllowed) {
+                    return@runBlocking value
+                }
+                delay(20)
+            }
+            store.snapshot()
+        }
         assertTrue(snapshot.accessibilityAllowed)
         assertFalse(snapshot.screenshotAllowed)
     }

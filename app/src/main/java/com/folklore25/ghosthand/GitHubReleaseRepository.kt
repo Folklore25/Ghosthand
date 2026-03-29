@@ -9,6 +9,7 @@ package com.folklore25.ghosthand
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -35,7 +36,12 @@ internal class GitHubReleaseRepository(
             } else {
                 GitHubReleaseCheckResult.UpToDate(installedVersion, latestRelease)
             }
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(
+                LOG_TAG,
+                "component=GitHubReleaseRepository operation=checkForUpdate endpoint=$latestReleaseEndpoint failure=${error.javaClass.simpleName}",
+                error
+            )
             GitHubReleaseCheckResult.Failed(
                 installedVersion = installedVersion,
                 reason = "Unable to read latest release metadata."
@@ -50,7 +56,12 @@ internal class GitHubReleaseRepository(
                 versionName = packageInfo.versionName ?: return null,
                 versionCode = packageInfo.longVersionCode
             )
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(
+                LOG_TAG,
+                "component=GitHubReleaseRepository operation=installedAppVersion package=${context.packageName} failure=${error.javaClass.simpleName}",
+                error
+            )
             null
         }
     }
@@ -101,6 +112,7 @@ internal class GitHubReleaseRepository(
         private const val NETWORK_TIMEOUT_MS = 5_000
         private const val DEFAULT_LATEST_RELEASE_ENDPOINT =
             "https://api.github.com/repos/folklore25/ghosthand/releases/latest"
+        private const val LOG_TAG = "GitHubReleaseRepo"
     }
 }
 

@@ -12,6 +12,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.util.Base64
+import android.util.Log
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -61,15 +62,21 @@ class MediaProjectionProvider(private val context: Context) {
     fun clearProjection() {
         try {
             virtualDisplay?.release()
-        } catch (_: Exception) { }
+        } catch (error: Exception) {
+            Log.w(LOG_TAG, "component=MediaProjectionProvider operation=releaseVirtualDisplay failure=${error.javaClass.simpleName}", error)
+        }
         virtualDisplay = null
         try {
             imageReader?.close()
-        } catch (_: Exception) { }
+        } catch (error: Exception) {
+            Log.w(LOG_TAG, "component=MediaProjectionProvider operation=closeImageReader failure=${error.javaClass.simpleName}", error)
+        }
         imageReader = null
         try {
             mediaProjection?.stop()
-        } catch (_: Exception) { }
+        } catch (error: Exception) {
+            Log.w(LOG_TAG, "component=MediaProjectionProvider operation=stopProjection failure=${error.javaClass.simpleName}", error)
+        }
         mediaProjection = null
     }
 
@@ -177,6 +184,11 @@ class MediaProjectionProvider(private val context: Context) {
                     image.close()
                 }
             } catch (e: Exception) {
+                Log.e(
+                    LOG_TAG,
+                    "component=MediaProjectionProvider operation=captureScreenshot width=$width height=$height failure=${e.javaClass.simpleName}",
+                    e
+                )
                 result = ScreenshotDispatchResult(
                     available = false,
                     base64 = null,
@@ -186,9 +198,17 @@ class MediaProjectionProvider(private val context: Context) {
                     attemptedPath = "capture_exception_${e.javaClass.simpleName}"
                 )
             } finally {
-                try { virtualDisplay?.release() } catch (_: Exception) { }
+                try {
+                    virtualDisplay?.release()
+                } catch (error: Exception) {
+                    Log.w(LOG_TAG, "component=MediaProjectionProvider operation=finalReleaseVirtualDisplay failure=${error.javaClass.simpleName}", error)
+                }
                 virtualDisplay = null
-                try { imageReader?.close() } catch (_: Exception) { }
+                try {
+                    imageReader?.close()
+                } catch (error: Exception) {
+                    Log.w(LOG_TAG, "component=MediaProjectionProvider operation=finalCloseImageReader failure=${error.javaClass.simpleName}", error)
+                }
                 imageReader = null
                 latch.countDown()
             }
@@ -200,5 +220,6 @@ class MediaProjectionProvider(private val context: Context) {
 
     private companion object {
         private const val SCREENSHOT_TOTAL_TIMEOUT_MS = 5000L
+        private const val LOG_TAG = "MediaProjection"
     }
 }

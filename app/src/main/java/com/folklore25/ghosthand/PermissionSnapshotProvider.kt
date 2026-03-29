@@ -14,6 +14,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
+import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 
 class PermissionSnapshotProvider(
@@ -64,6 +65,8 @@ data class PermissionSnapshot(
     val writeSecureSettings: Boolean?
 )
 
+private const val PERMISSION_SNAPSHOT_LOG_TAG = "PermissionSnapshot"
+
 @Suppress("DEPRECATION")
 private fun PackageManager.getPackageInfoWithPermissions(packageName: String): PackageInfo? {
     return try {
@@ -75,7 +78,12 @@ private fun PackageManager.getPackageInfoWithPermissions(packageName: String): P
         } else {
             getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
         }
-    } catch (_: Exception) {
+    } catch (error: Exception) {
+        Log.w(
+            PERMISSION_SNAPSHOT_LOG_TAG,
+            "component=PermissionSnapshotProvider operation=getPackageInfoWithPermissions package=$packageName failure=${error.javaClass.simpleName}",
+            error
+        )
         null
     }
 }
