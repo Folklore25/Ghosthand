@@ -30,16 +30,8 @@ internal class HomeScreenBinder(
 ) {
     fun bind(state: HomeScreenUiState) {
         versionBadge.text = state.versionBadgeText
-        UiStatusSupport.styleChip(context, versionBadge, StatusTone.Neutral)
-        if (state.updateSummary.actionMode == UpdateActionMode.NONE ||
-            state.updateSummary.actionLabel == null
-        ) {
-            updateButton.visibility = View.INVISIBLE
-        } else {
-            updateButton.visibility = View.VISIBLE
-            updateButton.text = state.updateSummary.actionLabel
-        }
-        updateButton.isEnabled = state.updateSummary.actionEnabled
+        updateButton.visibility = View.VISIBLE
+        updateButton.isEnabled = true
 
         runtimeStatusValue.text = state.runtimeSummary.statusText
         runtimeApiChip.text = state.runtimeSummary.apiStatusText
@@ -147,18 +139,7 @@ internal class HomeScreenActions(
             android.widget.Toast.makeText(activity, R.string.service_requested, android.widget.Toast.LENGTH_SHORT).show()
         }
         views.updateButton.setOnClickListener {
-            val updateSummary = runtimeViewModel.homeScreenState.value?.updateSummary ?: return@setOnClickListener
-            when (updateSummary.actionMode) {
-                UpdateActionMode.NONE -> Unit
-                UpdateActionMode.REFRESH -> {
-                    runtimeViewModel.refreshReleaseInfo()
-                    android.widget.Toast.makeText(activity, R.string.home_update_refresh_started, android.widget.Toast.LENGTH_SHORT).show()
-                }
-                UpdateActionMode.OPEN_RELEASE -> {
-                    val actionUrl = updateSummary.actionUrl ?: return@setOnClickListener
-                    activity.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(actionUrl)))
-                }
-            }
+            UpdateDialogFragment.show(activity.supportFragmentManager)
         }
         views.managePermissionsButton.setOnClickListener {
             activity.startActivity(PermissionsActivity.createIntent(activity))

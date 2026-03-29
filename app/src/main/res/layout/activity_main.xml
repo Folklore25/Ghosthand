@@ -19,7 +19,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:gravity="top"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -35,48 +35,26 @@
                     android:text="@string/home_title"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline3"
                     android:textColor="@color/gh_text_primary" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="end"
-                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/homeVersionBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_status_chip"
-                    android:paddingStart="10dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="6dp"
-                    android:text="@string/runtime_placeholder_unknown"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/homeUpdateButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minWidth="0dp"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:text="@string/home_update_action_refresh"
-                        android:textAllCaps="false"
-                        android:textColor="@color/gh_brand_primary"
-                        app:cornerRadius="18dp"
-                        app:strokeColor="@color/gh_surface_stroke" />
-                </LinearLayout>
+                    android:layout_marginTop="6dp"
+                    android:text="@string/home_version_badge_template"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
             </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeUpdateButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:text="@string/home_update_trigger"
+                android:textAllCaps="false"
+                android:textColor="@color/gh_brand_primary" />
         </LinearLayout>
 
         <TextView
@@ -121,13 +99,9 @@
 
                     <ImageButton
                         android:id="@+id/homeRuntimeInfoButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
+                        style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
-                        android:padding="2dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        android:tint="@color/gh_brand_primary" />
+                        android:layout_marginStart="10dp" />
                 </LinearLayout>
 
                 <TextView
@@ -306,13 +280,9 @@
 
                     <ImageButton
                         android:id="@+id/homePermissionsInfoButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
+                        style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
-                        android:padding="2dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        android:tint="@color/gh_brand_primary" />
+                        android:layout_marginStart="10dp" />
                 </LinearLayout>
 
                 <TextView
@@ -457,13 +427,9 @@
 
                     <ImageButton
                         android:id="@+id/homeDiagnosticsInfoButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
+                        style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
-                        android:padding="2dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        android:tint="@color/gh_brand_primary" />
+                        android:layout_marginStart="10dp" />
                 </LinearLayout>
 
                 <TextView

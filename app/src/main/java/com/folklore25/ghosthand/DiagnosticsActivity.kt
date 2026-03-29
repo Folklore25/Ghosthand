@@ -7,7 +7,6 @@
 package com.folklore25.ghosthand
 
 import android.os.Bundle
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -37,9 +36,8 @@ class DiagnosticsActivity : AppCompatActivity() {
         val accessibilityValue: TextView = findViewById(R.id.diagnosticsAccessibilityValue)
         val screenshotValue: TextView = findViewById(R.id.diagnosticsScreenshotValue)
         val helperResultValue: TextView = findViewById(R.id.diagnosticsHelperResultValue)
-        val runHelperButton: Button = findViewById(R.id.diagnosticsRunHelperButton)
+        val runHelperButton: com.google.android.material.button.MaterialButton = findViewById(R.id.diagnosticsRunHelperButton)
 
-        findViewById<Button>(R.id.diagnosticsBackButton).setOnClickListener { finish() }
         findViewById<android.widget.ImageButton>(R.id.diagnosticsInfoButton).setOnClickListener {
             ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Diagnostics)
         }

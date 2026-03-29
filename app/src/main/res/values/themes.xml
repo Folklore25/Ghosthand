@@ -12,4 +12,14 @@
         <item name="android:statusBarColor">@color/gh_window_background</item>
         <item name="android:navigationBarColor">@color/gh_window_background</item>
     </style>
+
+    <style name="Widget_Ghosthand_InfoButton">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">20dp</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:padding">1dp</item>
+        <item name="android:scaleType">centerInside</item>
+        <item name="android:src">@drawable/ic_info_affordance</item>
+        <item name="android:tint">@color/gh_brand_primary</item>
+    </style>
 </resources>

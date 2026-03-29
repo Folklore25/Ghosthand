@@ -21,7 +21,7 @@ Ghosthand is moving from an accepted runtime and operator-validation baseline in
 - [x] **Phase 16: Release Polish Closeout** - Close the remaining update-interaction loop, delete stale product copy/resources, and finish the final 1.0 release-surface polish without reopening the accepted architecture. (completed 2026-03-30)
 - [x] **Phase 17: Agent Perspective Reconciliation 01** - Reconcile the latest zero-context OpenClaw exploratory evaluation against accepted repo truth, preserve the useful signal, reject misclassifications, and narrow the next platform-owned direction honestly. (completed 2026-03-30)
 - [ ] **Phase 18: Launch Handoff Audit 01** - Audit whether Ghosthand actually lacks a clean app launch/open primitive, or whether launch capability already exists but is only under-expressive or poorly exposed.
-- [ ] **Phase 19: Home Surface Copy And Affordance Polish 01** - Polish the current 1.0 UI with a refined info-affordance system, calmer title/version/update presentation, dedicated update modal flow, permissions top-bar cleanup, and final product copy cleanup without reopening the accepted architecture.
+- [x] **Phase 19: Home Surface Copy And Affordance Polish 01** - Polish the current 1.0 UI with a refined info-affordance system, calmer title/version/update presentation, dedicated update modal flow, permissions top-bar cleanup, and final product copy cleanup without reopening the accepted architecture. (completed 2026-03-30)
 
 ## Phase Details
 
@@ -201,9 +201,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 19-01: Custom info-affordance system and reusable style resources
-- [ ] 19-02: Home title/version/update redesign with dedicated update modal
-- [ ] 19-03: Permissions top-bar cleanup, copy cleanup, and final UI verification
+- [x] 19-01: Custom info-affordance system and reusable style resources
+- [x] 19-02: Home title/version/update redesign with dedicated update modal
+- [x] 19-03: Permissions top-bar cleanup, copy cleanup, and final UI verification
 
 ## Progress
 
@@ -220,4 +220,4 @@ Plans:
 | 16. Release Polish Closeout | 2/2 | Complete | 2026-03-30 |
 | 17. Agent Perspective Reconciliation 01 | 2/2 | Complete | 2026-03-30 |
 | 18. Launch Handoff Audit 01 | 0/2 | Planned | - |
-| 19. Home Surface Copy And Affordance Polish 01 | 0/3 | Planned | - |
+| 19. Home Surface Copy And Affordance Polish 01 | 3/3 | Complete | 2026-03-30 |

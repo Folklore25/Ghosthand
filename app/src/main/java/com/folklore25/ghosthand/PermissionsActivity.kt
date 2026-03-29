@@ -81,7 +81,6 @@ class PermissionsActivity : AppCompatActivity() {
             authorizeButton = findViewById(R.id.screenshotAuthorizeButton)
         )
 
-        findViewById<Button>(R.id.permissionsBackButton).setOnClickListener { finish() }
         findViewById<android.widget.ImageButton>(R.id.permissionsInfoButton).setOnClickListener {
             ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Permissions)
         }

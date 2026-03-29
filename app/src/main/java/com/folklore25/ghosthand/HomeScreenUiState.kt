@@ -37,6 +37,7 @@ internal enum class UpdateActionMode {
 }
 
 internal data class UpdateSummaryUiState(
+    val status: UpdateStatus,
     val titleText: String,
     val subtitleText: String,
     val installedVersionText: String,
@@ -215,6 +216,7 @@ internal object HomeScreenUiStateFactory {
         }
 
         return UpdateSummaryUiState(
+            status = updateUiState.status,
             titleText = textLookup.getString(R.string.home_update_title),
             subtitleText = textLookup.getString(R.string.home_update_subtitle),
             installedVersionText = textLookup.getString(

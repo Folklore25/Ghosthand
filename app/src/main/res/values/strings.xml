@@ -74,9 +74,9 @@
     <string name="status_api_failed">Local API server failed: %1$s</string>
     <string name="common_back">Back</string>
     <string name="common_info">More information</string>
-    <string name="home_subtitle">Human, this app is not built for YOU.</string>
+    <string name="home_subtitle">Local runtime control, governed permissions, and diagnostics.</string>
     <string name="home_update_title">Updates</string>
-    <string name="home_update_subtitle">Check the latest GitHub release here, then complete the full APK update on GitHub.</string>
+    <string name="home_update_subtitle">Ghosthand compares this build with the latest GitHub release and hands full updates off to GitHub.</string>
     <string name="home_update_installed_template">Installed: %1$s</string>
     <string name="home_update_latest_template">Latest release: %1$s</string>
     <string name="home_update_latest_unknown">Not available yet</string>
@@ -86,8 +86,9 @@
     <string name="home_update_status_failed">Update check unavailable</string>
     <string name="home_update_action_checking">Checking</string>
     <string name="home_update_action_download">Update</string>
-    <string name="home_update_action_refresh">Re-check</string>
+    <string name="home_update_action_refresh">Check again</string>
     <string name="home_update_refresh_started">Checking GitHub release again</string>
+    <string name="home_update_trigger">Check updates</string>
     <string name="home_runtime_title">Primary Controls</string>
     <string name="home_runtime_subtitle">Start the local runtime here. Capability authorization and policy stay on the permissions page.</string>
     <string name="home_permissions_title">Permissions</string>
@@ -130,6 +131,13 @@
     <string name="diagnostics_recovery_title">Recovery Tools</string>
     <string name="diagnostics_recovery_subtitle">Keep advanced recovery available without making it the default product surface.</string>
     <string name="home_version_badge_template">v%1$s</string>
+    <string name="update_dialog_title">Updates</string>
+    <string name="update_dialog_subtitle">Ghosthand checks the latest GitHub release and keeps the full APK update handoff explicit.</string>
+    <string name="update_dialog_installed_label">Current version</string>
+    <string name="update_dialog_latest_label">Latest release</string>
+    <string name="update_dialog_status_label">Status</string>
+    <string name="update_dialog_footnote">When an update is available, Ghosthand opens the GitHub release page for the full update.</string>
+    <string name="update_dialog_action_retry">Check again</string>
     <string name="explanation_runtime_title">Runtime</string>
     <string name="explanation_runtime_body">This section controls whether the local Ghosthand runtime is active. It controls the foreground service and the local API availability for OpenClaw. It may need foreground-service permission and the normal Android runtime environment to start correctly. Ghosthand and OpenClaw can use the runtime only when it is active.</string>
     <string name="explanation_permissions_title">Permissions</string>

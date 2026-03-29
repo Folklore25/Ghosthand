@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
+status: complete
 last_updated: "2026-03-30T00:00:00Z"
 progress:
   total_phases: 11
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 27
-  completed_plans: 21
+  completed_plans: 24
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 19 home-surface copy and affordance polish** — a bounded 1.0 UI refinement pass over icons, title/version/update presentation, modalized update flow, permissions top-bar cleanup, and visible product copy.
+Current focus: **Phase 19 home-surface copy and affordance polish completed** — the 1.0 UI refinement pass is implemented and verified.
 
 ## Current Position
 
-Phase: 19 (home-surface-copy-and-affordance-polish-01) — PLANNED
-Plan: 3 plans defined
+Phase: 19 (home-surface-copy-and-affordance-polish-01) — COMPLETE
+Plan: All plans complete
 
 - **Phase:** 19
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Ready to plan/execute bounded UI polish follow-up
+- **Status:** Phase complete
 
 ## Progress
 
@@ -49,9 +49,9 @@ Plan: 3 plans defined
 - Phase 16: **DONE IN CODE** — update interaction, version visibility, stale update-era resources, and final release-polish cleanup are closed
 - Phase 17: **DONE IN DOCS** — exploratory OpenClaw feedback is now reconciled into repo truth through explicit issue classification instead of reactive defect inflation
 - Phase 18: **PLANNED** — launch/open handoff will be audited against the live runtime/catalog/docs before any new primitive is proposed
-- Phase 19: **PLANNED** — home-surface copy and affordance polish will refine the accepted 1.0 UI without reopening architecture or permission logic
+- Phase 19: **DONE IN CODE** — home-surface copy and affordance polish refined the accepted 1.0 UI without reopening architecture or permission logic
 
-Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-quality 1.0 surface with remaining bounded polish follow-ups. Phase 19 is UI refinement, not architecture churn.
+Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-quality 1.0 surface with bounded follow-up work remaining. The latest UI refinement pass is complete.
 
 ## Decisions
 

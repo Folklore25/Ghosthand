@@ -23,6 +23,8 @@ class PermissionsSurfaceLayoutContractTest {
         assertTrue(layout.contains("@+id/permissionsInfoButton"))
         assertTrue(layout.contains("@+id/accessibilityInfoButton"))
         assertTrue(layout.contains("@+id/screenshotInfoButton"))
+        assertFalse(layout.contains("@+id/permissionsBackButton"))
+        assertFalse(layout.contains("@android:drawable/ic_dialog_info"))
         assertFalse(layout.contains("@+id/rootPolicySwitch"))
         assertFalse(layout.contains("@+id/rootAuthorizeButton"))
     }

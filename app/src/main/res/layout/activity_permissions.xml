@@ -16,19 +16,9 @@
         android:paddingEnd="20dp"
         android:paddingBottom="32dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/permissionsBackButton"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/common_back"
-            android:textAllCaps="false"
-            android:textColor="@color/gh_brand_primary" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -42,13 +32,9 @@
 
             <ImageButton
                 android:id="@+id/permissionsInfoButton"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                style="@style/Widget_Ghosthand_InfoButton"
                 android:contentDescription="@string/common_info"
-                android:padding="2dp"
-                android:src="@android:drawable/ic_dialog_info"
-                android:tint="@color/gh_brand_primary" />
+                android:layout_marginStart="10dp" />
         </LinearLayout>
 
         <TextView
@@ -125,13 +111,9 @@
 
                     <ImageButton
                         android:id="@+id/accessibilityInfoButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
+                        style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
-                        android:padding="2dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        android:tint="@color/gh_brand_primary" />
+                        android:layout_marginStart="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/accessibilityPolicySwitch"
@@ -266,13 +248,9 @@
 
                     <ImageButton
                         android:id="@+id/screenshotInfoButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
+                        style="@style/Widget_Ghosthand_InfoButton"
                         android:contentDescription="@string/common_info"
-                        android:padding="2dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        android:tint="@color/gh_brand_primary" />
+                        android:layout_marginStart="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/screenshotPolicySwitch"

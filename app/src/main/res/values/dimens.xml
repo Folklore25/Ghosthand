@@ -1,0 +1,3 @@
+<resources>
+    <dimen name="update_dialog_action_stroke">1dp</dimen>
+</resources>

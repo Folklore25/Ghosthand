@@ -70,9 +70,9 @@
     <string name="status_api_failed">本地 API 服务启动失败：%1$s</string>
     <string name="common_back">返回</string>
     <string name="common_info">更多信息</string>
-    <string name="home_subtitle">Human, this app is not built for YOU.</string>
+    <string name="home_subtitle">本地运行时控制、权限治理与诊断信息。</string>
     <string name="home_update_title">更新</string>
-    <string name="home_update_subtitle">在这里检查 GitHub 最新发行版，再前往 GitHub 完成完整 APK 更新。</string>
+    <string name="home_update_subtitle">Ghosthand 会对比当前版本与 GitHub 最新发行版，并把完整更新明确交给 GitHub 完成。</string>
     <string name="home_update_installed_template">当前版本：%1$s</string>
     <string name="home_update_latest_template">最新发行版：%1$s</string>
     <string name="home_update_latest_unknown">暂不可用</string>
@@ -82,8 +82,9 @@
     <string name="home_update_status_failed">暂时无法检查更新</string>
     <string name="home_update_action_checking">检查中</string>
     <string name="home_update_action_download">更新</string>
-    <string name="home_update_action_refresh">检查更新</string>
+    <string name="home_update_action_refresh">重新检查</string>
     <string name="home_update_refresh_started">正在重新检查 GitHub 发行版</string>
+    <string name="home_update_trigger">检查更新</string>
     <string name="home_runtime_title">主要控制</string>
     <string name="home_runtime_subtitle">在这里启动本地运行时；能力授权与使用策略集中保留在权限页。</string>
     <string name="home_permissions_title">权限</string>
@@ -126,6 +127,13 @@
     <string name="diagnostics_recovery_title">恢复工具</string>
     <string name="diagnostics_recovery_subtitle">保留高级恢复入口，但不让它主导主界面。</string>
     <string name="home_version_badge_template">v%1$s</string>
+    <string name="update_dialog_title">更新</string>
+    <string name="update_dialog_subtitle">Ghosthand 会检查 GitHub 最新发行版，并把完整 APK 更新明确交给 GitHub 完成。</string>
+    <string name="update_dialog_installed_label">当前版本</string>
+    <string name="update_dialog_latest_label">最新发行版</string>
+    <string name="update_dialog_status_label">状态</string>
+    <string name="update_dialog_footnote">检测到更新后，Ghosthand 会打开 GitHub 发行页完成完整更新。</string>
+    <string name="update_dialog_action_retry">检查更新</string>
     <string name="explanation_runtime_title">运行时</string>
     <string name="explanation_runtime_body">此模块控制 Ghosthand 本地运行时是否处于活动状态。它负责前台服务和本地 API 的可用性。启动时可能需要前台服务能力和正常的 Android 运行环境。只有运行时处于活动状态时，Ghosthand 和 OpenClaw 才能使用它。</string>
     <string name="explanation_permissions_title">权限</string>

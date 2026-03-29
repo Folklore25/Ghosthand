@@ -61,7 +61,7 @@ class ScreenUiStateMapperTest {
         )
 
         assertEquals("Up to date", uiState.updateSummary.statusText)
-        assertEquals("Re-check", uiState.updateSummary.actionLabel)
+        assertEquals("Check again", uiState.updateSummary.actionLabel)
         assertTrue(uiState.updateSummary.actionEnabled)
         assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
     }
@@ -82,7 +82,7 @@ class ScreenUiStateMapperTest {
         assertEquals("Unable to read latest release metadata.", uiState.updateSummary.statusText)
         assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
         assertEquals("Latest: Not available yet", uiState.updateSummary.latestReleaseText)
-        assertEquals("Re-check", uiState.updateSummary.actionLabel)
+        assertEquals("Check again", uiState.updateSummary.actionLabel)
         assertTrue(uiState.updateSummary.actionEnabled)
         assertEquals(UpdateActionMode.REFRESH, uiState.updateSummary.actionMode)
     }
@@ -198,7 +198,7 @@ class ScreenUiStateMapperTest {
                 R.string.home_update_status_failed -> "Update check unavailable"
                 R.string.home_update_action_checking -> "Checking"
                 R.string.home_update_action_download -> "Update"
-                R.string.home_update_action_refresh -> "Re-check"
+                R.string.home_update_action_refresh -> "Check again"
                 R.string.service_button_running_label -> "Runtime Active"
                 R.string.service_button_label -> "Start Runtime"
                 R.string.home_permissions_summary_template -> "usable=${args[0]}/${args[1]} allowed=${args[2]}"
