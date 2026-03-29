@@ -73,6 +73,17 @@
     <string name="home_eyebrow">操作台</string>
     <string name="home_subtitle_v2">更安静、更产品化的运行时控制界面，权限与诊断分层展示。</string>
     <string name="home_subtitle_v3">更接近 1.0 产品界面的操作台：运行时状态、真实能力授权与次级诊断清晰分层。</string>
+    <string name="home_update_title">更新</string>
+    <string name="home_update_subtitle">Ghosthand 会检查 GitHub 最新发行版，并将完整 APK 更新引导到 GitHub 完成。</string>
+    <string name="home_update_installed_template">当前版本：%1$s</string>
+    <string name="home_update_latest_template">最新发行版：%1$s</string>
+    <string name="home_update_latest_unknown">暂不可用</string>
+    <string name="home_update_status_checking">正在检查 GitHub 发行版</string>
+    <string name="home_update_status_up_to_date">已是最新版本</string>
+    <string name="home_update_status_available">有可用更新</string>
+    <string name="home_update_status_failed">暂时无法检查更新</string>
+    <string name="home_update_action_download">打开 GitHub 发行页</string>
+    <string name="home_update_action_refresh">暂无可用发行链接</string>
     <string name="home_runtime_title">主要控制</string>
     <string name="home_runtime_subtitle">需要 Ghosthand 对 OpenClaw 可用时再启动运行时。敏感能力的授权与允许策略在独立页面中管理。</string>
     <string name="home_runtime_subtitle_v2">主页面只保留运行时控制。敏感能力授权与使用策略集中放在权限页。</string>

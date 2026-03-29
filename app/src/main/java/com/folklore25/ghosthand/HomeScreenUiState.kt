@@ -30,8 +30,20 @@ internal data class DiagnosticsSummaryUiState(
     val foregroundText: String
 )
 
+internal data class UpdateSummaryUiState(
+    val titleText: String,
+    val subtitleText: String,
+    val installedVersionText: String,
+    val latestReleaseText: String,
+    val statusText: String,
+    val statusTone: StatusTone,
+    val actionLabel: String?,
+    val actionUrl: String?
+)
+
 internal data class HomeScreenUiState(
     val versionBadgeText: String,
+    val updateSummary: UpdateSummaryUiState,
     val runtimeSummary: RuntimeSummaryUiState,
     val permissionsSummaryText: String,
     val accessibilitySummary: HomeCapabilitySummaryUiState,
@@ -42,6 +54,7 @@ internal data class HomeScreenUiState(
 internal object HomeScreenUiStateFactory {
     fun create(
         runtimeState: RuntimeState,
+        updateUiState: UpdateUiState,
         textLookup: UiTextLookup = AppUiTextLookup
     ): HomeScreenUiState {
         val accessibilityUi = CapabilityUiStateFactory.forCapability(
@@ -70,6 +83,7 @@ internal object HomeScreenUiStateFactory {
                 R.string.home_version_badge_template,
                 localizedValue(runtimeState.buildVersion, textLookup)
             ),
+            updateSummary = updateSummary(updateUiState, textLookup),
             runtimeSummary = RuntimeSummaryUiState(
                 statusText = runtimeState.statusText,
                 apiStatusText = UiStatusSupport.booleanText(
@@ -138,5 +152,58 @@ internal object HomeScreenUiStateFactory {
         } else {
             value
         }
+    }
+
+    private fun updateSummary(
+        updateUiState: UpdateUiState,
+        textLookup: UiTextLookup
+    ): UpdateSummaryUiState {
+        val installedVersion = if (updateUiState.installedVersionText.isBlank()) {
+            textLookup.getString(R.string.runtime_placeholder_unknown)
+        } else {
+            updateUiState.installedVersionText
+        }
+        val latestRelease = updateUiState.latestReleaseText
+            ?: textLookup.getString(R.string.home_update_latest_unknown)
+
+        val statusText = when (updateUiState.status) {
+            UpdateStatus.CHECKING -> textLookup.getString(R.string.home_update_status_checking)
+            UpdateStatus.UP_TO_DATE -> textLookup.getString(R.string.home_update_status_up_to_date)
+            UpdateStatus.UPDATE_AVAILABLE -> textLookup.getString(R.string.home_update_status_available)
+            UpdateStatus.CHECK_FAILED -> updateUiState.failureReason
+                ?: textLookup.getString(R.string.home_update_status_failed)
+        }
+
+        val statusTone = when (updateUiState.status) {
+            UpdateStatus.CHECKING -> StatusTone.Neutral
+            UpdateStatus.UP_TO_DATE -> StatusTone.Success
+            UpdateStatus.UPDATE_AVAILABLE -> StatusTone.Warning
+            UpdateStatus.CHECK_FAILED -> StatusTone.Danger
+        }
+
+        val actionLabel = if (updateUiState.status == UpdateStatus.UPDATE_AVAILABLE &&
+            !updateUiState.actionUrl.isNullOrBlank()
+        ) {
+            textLookup.getString(R.string.home_update_action_download)
+        } else {
+            null
+        }
+
+        return UpdateSummaryUiState(
+            titleText = textLookup.getString(R.string.home_update_title),
+            subtitleText = textLookup.getString(R.string.home_update_subtitle),
+            installedVersionText = textLookup.getString(
+                R.string.home_update_installed_template,
+                installedVersion
+            ),
+            latestReleaseText = textLookup.getString(
+                R.string.home_update_latest_template,
+                latestRelease
+            ),
+            statusText = statusText,
+            statusTone = statusTone,
+            actionLabel = actionLabel,
+            actionUrl = updateUiState.actionUrl
+        )
     }
 }

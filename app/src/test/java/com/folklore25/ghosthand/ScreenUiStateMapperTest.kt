@@ -15,12 +15,27 @@ class ScreenUiStateMapperTest {
     @Test
     fun homeScreenStateDerivesPermissionSummaryWithoutRootEntry() {
         val state = sampleRuntimeState()
+        val updateState = UpdateUiStateFactory.fromReleaseCheck(
+            GitHubReleaseCheckResult.UpdateAvailable(
+                installedVersion = InstalledAppVersion("1.0.0", 1),
+                latestRelease = GitHubReleaseInfo(
+                    tagName = "v1.1.0",
+                    name = "1.1.0",
+                    htmlUrl = "https://github.com/folklore25/ghosthand/releases/tag/v1.1.0",
+                    publishedAt = "2026-03-30T00:00:00Z",
+                    apkAssetUrl = null
+                )
+            )
+        )
 
-        val uiState = HomeScreenUiStateFactory.create(state, FakeTextLookup)
+        val uiState = HomeScreenUiStateFactory.create(state, updateState, FakeTextLookup)
 
         assertTrue(uiState.permissionsSummaryText.contains("usable=1/2 allowed=1"))
         assertEquals("System:Enabled, connected Policy:Allowed", uiState.accessibilitySummary.detailText)
         assertFalse(uiState.runtimeSummary.actionEnabled)
+        assertEquals("Installed: 1.0.0", uiState.updateSummary.installedVersionText)
+        assertEquals("Latest: 1.1.0", uiState.updateSummary.latestReleaseText)
+        assertEquals("Update available", uiState.updateSummary.statusText)
     }
 
     @Test
@@ -104,6 +119,17 @@ class ScreenUiStateMapperTest {
                 R.string.permission_authorize_accessibility_button -> "Open Accessibility Settings"
                 R.string.permission_authorize_screenshot_button -> "Grant Screenshot Consent"
                 R.string.home_version_badge_template -> "v${args[0]}"
+                R.string.home_update_title -> "Updates"
+                R.string.home_update_subtitle -> "Release handoff"
+                R.string.home_update_installed_template -> "Installed: ${args[0]}"
+                R.string.home_update_latest_template -> "Latest: ${args[0]}"
+                R.string.home_update_latest_unknown -> "Not available yet"
+                R.string.home_update_status_checking -> "Checking GitHub release"
+                R.string.home_update_status_up_to_date -> "Up to date"
+                R.string.home_update_status_available -> "Update available"
+                R.string.home_update_status_failed -> "Update check unavailable"
+                R.string.home_update_action_download -> "Open GitHub release"
+                R.string.home_update_action_refresh -> "No release link available"
                 R.string.service_button_running_label -> "Runtime Active"
                 R.string.service_button_label -> "Start Runtime"
                 R.string.home_permissions_summary_template_v2 -> "usable=${args[0]}/${args[1]} allowed=${args[2]}"

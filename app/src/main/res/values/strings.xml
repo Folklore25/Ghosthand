@@ -77,6 +77,17 @@
     <string name="home_eyebrow">Operator Surface</string>
     <string name="home_subtitle_v2">A calmer operator surface for runtime control, explicit permissions, and secondary diagnostics.</string>
     <string name="home_subtitle_v3">A product-grade operator surface with explicit runtime state, real capability consent, and quieter diagnostics.</string>
+    <string name="home_update_title">Updates</string>
+    <string name="home_update_subtitle">Ghosthand checks the latest GitHub release and sends you there for the full APK update.</string>
+    <string name="home_update_installed_template">Installed: %1$s</string>
+    <string name="home_update_latest_template">Latest release: %1$s</string>
+    <string name="home_update_latest_unknown">Not available yet</string>
+    <string name="home_update_status_checking">Checking GitHub release</string>
+    <string name="home_update_status_up_to_date">Up to date</string>
+    <string name="home_update_status_available">Update available</string>
+    <string name="home_update_status_failed">Update check unavailable</string>
+    <string name="home_update_action_download">Open GitHub release</string>
+    <string name="home_update_action_refresh">No release link available</string>
     <string name="home_runtime_title">Primary Controls</string>
     <string name="home_runtime_subtitle">Start the runtime when you want Ghosthand available to OpenClaw. Permission consent lives on its own page.</string>
     <string name="home_runtime_subtitle_v2">Runtime control stays in the main flow. Sensitive capability consent and policy stay on the permissions page.</string>

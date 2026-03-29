@@ -29,8 +29,10 @@ class MainActivity : AppCompatActivity() {
         val runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
 
         val versionBadge: TextView = findViewById(R.id.homeVersionBadge)
+        val updateInstalledValue: TextView = findViewById(R.id.homeUpdateInstalledValue)
+        val updateLatestValue: TextView = findViewById(R.id.homeUpdateLatestValue)
+        val updateStatusValue: TextView = findViewById(R.id.homeUpdateStatusValue)
         val updateButton: Button = findViewById(R.id.homeUpdateButton)
-        val githubButton: Button = findViewById(R.id.homeGithubButton)
         val runtimeStatusValue: TextView = findViewById(R.id.homeRuntimeStatusValue)
         val runtimeApiChip: TextView = findViewById(R.id.homeApiStatusValue)
         val runtimeServiceChip: TextView = findViewById(R.id.homeServiceStatusValue)
@@ -57,6 +59,10 @@ class MainActivity : AppCompatActivity() {
             renderHome(
                 state,
                 versionBadge,
+                updateInstalledValue,
+                updateLatestValue,
+                updateStatusValue,
+                updateButton,
                 runtimeStatusValue,
                 runtimeApiChip,
                 runtimeServiceChip,
@@ -78,11 +84,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateButton.setOnClickListener {
-            openExternalUrl(getString(R.string.home_update_url))
-        }
-
-        githubButton.setOnClickListener {
-            openExternalUrl(getString(R.string.home_github_url))
+            runtimeViewModel.homeScreenState.value?.updateSummary?.actionUrl?.let(::openExternalUrl)
+                ?: Toast.makeText(this, R.string.home_external_link_unavailable, Toast.LENGTH_SHORT).show()
         }
 
         managePermissionsButton.setOnClickListener {
@@ -98,6 +101,10 @@ class MainActivity : AppCompatActivity() {
     private fun renderHome(
         state: HomeScreenUiState,
         versionBadge: TextView,
+        updateInstalledValue: TextView,
+        updateLatestValue: TextView,
+        updateStatusValue: TextView,
+        updateButton: Button,
         runtimeStatusValue: TextView,
         runtimeApiChip: TextView,
         runtimeServiceChip: TextView,
@@ -112,6 +119,12 @@ class MainActivity : AppCompatActivity() {
     ) {
         versionBadge.text = state.versionBadgeText
         UiStatusSupport.styleChip(this, versionBadge, StatusTone.Neutral)
+        updateInstalledValue.text = state.updateSummary.installedVersionText
+        updateLatestValue.text = state.updateSummary.latestReleaseText
+        updateStatusValue.text = state.updateSummary.statusText
+        UiStatusSupport.styleChip(this, updateStatusValue, state.updateSummary.statusTone)
+        updateButton.text = state.updateSummary.actionLabel ?: getString(R.string.home_update_action_refresh)
+        updateButton.isEnabled = state.updateSummary.actionUrl != null
         runtimeStatusValue.text = state.runtimeSummary.statusText
         runtimeApiChip.text = state.runtimeSummary.apiStatusText
         runtimeServiceChip.text = state.runtimeSummary.serviceStatusText

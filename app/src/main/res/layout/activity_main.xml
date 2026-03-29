@@ -69,40 +69,88 @@
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
             android:textColor="@color/gh_text_secondary" />
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/homeUpdateCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:gravity="end"
-            android:orientation="horizontal">
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/gh_surface_card"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/gh_surface_stroke"
+            app:strokeWidth="1dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/homeUpdateButton"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:text="@string/home_update_button"
-                android:textAllCaps="false"
-                android:textColor="@color/gh_brand_primary" />
+                android:orientation="vertical"
+                android:padding="20dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/homeGithubButton"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:minWidth="0dp"
-                android:text="@string/home_github_button"
-                android:textAllCaps="false"
-                android:textColor="@color/gh_brand_primary" />
-        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/home_update_title"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:textColor="@color/gh_text_primary" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/home_update_subtitle"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
+
+                <TextView
+                    android:id="@+id/homeUpdateInstalledValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/gh_text_primary" />
+
+                <TextView
+                    android:id="@+id/homeUpdateLatestValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/gh_text_primary" />
+
+                <TextView
+                    android:id="@+id/homeUpdateStatusValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/homeUpdateButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/home_update_action_refresh"
+                    android:textAllCaps="false"
+                    android:textColor="@color/gh_brand_primary"
+                    app:cornerRadius="18dp"
+                    app:strokeColor="@color/gh_surface_stroke" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/runtimeCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/gh_surface_card"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"

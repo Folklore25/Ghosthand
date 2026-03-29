@@ -17,8 +17,7 @@ internal data class UpdateUiState(
     val status: UpdateStatus,
     val installedVersionText: String,
     val latestReleaseText: String?,
-    val statusText: String,
-    val actionLabel: String?,
+    val failureReason: String? = null,
     val actionUrl: String?
 )
 
@@ -29,8 +28,6 @@ internal object UpdateUiStateFactory {
                 status = UpdateStatus.CHECKING,
                 installedVersionText = "",
                 latestReleaseText = null,
-                statusText = "",
-                actionLabel = null,
                 actionUrl = null
             )
 
@@ -38,8 +35,6 @@ internal object UpdateUiStateFactory {
                 status = UpdateStatus.UP_TO_DATE,
                 installedVersionText = result.installedVersion.versionName,
                 latestReleaseText = result.latestRelease.displayVersion,
-                statusText = "up_to_date",
-                actionLabel = null,
                 actionUrl = null
             )
 
@@ -47,8 +42,6 @@ internal object UpdateUiStateFactory {
                 status = UpdateStatus.UPDATE_AVAILABLE,
                 installedVersionText = result.installedVersion.versionName,
                 latestReleaseText = result.latestRelease.displayVersion,
-                statusText = "update_available",
-                actionLabel = "open_github",
                 actionUrl = result.latestRelease.htmlUrl
             )
 
@@ -56,8 +49,7 @@ internal object UpdateUiStateFactory {
                 status = UpdateStatus.CHECK_FAILED,
                 installedVersionText = result.installedVersion?.versionName.orEmpty(),
                 latestReleaseText = null,
-                statusText = result.reason,
-                actionLabel = null,
+                failureReason = result.reason,
                 actionUrl = null
             )
         }

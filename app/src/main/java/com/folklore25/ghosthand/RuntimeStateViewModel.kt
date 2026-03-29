@@ -10,22 +10,36 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import kotlin.concurrent.thread
 
 class RuntimeStateViewModel(
     application: Application
 ) : AndroidViewModel(application) {
     private val capabilityPolicyStore = CapabilityPolicyStore(application)
+    private val releaseRepository = GitHubReleaseRepository(application)
+    private val updateState = MutableLiveData<UpdateUiState>().apply {
+        value = UpdateUiStateFactory.fromReleaseCheck(GitHubReleaseCheckResult.Checking)
+    }
 
     val runtimeState: LiveData<RuntimeState> = RuntimeStateStore.observe()
     internal val homeScreenState = MediatorLiveData<HomeScreenUiState>().apply {
-        addSource(runtimeState) { state ->
-            value = HomeScreenUiStateFactory.create(state)
+        fun publish() {
+            val runtime = runtimeState.value ?: return
+            val update = updateState.value ?: return
+            value = HomeScreenUiStateFactory.create(runtime, update)
         }
+        addSource(runtimeState) { publish() }
+        addSource(updateState) { publish() }
     }
     internal val permissionsScreenState = MediatorLiveData<PermissionsScreenUiState>().apply {
         addSource(runtimeState) { state ->
             value = PermissionsScreenUiStateFactory.create(state)
         }
+    }
+
+    init {
+        refreshReleaseInfo()
     }
 
     fun requestForegroundServiceStart() {
@@ -39,5 +53,13 @@ class RuntimeStateViewModel(
 
     fun recordTapProbeTap(source: String) {
         RuntimeStateStore.markTapProbeTapped(source)
+    }
+
+    fun refreshReleaseInfo() {
+        updateState.value = UpdateUiStateFactory.fromReleaseCheck(GitHubReleaseCheckResult.Checking)
+        thread(name = "ghosthand-release-check", isDaemon = true) {
+            val result = releaseRepository.checkForUpdate()
+            updateState.postValue(UpdateUiStateFactory.fromReleaseCheck(result))
+        }
     }
 }
