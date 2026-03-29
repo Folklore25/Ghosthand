@@ -26,6 +26,10 @@ class HomeSurfaceLayoutContractTest {
         assertTrue(layout.contains("@+id/homeUpdateInstalledValue"))
         assertTrue(layout.contains("@+id/homeUpdateLatestValue"))
         assertTrue(layout.contains("@+id/homeUpdateStatusValue"))
+        assertTrue(layout.contains("@+id/homeUpdateInfoButton"))
+        assertTrue(layout.contains("@+id/homeRuntimeInfoButton"))
+        assertTrue(layout.contains("@+id/homePermissionsInfoButton"))
+        assertTrue(layout.contains("@+id/homeDiagnosticsInfoButton"))
         assertTrue(layout.contains("@+id/openPermissionsButton"))
         assertTrue(layout.contains("@+id/openDiagnosticsButton"))
     }

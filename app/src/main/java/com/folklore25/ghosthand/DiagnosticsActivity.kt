@@ -40,6 +40,9 @@ class DiagnosticsActivity : AppCompatActivity() {
         val runHelperButton: Button = findViewById(R.id.diagnosticsRunHelperButton)
 
         findViewById<Button>(R.id.diagnosticsBackButton).setOnClickListener { finish() }
+        findViewById<android.widget.ImageButton>(R.id.diagnosticsInfoButton).setOnClickListener {
+            ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Diagnostics)
+        }
 
         runHelperButton.setOnClickListener {
             val result = devAccessibilityHelper.attemptEnableAccessibility()

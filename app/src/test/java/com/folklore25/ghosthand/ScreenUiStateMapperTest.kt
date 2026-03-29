@@ -132,7 +132,7 @@ class ScreenUiStateMapperTest {
                 R.string.home_update_action_refresh -> "No release link available"
                 R.string.service_button_running_label -> "Runtime Active"
                 R.string.service_button_label -> "Start Runtime"
-                R.string.home_permissions_summary_template_v2 -> "usable=${args[0]}/${args[1]} allowed=${args[2]}"
+                R.string.home_permissions_summary_template -> "usable=${args[0]}/${args[1]} allowed=${args[2]}"
                 R.string.home_permission_detail_template -> "System:${args[0]} Policy:${args[1]}"
                 R.string.last_service_action_default -> "Not started"
                 R.string.runtime_placeholder_unknown -> "Unknown"

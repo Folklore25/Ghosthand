@@ -25,19 +25,37 @@
             android:textAllCaps="false"
             android:textColor="@color/gh_brand_primary" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/permissions_title"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
-            android:textColor="@color/gh_text_primary" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/permissions_title"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
+                android:textColor="@color/gh_text_primary" />
+
+            <ImageButton
+                android:id="@+id/permissionsInfoButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/common_info"
+                android:padding="4dp"
+                android:src="@android:drawable/ic_dialog_info"
+                android:tint="@color/gh_brand_primary" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/permissions_subtitle_v2"
+            android:text="@string/permissions_subtitle"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
             android:textColor="@color/gh_text_secondary" />
 
@@ -55,7 +73,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="18dp"
-                android:text="@string/permissions_layer_note_v2"
+                android:text="@string/permissions_layer_note"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                 android:textColor="@color/gh_text_primary" />
         </com.google.android.material.card.MaterialCardView>
@@ -105,10 +123,21 @@
                             android:textColor="@color/gh_text_secondary" />
                     </LinearLayout>
 
+                    <ImageButton
+                        android:id="@+id/accessibilityInfoButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/common_info"
+                        android:padding="4dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        android:tint="@color/gh_brand_primary" />
+
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/accessibilityPolicySwitch"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
                         app:thumbTint="@color/gh_switch_thumb_tint"
                         app:trackTint="@color/gh_switch_track_tint" />
                 </LinearLayout>
@@ -230,15 +259,26 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/permission_screenshot_description_v2"
+                            android:text="@string/permission_screenshot_description"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                             android:textColor="@color/gh_text_secondary" />
                     </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/screenshotInfoButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/common_info"
+                        android:padding="4dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        android:tint="@color/gh_brand_primary" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/screenshotPolicySwitch"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
                         app:thumbTint="@color/gh_switch_thumb_tint"
                         app:trackTint="@color/gh_switch_track_tint" />
                 </LinearLayout>

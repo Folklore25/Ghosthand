@@ -29,6 +29,18 @@ class MainActivity : AppCompatActivity() {
         val runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
 
         val versionBadge: TextView = findViewById(R.id.homeVersionBadge)
+        findViewById<android.widget.ImageButton>(R.id.homeUpdateInfoButton).setOnClickListener {
+            ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Update)
+        }
+        findViewById<android.widget.ImageButton>(R.id.homeRuntimeInfoButton).setOnClickListener {
+            ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Runtime)
+        }
+        findViewById<android.widget.ImageButton>(R.id.homePermissionsInfoButton).setOnClickListener {
+            ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Permissions)
+        }
+        findViewById<android.widget.ImageButton>(R.id.homeDiagnosticsInfoButton).setOnClickListener {
+            ModuleExplanationDialogFragment.show(supportFragmentManager, ModuleExplanation.Diagnostics)
+        }
         val updateInstalledValue: TextView = findViewById(R.id.homeUpdateInstalledValue)
         val updateLatestValue: TextView = findViewById(R.id.homeUpdateLatestValue)
         val updateStatusValue: TextView = findViewById(R.id.homeUpdateStatusValue)
@@ -84,8 +96,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateButton.setOnClickListener {
-            runtimeViewModel.homeScreenState.value?.updateSummary?.actionUrl?.let(::openExternalUrl)
-                ?: Toast.makeText(this, R.string.home_external_link_unavailable, Toast.LENGTH_SHORT).show()
+            val actionUrl = runtimeViewModel.homeScreenState.value?.updateSummary?.actionUrl
+            if (actionUrl == null) {
+                runtimeViewModel.refreshReleaseInfo()
+                Toast.makeText(this, R.string.home_update_refresh_started, Toast.LENGTH_SHORT).show()
+            } else {
+                openExternalUrl(actionUrl)
+            }
         }
 
         managePermissionsButton.setOnClickListener {

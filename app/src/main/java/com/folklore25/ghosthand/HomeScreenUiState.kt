@@ -111,7 +111,7 @@ internal object HomeScreenUiStateFactory {
                 }
             ),
             permissionsSummaryText = textLookup.getString(
-                R.string.home_permissions_summary_template_v2,
+                R.string.home_permissions_summary_template,
                 effectiveCount,
                 2,
                 allowedCount

@@ -20,6 +20,9 @@ class PermissionsSurfaceLayoutContractTest {
 
         assertTrue(layout.contains("@+id/accessibilityPolicySwitch"))
         assertTrue(layout.contains("@+id/screenshotPolicySwitch"))
+        assertTrue(layout.contains("@+id/permissionsInfoButton"))
+        assertTrue(layout.contains("@+id/accessibilityInfoButton"))
+        assertTrue(layout.contains("@+id/screenshotInfoButton"))
         assertFalse(layout.contains("@+id/rootPolicySwitch"))
         assertFalse(layout.contains("@+id/rootAuthorizeButton"))
     }
@@ -37,6 +40,8 @@ class PermissionsSurfaceLayoutContractTest {
 
         assertTrue(activity.contains("PermissionsScreenUiState"))
         assertFalse(activity.contains("CapabilityPolicyStore("))
-        assertTrue(strings.contains("permissions_layer_note_v2"))
+        assertTrue(activity.contains("ModuleExplanationDialogFragment.show"))
+        assertTrue(strings.contains("permissions_layer_note"))
+        assertFalse(strings.contains("permissions_layer_note_v2"))
     }
 }
