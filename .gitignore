@@ -16,6 +16,7 @@ app/build/
 
 # OS noise
 .DS_Store
+__MACOSX/
 
 # Local workflow state and unpublished project context
 .planning/
@@ -41,4 +42,3 @@ AGENTS.md
 app/.gitignore
 icon.png
 icon.svg
-
