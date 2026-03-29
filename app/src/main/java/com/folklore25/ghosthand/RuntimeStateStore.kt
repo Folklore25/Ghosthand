@@ -29,7 +29,6 @@ object RuntimeStateStore {
         val diagnosticsSnapshot = HomeDiagnosticsProvider(appContext).snapshot()
         val permissionSnapshot = PermissionSnapshotProvider(appContext).snapshot()
         val foregroundSnapshot = ForegroundAppProvider(appContext).snapshot()
-        val rootSnapshot = RootControlProvider().availability()
         val executionStatus = GhostAccessibilityExecutionCoreRegistry.currentStatus()
         val accessibilitySnapshot = AccessibilityStatusProvider(appContext)
             .snapshot(
@@ -42,7 +41,6 @@ object RuntimeStateStore {
         val capabilityAccess = CapabilityAccessSnapshotFactory.create(
             accessibilityStatus = accessibilitySnapshot,
             mediaProjectionGranted = screenshotPermissionGranted,
-            rootAvailability = rootSnapshot,
             policy = capabilityPolicy
         )
 
@@ -53,9 +51,6 @@ object RuntimeStateStore {
                 tapProbeUiBuildState = diagnosticsSnapshot.tapProbeUiBuildState,
                 writeSecureSettingsGranted = permissionSnapshot.writeSecureSettings,
                 foregroundPackage = foregroundSnapshot.packageName,
-                rootAvailable = rootSnapshot.available,
-                rootHealthy = rootSnapshot.healthy,
-                rootStatus = rootSnapshot.status,
                 screenshotPermissionGranted = screenshotPermissionGranted,
                 accessibilityServiceConnected = accessibilitySnapshot.connected,
                 accessibilityDispatchCapable = accessibilitySnapshot.dispatchCapable,

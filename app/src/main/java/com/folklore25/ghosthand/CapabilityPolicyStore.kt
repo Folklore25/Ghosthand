@@ -25,20 +25,17 @@ enum class GhosthandCapability(
     val prefKey: String
 ) {
     Accessibility("accessibility"),
-    Screenshot("screenshot"),
-    Root("root")
+    Screenshot("screenshot")
 }
 
 data class CapabilityPolicySnapshot(
     val accessibilityAllowed: Boolean = false,
-    val screenshotAllowed: Boolean = false,
-    val rootAllowed: Boolean = false
+    val screenshotAllowed: Boolean = false
 ) {
     fun allowed(capability: GhosthandCapability): Boolean {
         return when (capability) {
             GhosthandCapability.Accessibility -> accessibilityAllowed
             GhosthandCapability.Screenshot -> screenshotAllowed
-            GhosthandCapability.Root -> rootAllowed
         }
     }
 }
@@ -87,8 +84,7 @@ class CapabilityPolicyStore internal constructor(
     private fun toSnapshot(preferences: Preferences): CapabilityPolicySnapshot {
         return CapabilityPolicySnapshot(
             accessibilityAllowed = preferences[preferenceKey(GhosthandCapability.Accessibility)] ?: false,
-            screenshotAllowed = preferences[preferenceKey(GhosthandCapability.Screenshot)] ?: false,
-            rootAllowed = preferences[preferenceKey(GhosthandCapability.Root)] ?: false
+            screenshotAllowed = preferences[preferenceKey(GhosthandCapability.Screenshot)] ?: false
         )
     }
 
@@ -103,8 +99,7 @@ class CapabilityPolicyStore internal constructor(
         internal fun migratedSnapshot(legacyPreferences: Map<String, *>): CapabilityPolicySnapshot {
             return CapabilityPolicySnapshot(
                 accessibilityAllowed = legacyPreferences[preferenceKey(GhosthandCapability.Accessibility).name] as? Boolean ?: false,
-                screenshotAllowed = legacyPreferences[preferenceKey(GhosthandCapability.Screenshot).name] as? Boolean ?: false,
-                rootAllowed = legacyPreferences[preferenceKey(GhosthandCapability.Root).name] as? Boolean ?: false
+                screenshotAllowed = legacyPreferences[preferenceKey(GhosthandCapability.Screenshot).name] as? Boolean ?: false
             )
         }
     }

@@ -140,8 +140,6 @@ class LocalApiServer(
                     method == "POST" && path == "/tap" -> buildTapResponse(requestBody)
                     method == "POST" && path == "/swipe" -> buildSwipeResponse(requestBody)
                     method == "POST" && path == "/type" -> buildTypeResponse(requestBody)
-                    method == "POST" && path == "/launch" -> buildLaunchResponse(requestBody)
-                    method == "POST" && path == "/stop" -> buildStopResponse(requestBody)
                     method == "GET" && path == "/screen" -> buildScreenResponse(queryParameters)
                     method == "GET" && path == "/screenshot" -> buildScreenshotGetResponse(queryParameters)
                     method == "POST" && path == "/screenshot" -> buildScreenshotResponse(requestBody)
@@ -439,7 +437,7 @@ class LocalApiServer(
             TreeUnavailableReason.ACCESSIBILITY_SERVICE_DISCONNECTED ->
                 "Accessibility service is unavailable or not connected."
             TreeUnavailableReason.NO_ACTIVE_ROOT ->
-                "Accessibility tree is unavailable because no active root is available."
+                "Accessibility tree is unavailable because no active window root is available."
             null ->
                 "Accessibility tree is unavailable."
         }
@@ -469,21 +467,12 @@ class LocalApiServer(
         val backend = body.optString("backend", DEFAULT_BACKEND).ifBlank { DEFAULT_BACKEND }
         when (backend) {
             BACKEND_AUTO, BACKEND_ACCESSIBILITY -> Unit
-            BACKEND_ROOT -> {
-                return buildJsonResponse(
-                    statusCode = 503,
-                    body = errorEnvelope(
-                        code = "ROOT_UNAVAILABLE",
-                        message = "backend=root is not implemented."
-                    )
-                )
-            }
             else -> {
                 return buildJsonResponse(
                     statusCode = 422,
                     body = errorEnvelope(
                         code = "UNSUPPORTED_OPERATION",
-                        message = "Unsupported backend: $backend."
+                        message = "Only backend=accessibility and backend=auto are supported."
                     )
                 )
             }
@@ -608,21 +597,12 @@ class LocalApiServer(
         val backend = body.optString("backend", DEFAULT_BACKEND).ifBlank { DEFAULT_BACKEND }
         when (backend) {
             BACKEND_AUTO, BACKEND_ACCESSIBILITY -> Unit
-            BACKEND_ROOT -> {
-                return buildJsonResponse(
-                    statusCode = 503,
-                    body = errorEnvelope(
-                        code = "ROOT_UNAVAILABLE",
-                        message = "backend=root is not implemented."
-                    )
-                )
-            }
             else -> {
                 return buildJsonResponse(
                     statusCode = 422,
                     body = errorEnvelope(
                         code = "UNSUPPORTED_OPERATION",
-                        message = "Unsupported backend: $backend."
+                        message = "Only backend=accessibility and backend=auto are supported."
                     )
                 )
             }
@@ -720,21 +700,12 @@ class LocalApiServer(
         val backend = body.optString("backend", DEFAULT_BACKEND).ifBlank { DEFAULT_BACKEND }
         when (backend) {
             BACKEND_AUTO, BACKEND_ACCESSIBILITY -> Unit
-            BACKEND_ROOT -> {
-                return buildJsonResponse(
-                    statusCode = 503,
-                    body = errorEnvelope(
-                        code = "ROOT_UNAVAILABLE",
-                        message = "backend=root is not implemented."
-                    )
-                )
-            }
             else -> {
                 return buildJsonResponse(
                     statusCode = 422,
                     body = errorEnvelope(
                         code = "UNSUPPORTED_OPERATION",
-                        message = "Unsupported backend: $backend."
+                        message = "Only backend=accessibility and backend=auto are supported."
                     )
                 )
             }
@@ -793,125 +764,6 @@ class LocalApiServer(
                     } else {
                         "Accessibility text input action failed."
                     }
-                )
-            )
-        }
-    }
-
-    private fun buildLaunchResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
-
-        val packageName = body.optString("packageName").trim()
-        if (packageName.isEmpty()) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "INVALID_ARGUMENT",
-                    message = "packageName is required."
-                )
-            )
-        }
-
-        val activity = body.optString("activity").trim().ifEmpty { null }
-        val result = stateCoordinator.launchApp(packageName, activity)
-
-        return when {
-            result.performed -> buildJsonResponse(
-                statusCode = 200,
-                body = successEnvelope(
-                    JSONObject()
-                        .put("launched", true)
-                        .put("packageName", result.packageName)
-                )
-            )
-            result.failureReason == RootControlFailureReason.ROOT_AUTHORIZATION_REQUIRED -> buildJsonResponse(
-                statusCode = 503,
-                body = errorEnvelope(
-                    code = "ROOT_UNAVAILABLE",
-                    message = "Root is not authorized for app launch. First-time root authorization must be granted manually in the root manager."
-                )
-            )
-            result.failureReason == RootControlFailureReason.ROOT_UNAVAILABLE -> buildJsonResponse(
-                statusCode = 503,
-                body = errorEnvelope(
-                    code = "ROOT_UNAVAILABLE",
-                    message = "Root is not available to the Ghosthand app process for app launch."
-                )
-            )
-            else -> buildJsonResponse(
-                statusCode = 422,
-                body = errorEnvelope(
-                    code = "APP_LAUNCH_FAILED",
-                    message = "App launch failed."
-                )
-            )
-        }
-    }
-
-    private fun buildStopResponse(requestBody: String): String {
-        val body = try {
-            JSONObject(requestBody.ifBlank { "{}" })
-        } catch (_: JSONException) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "BAD_REQUEST",
-                    message = "Request body must be valid JSON."
-                )
-            )
-        }
-
-        val packageName = body.optString("packageName").trim()
-        if (packageName.isEmpty()) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "INVALID_ARGUMENT",
-                    message = "packageName is required."
-                )
-            )
-        }
-
-        val result = stateCoordinator.stopApp(packageName)
-
-        return when {
-            result.performed -> buildJsonResponse(
-                statusCode = 200,
-                body = successEnvelope(
-                    JSONObject()
-                        .put("stopped", true)
-                        .put("packageName", result.packageName)
-                )
-            )
-            result.failureReason == RootControlFailureReason.ROOT_AUTHORIZATION_REQUIRED -> buildJsonResponse(
-                statusCode = 503,
-                body = errorEnvelope(
-                    code = "ROOT_UNAVAILABLE",
-                    message = "Root is not authorized for app stop. First-time root authorization must be granted manually in the root manager."
-                )
-            )
-            result.failureReason == RootControlFailureReason.ROOT_UNAVAILABLE -> buildJsonResponse(
-                statusCode = 503,
-                body = errorEnvelope(
-                    code = "ROOT_UNAVAILABLE",
-                    message = "Root is not available to the Ghosthand app process for app stop."
-                )
-            )
-            else -> buildJsonResponse(
-                statusCode = 422,
-                body = errorEnvelope(
-                    code = "APP_STOP_FAILED",
-                    message = "App stop failed."
                 )
             )
         }
@@ -1680,7 +1532,6 @@ class LocalApiServer(
         private const val TARGET_TYPE_NODE = "node"
         private const val BACKEND_AUTO = "auto"
         private const val BACKEND_ACCESSIBILITY = "accessibility"
-        private const val BACKEND_ROOT = "root"
         private const val DEFAULT_BACKEND = "auto"
         private const val TAP_LOG_TAG = "GhostTap"
         private const val SWIPE_LOG_TAG = "GhostSwipe"
@@ -1733,13 +1584,10 @@ internal object CapabilityRoutePolicy {
         "/wait"
     )
     private val screenshotPaths = setOf("/screenshot")
-    private val rootPaths = setOf("/launch", "/stop")
-
     fun routeCapability(path: String): GhosthandCapability? {
         return when {
             path in accessibilityPaths -> GhosthandCapability.Accessibility
             path in screenshotPaths -> GhosthandCapability.Screenshot
-            path in rootPaths -> GhosthandCapability.Root
             else -> null
         }
     }
@@ -1762,8 +1610,6 @@ internal object CapabilityRoutePolicy {
                 "Accessibility control is disabled by app policy. Enable it on the Permissions page before using accessibility-backed Ghosthand routes."
             GhosthandCapability.Screenshot ->
                 "Screenshot capture is disabled by app policy. Enable it on the Permissions page before using screenshot routes."
-            GhosthandCapability.Root ->
-                "Root capability is disabled by app policy. Enable it on the Permissions page before using root-backed routes."
         }
     }
 }

@@ -471,17 +471,5 @@
                     app:strokeColor="@color/gh_surface_stroke" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/rootEntryButton"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="@color/gh_danger_red"
-            android:text="@string/home_root_entry_default_v2"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            app:cornerRadius="18dp" />
     </LinearLayout>
 </ScrollView>

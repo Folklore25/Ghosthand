@@ -75,24 +75,6 @@ internal object CapabilityUiStateFactory {
                     }
                 )
             }
-
-            GhosthandCapability.Root -> {
-                val snapshot = runtimeState.capabilityAccess.root
-                CapabilityPermissionUiState(
-                    systemLabel = UiStatusSupport.rootStatusText(textLookup, snapshot.system.status),
-                    systemTone = UiStatusSupport.rootTone(snapshot.system.status),
-                    policyLabel = UiStatusSupport.policyStatusText(textLookup, snapshot.policy.allowed),
-                    policyTone = UiStatusSupport.policyTone(snapshot.policy.allowed),
-                    effectiveLabel = UiStatusSupport.effectiveStatusText(textLookup, snapshot.effective),
-                    effectiveTone = UiStatusSupport.effectiveTone(snapshot.effective.usableNow),
-                    policyAllowed = snapshot.policy.allowed,
-                    authorizeLabel = if (snapshot.system.authorized) {
-                        textLookup.getString(R.string.permission_refresh_root_button)
-                    } else {
-                        textLookup.getString(R.string.permission_authorize_root_button)
-                    }
-                )
-            }
         }
     }
 }

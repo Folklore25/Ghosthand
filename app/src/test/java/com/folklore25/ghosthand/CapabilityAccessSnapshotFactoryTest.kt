@@ -13,7 +13,7 @@ import org.junit.Test
 
 class CapabilityAccessSnapshotFactoryTest {
     @Test
-    fun accessibilityRequiresPolicyAndConnectedService() {
+    fun accessibilityRequiresPolicyAndDispatchCapableService() {
         val snapshot = CapabilityAccessSnapshotFactory.create(
             accessibilityStatus = AccessibilityStatusSnapshot(
                 implemented = true,
@@ -24,16 +24,9 @@ class CapabilityAccessSnapshotFactoryTest {
                 status = "enabled_connected"
             ),
             mediaProjectionGranted = false,
-            rootAvailability = RootAvailabilitySnapshot(
-                implemented = true,
-                available = false,
-                healthy = false,
-                status = "unavailable"
-            ),
             policy = CapabilityPolicySnapshot(
                 accessibilityAllowed = true,
-                screenshotAllowed = false,
-                rootAllowed = false
+                screenshotAllowed = false
             )
         )
 
@@ -55,16 +48,9 @@ class CapabilityAccessSnapshotFactoryTest {
                 status = "enabled_idle"
             ),
             mediaProjectionGranted = false,
-            rootAvailability = RootAvailabilitySnapshot(
-                implemented = true,
-                available = false,
-                healthy = false,
-                status = "unavailable"
-            ),
             policy = CapabilityPolicySnapshot(
                 accessibilityAllowed = true,
-                screenshotAllowed = false,
-                rootAllowed = false
+                screenshotAllowed = false
             )
         )
 
@@ -75,7 +61,7 @@ class CapabilityAccessSnapshotFactoryTest {
     }
 
     @Test
-    fun screenshotCanUseRootFallbackOnlyWhenBothPoliciesAllowIt() {
+    fun screenshotUsesOnlyAccessibilityAndMediaProjectionTruth() {
         val snapshot = CapabilityAccessSnapshotFactory.create(
             accessibilityStatus = AccessibilityStatusSnapshot(
                 implemented = true,
@@ -86,27 +72,19 @@ class CapabilityAccessSnapshotFactoryTest {
                 status = "disabled"
             ),
             mediaProjectionGranted = false,
-            rootAvailability = RootAvailabilitySnapshot(
-                implemented = true,
-                available = true,
-                healthy = true,
-                status = "available"
-            ),
             policy = CapabilityPolicySnapshot(
                 accessibilityAllowed = false,
-                screenshotAllowed = true,
-                rootAllowed = true
+                screenshotAllowed = true
             )
         )
 
-        assertTrue(snapshot.root.effective.usableNow)
-        assertTrue(snapshot.screenshot.system.rootFallbackAvailable)
-        assertTrue(snapshot.screenshot.effective.usableNow)
-        assertEquals("root_fallback", snapshot.screenshot.effective.reason)
+        assertFalse(snapshot.screenshot.system.authorized)
+        assertFalse(snapshot.screenshot.effective.usableNow)
+        assertEquals("system_missing", snapshot.screenshot.effective.reason)
     }
 
     @Test
-    fun screenshotRemainsBlockedWhenPolicyIsOffEvenIfSystemPathExists() {
+    fun screenshotRemainsBlockedWhenPolicyIsOffEvenIfMediaProjectionExists() {
         val snapshot = CapabilityAccessSnapshotFactory.create(
             accessibilityStatus = AccessibilityStatusSnapshot(
                 implemented = true,
@@ -117,16 +95,9 @@ class CapabilityAccessSnapshotFactoryTest {
                 status = "enabled_connected"
             ),
             mediaProjectionGranted = true,
-            rootAvailability = RootAvailabilitySnapshot(
-                implemented = true,
-                available = true,
-                healthy = true,
-                status = "available"
-            ),
             policy = CapabilityPolicySnapshot(
                 accessibilityAllowed = true,
-                screenshotAllowed = false,
-                rootAllowed = true
+                screenshotAllowed = false
             )
         )
 
@@ -134,35 +105,5 @@ class CapabilityAccessSnapshotFactoryTest {
         assertTrue(snapshot.screenshot.system.authorized)
         assertFalse(snapshot.screenshot.effective.usableNow)
         assertEquals("policy_blocked", snapshot.screenshot.effective.reason)
-    }
-
-    @Test
-    fun rootAuthorizationRequiredStaysNonEffectiveEvenWhenPolicyIsEnabled() {
-        val snapshot = CapabilityAccessSnapshotFactory.create(
-            accessibilityStatus = AccessibilityStatusSnapshot(
-                implemented = true,
-                enabled = false,
-                connected = false,
-                dispatchCapable = false,
-                healthy = false,
-                status = "disabled"
-            ),
-            mediaProjectionGranted = false,
-            rootAvailability = RootAvailabilitySnapshot(
-                implemented = true,
-                available = false,
-                healthy = null,
-                status = "authorization_required"
-            ),
-            policy = CapabilityPolicySnapshot(
-                accessibilityAllowed = false,
-                screenshotAllowed = false,
-                rootAllowed = true
-            )
-        )
-
-        assertEquals("authorization_required", snapshot.root.system.status)
-        assertFalse(snapshot.root.effective.usableNow)
-        assertEquals("authorization_required", snapshot.root.effective.reason)
     }
 }

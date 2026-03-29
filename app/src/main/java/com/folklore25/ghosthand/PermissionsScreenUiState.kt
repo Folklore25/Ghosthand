@@ -8,8 +8,7 @@ package com.folklore25.ghosthand
 
 internal data class PermissionsScreenUiState(
     val accessibility: CapabilityPermissionUiState,
-    val screenshot: CapabilityPermissionUiState,
-    val root: CapabilityPermissionUiState
+    val screenshot: CapabilityPermissionUiState
 )
 
 internal object PermissionsScreenUiStateFactory {
@@ -25,11 +24,6 @@ internal object PermissionsScreenUiStateFactory {
             ),
             screenshot = CapabilityUiStateFactory.forCapability(
                 capability = GhosthandCapability.Screenshot,
-                runtimeState = runtimeState,
-                textLookup = textLookup
-            ),
-            root = CapabilityUiStateFactory.forCapability(
-                capability = GhosthandCapability.Root,
                 runtimeState = runtimeState,
                 textLookup = textLookup
             )

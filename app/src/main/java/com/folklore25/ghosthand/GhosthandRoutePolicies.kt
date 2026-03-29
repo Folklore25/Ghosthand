@@ -24,8 +24,6 @@ object GhosthandRoutePolicies {
         "/tap" to RoutePolicy(setOf("POST"), "Only POST is supported for /tap."),
         "/swipe" to RoutePolicy(setOf("POST"), "Only POST is supported for /swipe."),
         "/type" to RoutePolicy(setOf("POST"), "Only POST is supported for /type."),
-        "/launch" to RoutePolicy(setOf("POST"), "Only POST is supported for /launch."),
-        "/stop" to RoutePolicy(setOf("POST"), "Only POST is supported for /stop."),
         "/screen" to RoutePolicy(setOf("GET"), "Only GET is supported for /screen."),
         "/screenshot" to RoutePolicy(setOf("GET", "POST"), "Only GET and POST are supported for /screenshot."),
         "/info" to RoutePolicy(setOf("GET"), "Only GET is supported for /info."),

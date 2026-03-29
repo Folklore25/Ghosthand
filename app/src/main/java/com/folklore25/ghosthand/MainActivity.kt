@@ -52,7 +52,6 @@ class MainActivity : AppCompatActivity() {
 
         val managePermissionsButton: Button = findViewById(R.id.openPermissionsButton)
         val openDiagnosticsButton: Button = findViewById(R.id.openDiagnosticsButton)
-        val rootEntryButton: Button = findViewById(R.id.rootEntryButton)
 
         runtimeViewModel.homeScreenState.observe(this) { state ->
             renderHome(
@@ -68,8 +67,7 @@ class MainActivity : AppCompatActivity() {
                 screenshotRow,
                 diagnosticsBuildValue,
                 diagnosticsLastActionValue,
-                diagnosticsForegroundValue,
-                rootEntryButton
+                diagnosticsForegroundValue
             )
         }
 
@@ -95,9 +93,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, DiagnosticsActivity::class.java))
         }
 
-        rootEntryButton.setOnClickListener {
-            startActivity(PermissionsActivity.createRootIntent(this))
-        }
     }
 
     private fun renderHome(
@@ -113,8 +108,7 @@ class MainActivity : AppCompatActivity() {
         screenshotRow: HomeCapabilityRowViews,
         diagnosticsBuildValue: TextView,
         diagnosticsLastActionValue: TextView,
-        diagnosticsForegroundValue: TextView,
-        rootEntryButton: Button
+        diagnosticsForegroundValue: TextView
     ) {
         versionBadge.text = state.versionBadgeText
         UiStatusSupport.styleChip(this, versionBadge, StatusTone.Neutral)
@@ -136,7 +130,6 @@ class MainActivity : AppCompatActivity() {
         diagnosticsBuildValue.text = state.diagnosticsSummary.buildText
         diagnosticsLastActionValue.text = state.diagnosticsSummary.lastActionText
         diagnosticsForegroundValue.text = state.diagnosticsSummary.foregroundText
-        rootEntryButton.text = state.rootEntryLabel
     }
 
     private fun bindHomeCapabilityRow(

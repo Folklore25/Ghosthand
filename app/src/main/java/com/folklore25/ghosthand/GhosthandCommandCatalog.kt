@@ -114,7 +114,7 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/tree",
             description = "Current accessibility tree snapshot with explicit trust signaling for invalid bounds, low-signal nodes, and whether the current output is structurally full",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "returnedNodeCount", "warnings", "invalidBoundsCount", "lowSignalCount", "root"),
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "returnedNodeCount", "warnings", "invalidBoundsCount", "lowSignalCount"),
             referenceStability = "snapshot_ephemeral",
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",

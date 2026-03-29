@@ -12,7 +12,7 @@ import org.junit.Test
 
 class PermissionsSurfaceLayoutContractTest {
     @Test
-    fun permissionsLayoutKeepsGovernanceSwitchesAndRootAuthorizeAction() {
+    fun permissionsLayoutKeepsOnlyAccessibilityAndScreenshotGovernanceSwitches() {
         val layout = TestFileSupport.readProjectFile(
             "app/src/main/res/layout/activity_permissions.xml",
             "src/main/res/layout/activity_permissions.xml"
@@ -20,8 +20,8 @@ class PermissionsSurfaceLayoutContractTest {
 
         assertTrue(layout.contains("@+id/accessibilityPolicySwitch"))
         assertTrue(layout.contains("@+id/screenshotPolicySwitch"))
-        assertTrue(layout.contains("@+id/rootPolicySwitch"))
-        assertTrue(layout.contains("@+id/rootAuthorizeButton"))
+        assertFalse(layout.contains("@+id/rootPolicySwitch"))
+        assertFalse(layout.contains("@+id/rootAuthorizeButton"))
     }
 
     @Test

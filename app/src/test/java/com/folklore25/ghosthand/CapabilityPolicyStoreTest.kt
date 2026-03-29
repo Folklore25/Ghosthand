@@ -18,7 +18,7 @@ import java.nio.file.Files
 
 class CapabilityPolicyStoreTest {
     @Test
-    fun preservesSeparateGovernedCapabilityBooleans() {
+    fun preservesAccessibilityAndScreenshotPolicyBooleans() {
         val tempFile = Files.createTempFile("ghosthand-policy", ".preferences_pb").toFile()
         val store = CapabilityPolicyStore(
             dataStore = PreferenceDataStoreFactory.create(
@@ -29,16 +29,14 @@ class CapabilityPolicyStoreTest {
 
         store.setAllowed(GhosthandCapability.Accessibility, true)
         store.setAllowed(GhosthandCapability.Screenshot, false)
-        store.setAllowed(GhosthandCapability.Root, true)
 
         val snapshot = store.snapshot()
         assertTrue(snapshot.accessibilityAllowed)
         assertFalse(snapshot.screenshotAllowed)
-        assertTrue(snapshot.rootAllowed)
     }
 
     @Test
-    fun migratedSnapshotUsesLegacySharedPreferencesKeys() {
+    fun migratedSnapshotUsesOnlySupportedLegacyKeys() {
         val migrated = CapabilityPolicyStore.migratedSnapshot(
             legacyPreferences = mapOf(
                 "capability.accessibility" to true,
@@ -50,8 +48,7 @@ class CapabilityPolicyStoreTest {
         assertEquals(
             CapabilityPolicySnapshot(
                 accessibilityAllowed = true,
-                screenshotAllowed = true,
-                rootAllowed = false
+                screenshotAllowed = true
             ),
             migrated
         )

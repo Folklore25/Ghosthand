@@ -12,31 +12,16 @@ import org.junit.Test
 
 class HomeSurfaceLayoutContractTest {
     @Test
-    fun homeLayoutKeepsSingleBottomRootEntryAndRemovesInlineRootSummary() {
+    fun homeLayoutHasNoRootEntryAndNoInlineRootSummary() {
         val layout = TestFileSupport.readProjectFile(
             "app/src/main/res/layout/activity_main.xml",
             "src/main/res/layout/activity_main.xml"
         )
 
-        assertTrue(layout.contains("@+id/rootEntryButton"))
+        assertFalse(layout.contains("@+id/rootEntryButton"))
         assertFalse(layout.contains("@+id/homeRootSummaryValue"))
         assertFalse(layout.contains("@+id/homeRootEffectiveValue"))
         assertTrue(layout.contains("@+id/openPermissionsButton"))
         assertTrue(layout.contains("@+id/openDiagnosticsButton"))
-    }
-
-    @Test
-    fun homeContractKeepsAdvancedRootNavigationAndDangerColorToken() {
-        val activity = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/MainActivity.kt",
-            "src/main/java/com/folklore25/ghosthand/MainActivity.kt"
-        )
-        val colors = TestFileSupport.readProjectFile(
-            "app/src/main/res/values/colors.xml",
-            "src/main/res/values/colors.xml"
-        )
-
-        assertTrue(activity.contains("PermissionsActivity.createRootIntent"))
-        assertTrue(colors.contains("gh_danger_red"))
     }
 }

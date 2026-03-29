@@ -28,20 +28,10 @@ data class AccessibilitySystemAuthorizationState(
 
 data class ScreenshotSystemAuthorizationState(
     val accessibilityCaptureReady: Boolean = false,
-    val mediaProjectionGranted: Boolean = false,
-    val rootFallbackAvailable: Boolean = false
+    val mediaProjectionGranted: Boolean = false
 ) {
     val authorized: Boolean
-        get() = accessibilityCaptureReady || mediaProjectionGranted || rootFallbackAvailable
-}
-
-data class RootSystemAuthorizationState(
-    val available: Boolean? = null,
-    val healthy: Boolean? = null,
-    val status: String = "unknown"
-) {
-    val authorized: Boolean
-        get() = available == true
+        get() = accessibilityCaptureReady || mediaProjectionGranted
 }
 
 data class GovernedCapabilitySnapshot<T>(
@@ -71,16 +61,12 @@ data class CapabilityAccessSnapshot(
     ),
     val screenshot: GovernedCapabilitySnapshot<ScreenshotSystemAuthorizationState> = GovernedCapabilitySnapshot(
         system = ScreenshotSystemAuthorizationState()
-    ),
-    val root: GovernedCapabilitySnapshot<RootSystemAuthorizationState> = GovernedCapabilitySnapshot(
-        system = RootSystemAuthorizationState()
     )
 ) {
     fun gateStateFor(capability: GhosthandCapability): CapabilityGateState {
         val snapshot = when (capability) {
             GhosthandCapability.Accessibility -> accessibility
             GhosthandCapability.Screenshot -> screenshot
-            GhosthandCapability.Root -> root
         }
         return CapabilityGateState(
             policyAllowed = snapshot.policyAllowed,
@@ -94,7 +80,6 @@ object CapabilityAccessSnapshotFactory {
     fun create(
         accessibilityStatus: AccessibilityStatusSnapshot,
         mediaProjectionGranted: Boolean,
-        rootAvailability: RootAvailabilitySnapshot,
         policy: CapabilityPolicySnapshot
     ): CapabilityAccessSnapshot {
         val accessibilitySystem = AccessibilitySystemAuthorizationState(
@@ -104,24 +89,15 @@ object CapabilityAccessSnapshotFactory {
             healthy = accessibilityStatus.healthy,
             status = accessibilityStatus.status
         )
-        val rootSystem = RootSystemAuthorizationState(
-            available = rootAvailability.available,
-            healthy = rootAvailability.healthy,
-            status = rootAvailability.status
-        )
         val screenshotSystem = ScreenshotSystemAuthorizationState(
             accessibilityCaptureReady = accessibilitySystem.dispatchCapable,
-            mediaProjectionGranted = mediaProjectionGranted,
-            rootFallbackAvailable = rootSystem.available == true
+            mediaProjectionGranted = mediaProjectionGranted
         )
         val accessibilityPolicy = AppCapabilityPolicyState(policy.accessibilityAllowed)
         val screenshotPolicy = AppCapabilityPolicyState(policy.screenshotAllowed)
-        val rootPolicy = AppCapabilityPolicyState(policy.rootAllowed)
-        val rootEffective = rootPolicy.allowed && rootSystem.authorized
         val screenshotEffective = screenshotPolicy.allowed && (
             screenshotSystem.accessibilityCaptureReady ||
-                screenshotSystem.mediaProjectionGranted ||
-                (screenshotSystem.rootFallbackAvailable && rootPolicy.allowed)
+                screenshotSystem.mediaProjectionGranted
         )
 
         return CapabilityAccessSnapshot(
@@ -147,20 +123,6 @@ object CapabilityAccessSnapshotFactory {
                         !screenshotPolicy.allowed -> "policy_blocked"
                         screenshotSystem.mediaProjectionGranted -> "projection_granted"
                         screenshotSystem.accessibilityCaptureReady -> "accessibility_capture_ready"
-                        screenshotSystem.rootFallbackAvailable && rootPolicy.allowed -> "root_fallback"
-                        else -> "system_missing"
-                    }
-                )
-            ),
-            root = GovernedCapabilitySnapshot(
-                system = rootSystem,
-                policy = rootPolicy,
-                effective = CapabilityEffectiveState(
-                    usableNow = rootEffective,
-                    reason = when {
-                        !rootPolicy.allowed -> "policy_blocked"
-                        rootSystem.authorized -> "root_available"
-                        rootSystem.status == "authorization_required" -> "authorization_required"
                         else -> "system_missing"
                     }
                 )

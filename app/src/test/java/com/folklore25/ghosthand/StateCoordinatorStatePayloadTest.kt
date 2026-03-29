@@ -42,13 +42,12 @@ class StateCoordinatorStatePayloadTest {
     }
 
     @Test
-    fun screenshotPayloadIncludesBackendSpecificSystemTruth() {
+    fun screenshotPayloadIncludesOnlySupportedSystemTruth() {
         val fields = GovernedCapabilityPayloads.screenshotFields(
             GovernedCapabilitySnapshot(
                 system = ScreenshotSystemAuthorizationState(
                     accessibilityCaptureReady = true,
-                    mediaProjectionGranted = false,
-                    rootFallbackAvailable = true
+                    mediaProjectionGranted = false
                 ),
                 policy = AppCapabilityPolicyState(allowed = true),
                 effective = CapabilityEffectiveState(
@@ -61,6 +60,5 @@ class StateCoordinatorStatePayloadTest {
         val system = fields["system"] as Map<*, *>
         assertTrue(system["accessibilityCaptureReady"] as Boolean)
         assertEquals(false, system["mediaProjectionGranted"] as Boolean)
-        assertTrue(system["rootFallbackAvailable"] as Boolean)
     }
 }

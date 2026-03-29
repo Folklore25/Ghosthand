@@ -36,8 +36,7 @@ internal data class HomeScreenUiState(
     val permissionsSummaryText: String,
     val accessibilitySummary: HomeCapabilitySummaryUiState,
     val screenshotSummary: HomeCapabilitySummaryUiState,
-    val diagnosticsSummary: DiagnosticsSummaryUiState,
-    val rootEntryLabel: String
+    val diagnosticsSummary: DiagnosticsSummaryUiState
 )
 
 internal object HomeScreenUiStateFactory {
@@ -59,13 +58,11 @@ internal object HomeScreenUiStateFactory {
         val access = runtimeState.capabilityAccess
         val allowedCount = listOf(
             policy.accessibilityAllowed,
-            policy.screenshotAllowed,
-            policy.rootAllowed
+            policy.screenshotAllowed
         ).count { it }
         val effectiveCount = listOf(
             access.accessibility.effectiveAvailable,
-            access.screenshot.effectiveAvailable,
-            access.root.effectiveAvailable
+            access.screenshot.effectiveAvailable
         ).count { it }
 
         return HomeScreenUiState(
@@ -102,7 +99,7 @@ internal object HomeScreenUiStateFactory {
             permissionsSummaryText = textLookup.getString(
                 R.string.home_permissions_summary_template_v2,
                 effectiveCount,
-                3,
+                2,
                 allowedCount
             ),
             accessibilitySummary = HomeCapabilitySummaryUiState(
@@ -131,12 +128,7 @@ internal object HomeScreenUiStateFactory {
                     runtimeState.lastServiceAction
                 },
                 foregroundText = localizedValue(runtimeState.foregroundPackage, textLookup)
-            ),
-            rootEntryLabel = if (runtimeState.capabilityAccess.root.system.authorized) {
-                textLookup.getString(R.string.home_root_entry_available)
-            } else {
-                textLookup.getString(R.string.home_root_entry_default_v2)
-            }
+            )
         )
     }
 

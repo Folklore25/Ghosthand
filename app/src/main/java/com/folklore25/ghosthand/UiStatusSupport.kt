@@ -49,18 +49,6 @@ internal object UiStatusSupport {
     fun accessibilityStatusText(context: Context, status: String): String =
         accessibilityStatusText(context.asTextLookup(), status)
 
-    fun rootStatusText(textLookup: UiTextLookup, status: String): String {
-        return when (status) {
-            "available" -> textLookup.getString(R.string.root_status_available)
-            "authorization_required" -> textLookup.getString(R.string.root_status_authorization_required)
-            "unavailable" -> textLookup.getString(R.string.root_status_unavailable)
-            else -> textLookup.getString(R.string.runtime_boolean_unknown)
-        }
-    }
-
-    fun rootStatusText(context: Context, status: String): String =
-        rootStatusText(context.asTextLookup(), status)
-
     fun screenshotSystemStatusText(
         textLookup: UiTextLookup,
         system: ScreenshotSystemAuthorizationState
@@ -70,8 +58,6 @@ internal object UiStatusSupport {
                 textLookup.getString(R.string.permission_screenshot_system_projection)
             system.accessibilityCaptureReady ->
                 textLookup.getString(R.string.permission_screenshot_system_accessibility)
-            system.rootFallbackAvailable ->
-                textLookup.getString(R.string.permission_screenshot_system_root_fallback)
             else ->
                 textLookup.getString(R.string.permission_system_missing)
         }
@@ -102,7 +88,6 @@ internal object UiStatusSupport {
         }
 
         return when (effective.reason) {
-            "root_fallback" -> textLookup.getString(R.string.permission_effective_root_fallback)
             else -> textLookup.getString(R.string.permission_effective_available)
         }
     }
@@ -117,21 +102,12 @@ internal object UiStatusSupport {
         }
     }
 
-    fun rootTone(status: String): StatusTone {
-        return when (status) {
-            "available" -> StatusTone.Success
-            "authorization_required" -> StatusTone.Warning
-            else -> StatusTone.Neutral
-        }
-    }
-
     fun policyTone(allowed: Boolean): StatusTone = if (allowed) StatusTone.Success else StatusTone.Neutral
 
     fun screenshotSystemTone(system: ScreenshotSystemAuthorizationState): StatusTone {
         return when {
             system.mediaProjectionGranted ||
-                system.accessibilityCaptureReady ||
-                system.rootFallbackAvailable -> StatusTone.Success
+                system.accessibilityCaptureReady -> StatusTone.Success
             else -> StatusTone.Neutral
         }
     }

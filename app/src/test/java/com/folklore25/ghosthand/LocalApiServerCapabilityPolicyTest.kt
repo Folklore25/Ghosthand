@@ -12,19 +12,20 @@ import org.junit.Test
 
 class LocalApiServerCapabilityPolicyTest {
     @Test
-    fun accessibilityRouteMapIncludesClickAndWait() {
+    fun accessibilityRouteMapIncludesClickAndWaitOnly() {
         assertEquals(GhosthandCapability.Accessibility, CapabilityRoutePolicy.routeCapability("/click"))
         assertEquals(GhosthandCapability.Accessibility, CapabilityRoutePolicy.routeCapability("/wait"))
+        assertNull(CapabilityRoutePolicy.routeCapability("/launch"))
+        assertNull(CapabilityRoutePolicy.routeCapability("/stop"))
     }
 
     @Test
-    fun screenshotPolicyDeniedIsReturnedEvenWhenRootFallbackIsAvailable() {
+    fun screenshotPolicyDeniedIsReturnedWhenPolicyIsOff() {
         val snapshot = CapabilityAccessSnapshot(
             screenshot = GovernedCapabilitySnapshot(
                 system = ScreenshotSystemAuthorizationState(
                     accessibilityCaptureReady = false,
-                    mediaProjectionGranted = false,
-                    rootFallbackAvailable = true
+                    mediaProjectionGranted = true
                 ),
                 policy = AppCapabilityPolicyState(allowed = false),
                 effective = CapabilityEffectiveState(
@@ -38,18 +39,5 @@ class LocalApiServerCapabilityPolicyTest {
             CapabilityRoutePolicy.denialMessage(GhosthandCapability.Screenshot),
             CapabilityRoutePolicy.policyDeniedResponse("/screenshot", snapshot)
         )
-    }
-
-    @Test
-    fun rootRoutesAreNotDeniedWhenPolicyIsAllowed() {
-        val snapshot = CapabilityAccessSnapshot(
-            root = GovernedCapabilitySnapshot(
-                system = RootSystemAuthorizationState(available = true, healthy = true, status = "available"),
-                policy = AppCapabilityPolicyState(allowed = true),
-                effective = CapabilityEffectiveState(usableNow = true, reason = "root_available")
-            )
-        )
-
-        assertNull(CapabilityRoutePolicy.policyDeniedResponse("/launch", snapshot))
     }
 }

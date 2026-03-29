@@ -205,7 +205,7 @@ Runs:
 ## Current Rules
 
 - Prefer device-shell orchestration over host-side timing-sensitive verification.
-- Treat root here as a testing recovery aid, not the product baseline.
+- Treat the local app path here as the product baseline.
 - Treat `/commands` as the runtime contract source for agents.
 - Treat Ghosthand as a substrate first: prefer additive truthful exposure over capability-reducing workflow shortcuts.
 - Treat `/screen` as the structured actionable surface route for selector planning and geometry.

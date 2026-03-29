@@ -68,10 +68,7 @@ class DiagnosticsActivity : AppCompatActivity() {
             apiServerValue.text = UiStatusSupport.booleanText(this, state.localApiServerRunning)
             serviceValue.text = UiStatusSupport.booleanText(this, state.foregroundServiceRunning)
             accessibilityValue.text = UiStatusSupport.accessibilityStatusText(this, state.accessibilityStatus)
-            screenshotValue.text = UiStatusSupport.screenshotSystemStatusText(
-                this,
-                state.capabilityAccess.screenshot.system
-            )
+            screenshotValue.text = UiStatusSupport.screenshotSystemStatusText(this, state.capabilityAccess.screenshot.system)
 
             UiStatusSupport.styleChip(this, apiServerValue, UiStatusSupport.booleanTone(state.localApiServerRunning))
             UiStatusSupport.styleChip(this, serviceValue, UiStatusSupport.booleanTone(state.foregroundServiceRunning))

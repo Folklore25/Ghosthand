@@ -26,7 +26,6 @@ class PermissionsActivity : AppCompatActivity() {
         getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
     }
 
-    private val rootControlProvider = RootControlProvider()
     private lateinit var runtimeViewModel: RuntimeStateViewModel
 
     private val screenshotPermissionLauncher = registerForActivityResult(
@@ -50,11 +49,9 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var accessibilityCard: android.view.View
     private lateinit var screenshotCard: android.view.View
-    private lateinit var rootCard: android.view.View
 
     private lateinit var accessibilityCardViews: PermissionCardViews
     private lateinit var screenshotCardViews: PermissionCardViews
-    private lateinit var rootCardViews: PermissionCardViews
 
     override fun onResume() {
         super.onResume()
@@ -68,7 +65,6 @@ class PermissionsActivity : AppCompatActivity() {
         scrollView = findViewById(R.id.permissionsScroll)
         accessibilityCard = findViewById(R.id.accessibilityPermissionCard)
         screenshotCard = findViewById(R.id.screenshotPermissionCard)
-        rootCard = findViewById(R.id.rootPermissionCard)
 
         accessibilityCardViews = PermissionCardViews(
             systemView = findViewById(R.id.accessibilitySystemStateChip),
@@ -84,18 +80,10 @@ class PermissionsActivity : AppCompatActivity() {
             policySwitch = findViewById(R.id.screenshotPolicySwitch),
             authorizeButton = findViewById(R.id.screenshotAuthorizeButton)
         )
-        rootCardViews = PermissionCardViews(
-            systemView = findViewById(R.id.rootSystemStateChip),
-            policyView = findViewById(R.id.rootPolicyValue),
-            effectiveView = findViewById(R.id.rootEffectiveValue),
-            policySwitch = findViewById(R.id.rootPolicySwitch),
-            authorizeButton = findViewById(R.id.rootAuthorizeButton)
-        )
 
         findViewById<Button>(R.id.permissionsBackButton).setOnClickListener { finish() }
         accessibilityCardViews.authorizeButton.setOnClickListener { openAccessibilitySettings() }
         screenshotCardViews.authorizeButton.setOnClickListener { requestScreenshotPermission() }
-        rootCardViews.authorizeButton.setOnClickListener { checkRootAuthorization() }
 
         runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
         runtimeViewModel.permissionsScreenState.observe(this) { state ->
@@ -105,7 +93,6 @@ class PermissionsActivity : AppCompatActivity() {
         when (intent.getStringExtra(EXTRA_FOCUS_CAPABILITY)) {
             FOCUS_ACCESSIBILITY -> scrollToCard(accessibilityCard)
             FOCUS_SCREENSHOT -> scrollToCard(screenshotCard)
-            FOCUS_ROOT -> scrollToCard(rootCard)
         }
     }
 
@@ -119,11 +106,6 @@ class PermissionsActivity : AppCompatActivity() {
             views = screenshotCardViews,
             capability = GhosthandCapability.Screenshot,
             uiState = runtimeState.screenshot
-        )
-        renderPermissionCard(
-            views = rootCardViews,
-            capability = GhosthandCapability.Root,
-            uiState = runtimeState.root
         )
     }
 
@@ -153,23 +135,6 @@ class PermissionsActivity : AppCompatActivity() {
 
     private fun launchScreenshotConsent() {
         screenshotPermissionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
-    }
-
-    private fun checkRootAuthorization() {
-        rootCardViews.authorizeButton.isEnabled = false
-        Thread {
-            val availability = rootControlProvider.availability()
-            runOnUiThread {
-                RuntimeStateStore.refreshRuntimeSnapshot(this)
-                rootCardViews.authorizeButton.isEnabled = true
-                val message = when (availability.status) {
-                    "available" -> R.string.root_check_available
-                    "authorization_required" -> R.string.root_check_authorization_required
-                    else -> R.string.root_check_unavailable
-                }
-                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-            }
-        }.start()
     }
 
     private fun launchSettingsIntent(intent: Intent): Boolean {
@@ -217,15 +182,12 @@ class PermissionsActivity : AppCompatActivity() {
         private const val EXTRA_FOCUS_CAPABILITY = "focus_capability"
         private const val FOCUS_ACCESSIBILITY = "accessibility"
         private const val FOCUS_SCREENSHOT = "screenshot"
-        private const val FOCUS_ROOT = "root"
 
         fun createIntent(context: Context, focusCapability: String? = null): Intent {
             return Intent(context, PermissionsActivity::class.java).apply {
                 putExtra(EXTRA_FOCUS_CAPABILITY, focusCapability)
             }
         }
-
-        fun createRootIntent(context: Context): Intent = createIntent(context, FOCUS_ROOT)
     }
 
     private data class PermissionCardViews(

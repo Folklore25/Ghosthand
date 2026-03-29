@@ -16,7 +16,6 @@ This API is designed to provide a stable capability surface for:
 - state observation
 - UI-semantic control
 - recovery/self-healing
-- optional device/system support when root exists
 - screenshot capture
 
 Ghosthand API is **capability-oriented**, not Android-implementation-oriented.
@@ -26,13 +25,11 @@ That means callers ask Ghosthand to:
 - find
 - tap
 - type
-- launch
 - ensure
 - capture
 
 They do **not** directly invoke:
 
-- `su`
 - `settings`
 - `pm`
 - `am`
@@ -165,8 +162,6 @@ Workflow-level implications:
 * `RUNTIME_NOT_READY`
 * `ACCESSIBILITY_UNAVAILABLE`
 * `ACCESSIBILITY_ACTION_FAILED`
-* `ROOT_UNAVAILABLE`
-* `ROOT_ACTION_DENIED`
 * `CAPABILITY_POLICY_DENIED`
 * `DEVICE_STATE_UNAVAILABLE`
 * `SCREENSHOT_UNAVAILABLE`
@@ -206,8 +201,6 @@ Allowed values:
 
 * `auto`
 * `accessibility`
-* `root`
-
 Default:
 
 * `auto`
@@ -216,7 +209,6 @@ Meaning:
 
 * `auto`: Ghosthand selects best backend
 * `accessibility`: require semantic UI backend
-* `root`: require root fallback backend
 
 ### 5.2 Timeout
 
@@ -254,7 +246,6 @@ Sensitive capabilities are gated by the app-level policy layer exposed on the Pe
 
 - accessibility-backed routes are blocked when Accessibility policy is off
 - screenshot routes are blocked when Screenshot policy is off
-- root-backed routes are blocked when Root policy is off
 
 When a route is blocked this way, Ghosthand returns:
 
@@ -318,11 +309,6 @@ This is separate from system capability unavailability. A capability can be gran
 * `POST /notify`
 * `DELETE /notify`
 
-### App / System Control
-
-* `POST /launch`
-* `POST /stop`
-
 ### Recovery
 
 * `POST /ensure`
@@ -350,7 +336,7 @@ Fast readiness probe.
     "runtimeReady": true,
     "apiServerReady": true,
     "accessibilityReady": true,
-    "rootReady": true
+    "screenshotReady": true
   },
   "meta": {
     "requestId": "req_health_1",
@@ -592,11 +578,6 @@ Return unified Ghosthand state snapshot.
       "charging": true,
       "foregroundPackage": "com.tencent.mm"
     },
-    "root": {
-      "implemented": false,
-      "available": null,
-      "healthy": null
-    },
     "openclaw": {
       "apiServerReady": true,
       "port": 5583
@@ -635,8 +616,7 @@ Return unified Ghosthand state snapshot.
           "system": {
             "authorized": true,
             "accessibilityCaptureReady": true,
-            "mediaProjectionGranted": false,
-            "rootFallbackAvailable": false
+            "mediaProjectionGranted": false
           },
           "policy": {
             "allowed": false
@@ -644,21 +624,6 @@ Return unified Ghosthand state snapshot.
           "effective": {
             "usableNow": false,
             "reason": "policy_blocked"
-          }
-        },
-        "root": {
-          "system": {
-            "authorized": false,
-            "available": false,
-            "healthy": null,
-            "status": "authorization_required"
-          },
-          "policy": {
-            "allowed": true
-          },
-          "effective": {
-            "usableNow": false,
-            "reason": "authorization_required"
           }
         }
       }
@@ -683,7 +648,7 @@ If `installIdentity` is newer than `appStartedAt`, the running process predates 
 - `system.*` = read-only platform truth
 - `policy.allowed` = Ghosthand app-level allow/deny policy
 - `effective.usableNow` / `effective.reason` = whether Ghosthand may actually use the capability now
-- `permissions.capabilities.screenshot.system` is backend-specific and distinguishes accessibility screenshot readiness, MediaProjection session truth, and root fallback availability
+- `permissions.capabilities.screenshot.system` is backend-specific and distinguishes accessibility screenshot readiness and MediaProjection session truth
 
 ---
 
@@ -716,7 +681,7 @@ Return device-only state.
 ### Notes
 
 Initial P3 implementation is accessibility-only.
-`backend=root` is accepted syntactically but should fail honestly until root support exists.
+Only `backend=auto` and `backend=accessibility` are supported.
 
 ---
 
@@ -859,7 +824,7 @@ GET /tree?mode=flat
 
 V1 supports `flat` first.
 `raw` is explicitly unsupported for now and should return `UNSUPPORTED_OPERATION`.
-If Accessibility is enabled but not connected, or no active root is available, `/tree` should return `ACCESSIBILITY_UNAVAILABLE` instead of an empty tree.
+If Accessibility is enabled but not connected, `/tree` should return `ACCESSIBILITY_UNAVAILABLE` instead of an empty tree.
 Returned node identifiers are snapshot-ephemeral. After UI drift, prefer selector-based re-resolution instead of reusing a stale tree node id.
 When invalid bounds are present on complex surfaces, `/tree` keeps the nodes but signals the risk explicitly through `warnings`, `invalidBoundsCount`, and per-node `boundsValid` / `actionableBounds`.
 `foregroundStableDuringCapture = false` means the foreground summary changed during snapshot capture, so the returned tree should be treated with stale-risk caution even if it is the best available final attempt.
@@ -1008,7 +973,7 @@ V1 should support:
 * backend selection
 
 Initial P2 implementation is accessibility-only.
-`backend=root` is accepted syntactically but should fail honestly until root support exists.
+Only `backend=auto` and `backend=accessibility` are supported.
 
 ---
 
@@ -1121,87 +1086,6 @@ Do not overload `/type` with focus-finding logic.
 
 ---
 
-## 7.11 `POST /launch`
-
-### Purpose
-
-Launch an app.
-
-### Request Body
-
-```json
-{
-  "packageName": "com.tencent.mm"
-}
-```
-
-### Optional Activity-Specific Launch
-
-```json
-{
-  "packageName": "com.tencent.mm",
-  "activity": "com.tencent.mm.ui.LauncherUI"
-}
-```
-
-### Success Response
-
-```json
-{
-  "ok": true,
-  "data": {
-    "launched": true,
-    "packageName": "com.tencent.mm"
-  },
-  "meta": {
-    "requestId": "req_launch_1",
-    "timestamp": "2026-03-27T05:32:20Z"
-  }
-}
-```
-
-### Notes
-
-Implementation may use optional root-backed support internally, but API must not expose shell semantics and must not assume root exists.
-
----
-
-## 7.12 `POST /stop`
-
-### Purpose
-
-Force-stop an app.
-
-### Request Body
-
-```json
-{
-  "packageName": "com.tencent.mm"
-}
-```
-
-### Success Response
-
-```json
-{
-  "ok": true,
-  "data": {
-    "stopped": true,
-    "packageName": "com.tencent.mm"
-  },
-  "meta": {
-    "requestId": "req_stop_1",
-    "timestamp": "2026-03-27T05:32:25Z"
-  }
-}
-```
-
-### Notes
-
-`/stop` may use optional root-backed support internally, but root is not a baseline user requirement and missing root must be surfaced truthfully.
-
----
-
 ## 7.13 `POST /ensure`
 
 ### Purpose
@@ -1214,8 +1098,7 @@ Check and optionally repair critical Ghosthand/runtime conditions.
 {
   "targets": [
     "accessibility",
-    "foreground_service",
-    "root"
+    "foreground_service"
   ],
   "repair": true
 }
@@ -1226,7 +1109,6 @@ Check and optionally repair critical Ghosthand/runtime conditions.
 * `accessibility`
 * `foreground_service`
 * `api_server`
-* `root`
 * `permissions`
 
 ### Success Response
@@ -1337,7 +1219,7 @@ Capture the current screenshot as base64 PNG.
 
 ### Notes
 
-Current preferred baseline is accessibility screenshot capability. MediaProjection and root are fallback/compatibility paths, not the normal expected baseline.
+Current preferred baseline is accessibility screenshot capability. MediaProjection remains the secondary compatibility path.
 
 ---
 
@@ -2139,19 +2021,12 @@ Maps to:
 
 * `InputText`
 
-### `/launch`
-
-Maps to:
-
-* `LaunchApp`
-
 ### `/ensure`
 
 Maps to:
 
 * `EnsureAccessibilityEnabled`
 * `EnsureForegroundServiceAlive`
-* `EnsureRootAvailable`
 * `EnsurePermissionState`
 
 ### `/repair`
@@ -2195,7 +2070,6 @@ Dangerous actions should additionally log:
 
 * action type
 * target package or capability
-* whether root path was used
 * whether repair was attempted
 
 Do not log:
@@ -2228,10 +2102,9 @@ It provides:
 * health/state inspection
 * UI-semantic control
 * device observation
-* app launch/stop
 * recovery actions
 * screenshot capture
 
-It does **not** expose raw Android or raw root primitives directly.
+It does **not** expose raw Android or raw privileged-system primitives directly.
 
 ```

@@ -27,12 +27,10 @@ class StateCoordinator(
     private val accessibilitySwiper = AccessibilitySwiper()
     private val accessibilityTyper = AccessibilityTyper()
     private val accessibilityScroller = AccessibilityScroller()
-    private val rootControlProvider = RootControlProvider()
     private val capabilityPolicyStore = CapabilityPolicyStore(appContext)
     private val clipboardProvider = ClipboardProvider(appContext)
     private val mediaProjectionProvider = MediaProjectionProvider(appContext)
     private val notificationDispatcher = NotificationDispatcher(appContext)
-    private val rootScreenshotProvider = RootScreenshotProvider()
 
     fun createPingPayload(): JSONObject {
         val diagnosticsSnapshot = homeDiagnosticsProvider.snapshot()
@@ -68,7 +66,6 @@ class StateCoordinator(
         val deviceSnapshot = deviceSnapshotProvider.snapshot()
         val foregroundSnapshot = foregroundAppProvider.snapshot()
         val permissionSnapshot = permissionSnapshotProvider.snapshot()
-        val rootAvailability = rootControlProvider.availability()
         val accessibilitySnapshot = accessibilityStatusProvider.snapshot(
             isConnected = executionStatus.connected,
             isDispatchCapable = executionStatus.dispatchCapable
@@ -77,7 +74,6 @@ class StateCoordinator(
         val capabilityAccess = CapabilityAccessSnapshotFactory.create(
             accessibilityStatus = accessibilitySnapshot,
             mediaProjectionGranted = mediaProjectionProvider.hasProjection(),
-            rootAvailability = rootAvailability,
             policy = capabilityPolicy
         )
         val runtimeUptimeMs = runtimeState.appStartedAtElapsedRealtimeMs?.let {
@@ -113,12 +109,6 @@ class StateCoordinator(
                 .put("charging", deviceSnapshot.charging)
                 .put("foregroundPackage", foregroundSnapshot.packageName ?: JSONObject.NULL)
             )
-            .put("root", JSONObject()
-                .put("implemented", rootAvailability.implemented)
-                .put("available", rootAvailability.available ?: JSONObject.NULL)
-                .put("healthy", rootAvailability.healthy ?: JSONObject.NULL)
-                .put("status", rootAvailability.status)
-            )
             .put("openclaw", JSONObject()
                 .put("apiServerReady", runtimeState.localApiServerRunning)
                 .put("port", LocalApiServer.PORT)
@@ -145,10 +135,6 @@ class StateCoordinator(
                         "screenshot",
                         GovernedCapabilityPayloads.screenshotToJson(capabilityAccess.screenshot)
                     )
-                    .put(
-                        "root",
-                        GovernedCapabilityPayloads.rootToJson(capabilityAccess.root)
-                    )
                 )
             )
     }
@@ -162,7 +148,6 @@ class StateCoordinator(
         return CapabilityAccessSnapshotFactory.create(
             accessibilityStatus = accessibilitySnapshot,
             mediaProjectionGranted = mediaProjectionProvider.hasProjection(),
-            rootAvailability = rootControlProvider.availability(),
             policy = capabilityPolicyStore.snapshot()
         )
     }
@@ -256,14 +241,6 @@ class StateCoordinator(
 
     fun typeText(text: String): TypeAttemptResult {
         return accessibilityTyper.typeText(text)
-    }
-
-    fun launchApp(packageName: String, activity: String?): RootControlResult {
-        return rootControlProvider.launchApp(packageName, activity)
-    }
-
-    fun stopApp(packageName: String): RootControlResult {
-        return rootControlProvider.stopApp(packageName)
     }
 
     fun createInfoPayload(): JSONObject {
@@ -572,28 +549,12 @@ class StateCoordinator(
             return projectionCapture
         }
 
-        val rootCapture = if (capabilityPolicyStore.snapshot().rootAllowed) {
-            rootScreenshotProvider.captureScreenshot()
-        } else {
-            ScreenshotDispatchResult(
-                available = false,
-                base64 = null,
-                format = "png",
-                width = 0,
-                height = 0,
-                attemptedPath = "root_policy_blocked"
-            )
-        }
-        if (rootCapture.available) {
-            return rootCapture
-        }
-
         return if (projectionCapture.attemptedPath != "projection_missing") {
             projectionCapture
         } else if (serviceCapture.attemptedPath != "service_disconnected") {
             serviceCapture
         } else {
-            rootCapture
+            projectionCapture
         }
     }
 
@@ -751,10 +712,6 @@ internal object GovernedCapabilityPayloads {
         return JSONObject(screenshotFields(snapshot))
     }
 
-    fun rootToJson(snapshot: GovernedCapabilitySnapshot<RootSystemAuthorizationState>): JSONObject {
-        return JSONObject(rootFields(snapshot))
-    }
-
     fun accessibilityFields(
         snapshot: GovernedCapabilitySnapshot<AccessibilitySystemAuthorizationState>
     ): Map<String, Any?> {
@@ -783,25 +740,7 @@ internal object GovernedCapabilityPayloads {
                 "authorized" to snapshot.system.authorized,
                 "accessibilityCaptureReady" to snapshot.system.accessibilityCaptureReady,
                 "mediaProjectionGranted" to snapshot.system.mediaProjectionGranted,
-                "rootFallbackAvailable" to snapshot.system.rootFallbackAvailable
-            ),
-            "policy" to linkedMapOf("allowed" to snapshot.policy.allowed),
-            "effective" to linkedMapOf(
-                "usableNow" to snapshot.effective.usableNow,
-                "reason" to snapshot.effective.reason
-            )
-        )
-    }
-
-    fun rootFields(
-        snapshot: GovernedCapabilitySnapshot<RootSystemAuthorizationState>
-    ): Map<String, Any?> {
-        return linkedMapOf(
-            "system" to linkedMapOf(
-                "authorized" to snapshot.system.authorized,
-                "available" to snapshot.system.available,
-                "healthy" to snapshot.system.healthy,
-                "status" to snapshot.system.status
+                "mediaProjectionGranted" to snapshot.system.mediaProjectionGranted
             ),
             "policy" to linkedMapOf("allowed" to snapshot.policy.allowed),
             "effective" to linkedMapOf(
