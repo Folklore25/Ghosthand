@@ -22,85 +22,81 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/homeEyebrow"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/home_eyebrow"
-                android:textAllCaps="true"
-                android:textColor="@color/gh_brand_primary"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Overline" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="end|center_vertical"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/homeVersionBadge"
+                    android:id="@+id/homeEyebrow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_status_chip"
-                    android:paddingStart="10dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="6dp"
-                    android:text="@string/runtime_placeholder_unknown"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/homeUpdateButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:text="@string/home_update_button"
-                    android:textAllCaps="false"
+                    android:text="@string/home_eyebrow"
+                    android:textAllCaps="true"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Overline"
                     android:textColor="@color/gh_brand_primary" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/homeGithubButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                <TextView
+                    android:id="@+id/homeTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="2dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:text="@string/home_github_button"
-                    android:textAllCaps="false"
-                    android:textColor="@color/gh_brand_primary" />
+                    android:layout_marginTop="6dp"
+                    android:text="@string/home_title"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline3"
+                    android:textColor="@color/gh_text_primary" />
             </LinearLayout>
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/homeTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/home_title"
-            android:textColor="@color/gh_text_primary"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline3" />
+            <TextView
+                android:id="@+id/homeVersionBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status_chip"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="6dp"
+                android:text="@string/runtime_placeholder_unknown"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/homeSubtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/home_subtitle_v2"
-            android:textColor="@color/gh_text_secondary"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+            android:layout_marginTop="10dp"
+            android:text="@string/home_subtitle_v3"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+            android:textColor="@color/gh_text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeUpdateButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:text="@string/home_update_button"
+                android:textAllCaps="false"
+                android:textColor="@color/gh_brand_primary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeGithubButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:minWidth="0dp"
+                android:text="@string/home_github_button"
+                android:textAllCaps="false"
+                android:textColor="@color/gh_brand_primary" />
+        </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/runtimeCard"
@@ -123,16 +119,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/home_runtime_title"
-                    android:textColor="@color/gh_text_primary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:textColor="@color/gh_text_primary" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="@string/home_runtime_subtitle"
-                    android:textColor="@color/gh_text_secondary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                    android:text="@string/home_runtime_subtitle_v2"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
                 <TextView
                     android:id="@+id/homeRuntimeStatusValue"
@@ -140,98 +136,94 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="@string/runtime_status_value"
-                    android:textColor="@color/gh_text_primary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/gh_text_primary" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="vertical">
+                    android:layout_marginTop="18dp"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:text="@string/api_server_running_label"
-                            android:textColor="@color/gh_text_secondary"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                            android:textColor="@color/gh_text_secondary" />
 
                         <TextView
                             android:id="@+id/homeApiStatusValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_status_chip"
                             android:paddingStart="12dp"
                             android:paddingTop="6dp"
                             android:paddingEnd="12dp"
                             android:paddingBottom="6dp"
                             android:text="@string/runtime_placeholder_unknown"
-                            android:textColor="@color/gh_text_primary"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:text="@string/service_running_label"
-                            android:textColor="@color/gh_text_secondary"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                            android:textColor="@color/gh_text_secondary" />
 
                         <TextView
                             android:id="@+id/homeServiceStatusValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_status_chip"
                             android:paddingStart="12dp"
                             android:paddingTop="6dp"
                             android:paddingEnd="12dp"
                             android:paddingBottom="6dp"
                             android:text="@string/runtime_placeholder_unknown"
-                            android:textColor="@color/gh_text_primary"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:text="@string/accessibility_card_label"
-                            android:textColor="@color/gh_text_secondary"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                            android:textColor="@color/gh_text_secondary" />
 
                         <TextView
                             android:id="@+id/homeAccessibilityStatusValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_status_chip"
                             android:paddingStart="12dp"
                             android:paddingTop="6dp"
                             android:paddingEnd="12dp"
                             android:paddingBottom="6dp"
                             android:text="@string/runtime_placeholder_unknown"
-                            android:textColor="@color/gh_text_primary"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
                     </LinearLayout>
                 </LinearLayout>
@@ -271,55 +263,57 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/home_permissions_title"
-                    android:textColor="@color/gh_text_primary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:textColor="@color/gh_text_primary" />
 
                 <TextView
                     android:id="@+id/homePermissionSummaryValue"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="@string/home_permissions_summary_default"
-                    android:textColor="@color/gh_text_secondary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                    android:text="@string/home_permissions_summary_default_v2"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/permission_accessibility_title"
-                        android:textColor="@color/gh_text_primary"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/permission_accessibility_title"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                            android:textColor="@color/gh_text_primary" />
+
+                        <TextView
+                            android:id="@+id/homeAccessibilitySummaryValue"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/runtime_placeholder_unknown"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                            android:textColor="@color/gh_text_secondary" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/homeAccessibilitySystemValue"
+                        android:id="@+id/homeAccessibilityEffectiveValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_status_chip"
-                        android:paddingStart="10dp"
-                        android:paddingTop="5dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/runtime_placeholder_unknown"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                    <TextView
-                        android:id="@+id/homeAccessibilityPolicyValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_status_chip"
-                        android:paddingStart="10dp"
-                        android:paddingTop="5dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="5dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
                         android:text="@string/runtime_placeholder_unknown"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
                 </LinearLayout>
@@ -331,77 +325,38 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/permission_screenshot_title"
-                        android:textColor="@color/gh_text_primary"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/permission_screenshot_title"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                            android:textColor="@color/gh_text_primary" />
+
+                        <TextView
+                            android:id="@+id/homeScreenshotSummaryValue"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/runtime_placeholder_unknown"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                            android:textColor="@color/gh_text_secondary" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/homeScreenshotSystemValue"
+                        android:id="@+id/homeScreenshotEffectiveValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_status_chip"
-                        android:paddingStart="10dp"
-                        android:paddingTop="5dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/runtime_placeholder_unknown"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                    <TextView
-                        android:id="@+id/homeScreenshotPolicyValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_status_chip"
-                        android:paddingStart="10dp"
-                        android:paddingTop="5dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/runtime_placeholder_unknown"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/permission_root_title"
-                        android:textColor="@color/gh_text_primary"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-
-                    <TextView
-                        android:id="@+id/homeRootSystemValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_status_chip"
-                        android:paddingStart="10dp"
-                        android:paddingTop="5dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/runtime_placeholder_unknown"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                    <TextView
-                        android:id="@+id/homeRootPolicyValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_status_chip"
-                        android:paddingStart="10dp"
-                        android:paddingTop="5dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="5dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
                         android:text="@string/runtime_placeholder_unknown"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
                 </LinearLayout>
@@ -441,24 +396,24 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/home_diagnostics_title"
-                    android:textColor="@color/gh_text_primary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:textColor="@color/gh_text_primary" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="@string/home_diagnostics_subtitle"
-                    android:textColor="@color/gh_text_secondary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                    android:text="@string/home_diagnostics_subtitle_v2"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/build_version_label"
-                    android:textColor="@color/gh_text_secondary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
                 <TextView
                     android:id="@+id/homeDiagnosticsBuildValue"
@@ -466,16 +421,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/runtime_placeholder_unknown"
-                    android:textColor="@color/gh_text_primary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/gh_text_primary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="@string/last_service_action_label"
-                    android:textColor="@color/gh_text_secondary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
                 <TextView
                     android:id="@+id/homeDiagnosticsLastActionValue"
@@ -483,16 +438,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/last_service_action_default"
-                    android:textColor="@color/gh_text_primary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/gh_text_primary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="@string/foreground_package_label"
-                    android:textColor="@color/gh_text_secondary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
                 <TextView
                     android:id="@+id/homeDiagnosticsForegroundValue"
@@ -500,8 +455,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/runtime_placeholder_unknown"
-                    android:textColor="@color/gh_text_primary"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/gh_text_primary" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/openDiagnosticsButton"
@@ -524,7 +479,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:backgroundTint="@color/gh_danger_red"
-            android:text="@string/home_root_entry_default"
+            android:text="@string/home_root_entry_default_v2"
             android:textAllCaps="false"
             android:textColor="@color/white"
             app:cornerRadius="18dp" />

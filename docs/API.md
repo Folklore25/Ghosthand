@@ -167,6 +167,7 @@ Workflow-level implications:
 * `ACCESSIBILITY_ACTION_FAILED`
 * `ROOT_UNAVAILABLE`
 * `ROOT_ACTION_DENIED`
+* `CAPABILITY_POLICY_DENIED`
 * `DEVICE_STATE_UNAVAILABLE`
 * `SCREENSHOT_UNAVAILABLE`
 * `SCREENSHOT_FAILED`
@@ -186,6 +187,7 @@ Workflow-level implications:
 
 * `200` success
 * `400` bad request / invalid argument
+* `403` capability blocked by app policy
 * `404` not found
 * `409` state conflict / inconsistent state
 * `422` action understood but failed semantically
@@ -245,6 +247,21 @@ Package name fields must use full Android package names:
   "packageName": "com.tencent.mm"
 }
 ```
+
+### 5.5 Capability Policy
+
+Sensitive capabilities are gated by the app-level policy layer exposed on the Permissions page.
+
+- accessibility-backed routes are blocked when Accessibility policy is off
+- screenshot routes are blocked when Screenshot policy is off
+- root-backed routes are blocked when Root policy is off
+
+When a route is blocked this way, Ghosthand returns:
+
+- HTTP `403`
+- error code `CAPABILITY_POLICY_DENIED`
+
+This is separate from system capability unavailability. A capability can be granted by Android and still intentionally blocked for Ghosthand/OpenClaw use.
 
 ---
 
@@ -590,12 +607,61 @@ Return unified Ghosthand state snapshot.
       "lastResult": null
     },
     "permissions": {
-      "implemented": false,
+      "implemented": true,
       "usageAccess": true,
       "accessibility": false,
       "notifications": null,
       "overlay": null,
-      "writeSecureSettings": false
+      "writeSecureSettings": false,
+      "capabilities": {
+        "accessibility": {
+          "system": {
+            "authorized": true,
+            "enabled": true,
+            "connected": true,
+            "dispatchCapable": true,
+            "healthy": true,
+            "status": "enabled_connected"
+          },
+          "policy": {
+            "allowed": true
+          },
+          "effective": {
+            "usableNow": true,
+            "reason": "accessibility_connected"
+          }
+        },
+        "screenshot": {
+          "system": {
+            "authorized": true,
+            "accessibilityCaptureReady": true,
+            "mediaProjectionGranted": false,
+            "rootFallbackAvailable": false
+          },
+          "policy": {
+            "allowed": false
+          },
+          "effective": {
+            "usableNow": false,
+            "reason": "policy_blocked"
+          }
+        },
+        "root": {
+          "system": {
+            "authorized": false,
+            "available": false,
+            "healthy": null,
+            "status": "authorization_required"
+          },
+          "policy": {
+            "allowed": true
+          },
+          "effective": {
+            "usableNow": false,
+            "reason": "authorization_required"
+          }
+        }
+      }
     }
   },
   "meta": {
@@ -612,6 +678,12 @@ It should prefer stability over exhaustiveness.
 For install validation, compare `runtime.installIdentity` with `runtime.appStartedAt` after:
 install -> force-stop -> explicit activity start -> curl `/state`.
 If `installIdentity` is newer than `appStartedAt`, the running process predates the latest install.
+`permissions.capabilities.*` exposes the two-layer capability model explicitly:
+
+- `system.*` = read-only platform truth
+- `policy.allowed` = Ghosthand app-level allow/deny policy
+- `effective.usableNow` / `effective.reason` = whether Ghosthand may actually use the capability now
+- `permissions.capabilities.screenshot.system` is backend-specific and distinguishes accessibility screenshot readiness, MediaProjection session truth, and root fallback availability
 
 ---
 

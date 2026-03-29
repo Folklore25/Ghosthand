@@ -27,6 +27,7 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private val rootControlProvider = RootControlProvider()
+    private lateinit var runtimeViewModel: RuntimeStateViewModel
 
     private val screenshotPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -35,13 +36,13 @@ class PermissionsActivity : AppCompatActivity() {
             val projection = mediaProjectionManager.getMediaProjection(result.resultCode, result.data!!)
             if (projection != null) {
                 GhosthandServiceRegistry.getInstanceIfRunning()?.setMediaProjection(projection)
-                RuntimeStateStore.refreshHomeDiagnostics(this)
+                RuntimeStateStore.refreshRuntimeSnapshot(this)
                 Toast.makeText(this, R.string.screenshot_permission_granted, Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, R.string.screenshot_permission_failed, Toast.LENGTH_SHORT).show()
             }
         } else {
-            RuntimeStateStore.refreshHomeDiagnostics(this)
+            RuntimeStateStore.refreshRuntimeSnapshot(this)
             Toast.makeText(this, R.string.screenshot_permission_denied, Toast.LENGTH_SHORT).show()
         }
     }
@@ -51,25 +52,13 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var screenshotCard: android.view.View
     private lateinit var rootCard: android.view.View
 
-    private lateinit var accessibilitySystemChip: TextView
-    private lateinit var accessibilityPolicyValue: TextView
-    private lateinit var accessibilityPolicySwitch: SwitchMaterial
-    private lateinit var accessibilityAuthorizeButton: Button
-
-    private lateinit var screenshotSystemChip: TextView
-    private lateinit var screenshotPolicyValue: TextView
-    private lateinit var screenshotPolicySwitch: SwitchMaterial
-    private lateinit var screenshotAuthorizeButton: Button
-
-    private lateinit var rootSystemChip: TextView
-    private lateinit var rootPolicyValue: TextView
-    private lateinit var rootPolicySwitch: SwitchMaterial
-    private lateinit var rootAuthorizeButton: Button
+    private lateinit var accessibilityCardViews: PermissionCardViews
+    private lateinit var screenshotCardViews: PermissionCardViews
+    private lateinit var rootCardViews: PermissionCardViews
 
     override fun onResume() {
         super.onResume()
-        RuntimeStateStore.refreshHomeDiagnostics(this)
-        RuntimeStateStore.refreshAccessibilityStatus(this)
+        RuntimeStateStore.refreshRuntimeSnapshot(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,39 +70,35 @@ class PermissionsActivity : AppCompatActivity() {
         screenshotCard = findViewById(R.id.screenshotPermissionCard)
         rootCard = findViewById(R.id.rootPermissionCard)
 
-        accessibilitySystemChip = findViewById(R.id.accessibilitySystemStateChip)
-        accessibilityPolicyValue = findViewById(R.id.accessibilityPolicyValue)
-        accessibilityPolicySwitch = findViewById(R.id.accessibilityPolicySwitch)
-        accessibilityAuthorizeButton = findViewById(R.id.accessibilityAuthorizeButton)
-
-        screenshotSystemChip = findViewById(R.id.screenshotSystemStateChip)
-        screenshotPolicyValue = findViewById(R.id.screenshotPolicyValue)
-        screenshotPolicySwitch = findViewById(R.id.screenshotPolicySwitch)
-        screenshotAuthorizeButton = findViewById(R.id.screenshotAuthorizeButton)
-
-        rootSystemChip = findViewById(R.id.rootSystemStateChip)
-        rootPolicyValue = findViewById(R.id.rootPolicyValue)
-        rootPolicySwitch = findViewById(R.id.rootPolicySwitch)
-        rootAuthorizeButton = findViewById(R.id.rootAuthorizeButton)
+        accessibilityCardViews = PermissionCardViews(
+            systemView = findViewById(R.id.accessibilitySystemStateChip),
+            policyView = findViewById(R.id.accessibilityPolicyValue),
+            effectiveView = findViewById(R.id.accessibilityEffectiveValue),
+            policySwitch = findViewById(R.id.accessibilityPolicySwitch),
+            authorizeButton = findViewById(R.id.accessibilityAuthorizeButton)
+        )
+        screenshotCardViews = PermissionCardViews(
+            systemView = findViewById(R.id.screenshotSystemStateChip),
+            policyView = findViewById(R.id.screenshotPolicyValue),
+            effectiveView = findViewById(R.id.screenshotEffectiveValue),
+            policySwitch = findViewById(R.id.screenshotPolicySwitch),
+            authorizeButton = findViewById(R.id.screenshotAuthorizeButton)
+        )
+        rootCardViews = PermissionCardViews(
+            systemView = findViewById(R.id.rootSystemStateChip),
+            policyView = findViewById(R.id.rootPolicyValue),
+            effectiveView = findViewById(R.id.rootEffectiveValue),
+            policySwitch = findViewById(R.id.rootPolicySwitch),
+            authorizeButton = findViewById(R.id.rootAuthorizeButton)
+        )
 
         findViewById<Button>(R.id.permissionsBackButton).setOnClickListener { finish() }
+        accessibilityCardViews.authorizeButton.setOnClickListener { openAccessibilitySettings() }
+        screenshotCardViews.authorizeButton.setOnClickListener { requestScreenshotPermission() }
+        rootCardViews.authorizeButton.setOnClickListener { checkRootAuthorization() }
 
-        listOf(
-            accessibilityPolicySwitch,
-            screenshotPolicySwitch,
-            rootPolicySwitch
-        ).forEach { control ->
-            control.isEnabled = false
-            control.isClickable = false
-            control.isFocusable = false
-        }
-
-        accessibilityAuthorizeButton.setOnClickListener { openAccessibilitySettings() }
-        screenshotAuthorizeButton.setOnClickListener { requestScreenshotPermission() }
-        rootAuthorizeButton.setOnClickListener { checkRootAuthorization() }
-
-        val runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
-        runtimeViewModel.runtimeState.observe(this) { state ->
+        runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
+        runtimeViewModel.permissionsScreenState.observe(this) { state ->
             render(state)
         }
 
@@ -124,57 +109,22 @@ class PermissionsActivity : AppCompatActivity() {
         }
     }
 
-    private fun render(runtimeState: RuntimeState) {
-        accessibilityPolicySwitch.isChecked = runtimeState.accessibilityEnabled
-        screenshotPolicySwitch.isChecked = runtimeState.screenshotPermissionGranted
-        rootPolicySwitch.isChecked = runtimeState.rootAvailable == true
-
-        accessibilityPolicyValue.text = if (runtimeState.accessibilityEnabled) {
-            getString(R.string.permission_system_granted)
-        } else {
-            getString(R.string.permission_system_missing)
-        }
-        screenshotPolicyValue.text = if (runtimeState.screenshotPermissionGranted) {
-            getString(R.string.permission_system_granted)
-        } else {
-            getString(R.string.permission_system_missing)
-        }
-        rootPolicyValue.text = if (runtimeState.rootAvailable == true) {
-            getString(R.string.permission_system_granted)
-        } else {
-            getString(R.string.permission_system_missing)
-        }
-
-        accessibilitySystemChip.text = UiStatusSupport.accessibilityStatusText(this, runtimeState.accessibilityStatus)
-        screenshotSystemChip.text = if (runtimeState.screenshotPermissionGranted) {
-            getString(R.string.permission_system_granted)
-        } else {
-            getString(R.string.permission_system_missing)
-        }
-        rootSystemChip.text = UiStatusSupport.rootStatusText(this, runtimeState.rootStatus)
-
-        UiStatusSupport.styleChip(this, accessibilitySystemChip, UiStatusSupport.accessibilityTone(runtimeState.accessibilityStatus))
-        UiStatusSupport.styleChip(this, screenshotSystemChip, UiStatusSupport.booleanTone(runtimeState.screenshotPermissionGranted))
-        UiStatusSupport.styleChip(this, rootSystemChip, UiStatusSupport.rootTone(runtimeState.rootStatus))
-        UiStatusSupport.styleChip(this, accessibilityPolicyValue, UiStatusSupport.booleanTone(runtimeState.accessibilityEnabled))
-        UiStatusSupport.styleChip(this, screenshotPolicyValue, UiStatusSupport.booleanTone(runtimeState.screenshotPermissionGranted))
-        UiStatusSupport.styleChip(this, rootPolicyValue, UiStatusSupport.booleanTone(runtimeState.rootAvailable == true))
-
-        accessibilityAuthorizeButton.text = if (runtimeState.accessibilityEnabled) {
-            getString(R.string.permission_review_button)
-        } else {
-            getString(R.string.permission_authorize_accessibility_button)
-        }
-        screenshotAuthorizeButton.text = if (runtimeState.screenshotPermissionGranted) {
-            getString(R.string.permission_review_button)
-        } else {
-            getString(R.string.permission_authorize_screenshot_button)
-        }
-        rootAuthorizeButton.text = if (runtimeState.rootAvailable == true) {
-            getString(R.string.permission_refresh_root_button)
-        } else {
-            getString(R.string.permission_authorize_root_button)
-        }
+    private fun render(runtimeState: PermissionsScreenUiState) {
+        renderPermissionCard(
+            views = accessibilityCardViews,
+            capability = GhosthandCapability.Accessibility,
+            uiState = runtimeState.accessibility
+        )
+        renderPermissionCard(
+            views = screenshotCardViews,
+            capability = GhosthandCapability.Screenshot,
+            uiState = runtimeState.screenshot
+        )
+        renderPermissionCard(
+            views = rootCardViews,
+            capability = GhosthandCapability.Root,
+            uiState = runtimeState.root
+        )
     }
 
     private fun openAccessibilitySettings() {
@@ -206,12 +156,12 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun checkRootAuthorization() {
-        rootAuthorizeButton.isEnabled = false
+        rootCardViews.authorizeButton.isEnabled = false
         Thread {
             val availability = rootControlProvider.availability()
             runOnUiThread {
-                RuntimeStateStore.refreshHomeDiagnostics(this)
-                rootAuthorizeButton.isEnabled = true
+                RuntimeStateStore.refreshRuntimeSnapshot(this)
+                rootCardViews.authorizeButton.isEnabled = true
                 val message = when (availability.status) {
                     "available" -> R.string.root_check_available
                     "authorization_required" -> R.string.root_check_authorization_required
@@ -239,6 +189,27 @@ class PermissionsActivity : AppCompatActivity() {
         scrollView.post { scrollView.smoothScrollTo(0, card.top) }
     }
 
+    private fun renderPermissionCard(
+        views: PermissionCardViews,
+        capability: GhosthandCapability,
+        uiState: CapabilityPermissionUiState
+    ) {
+        views.policySwitch.setOnCheckedChangeListener(null)
+        views.policySwitch.isChecked = uiState.policyAllowed
+        views.policySwitch.setOnCheckedChangeListener { _, isChecked ->
+            runtimeViewModel.setCapabilityPolicy(capability, isChecked)
+        }
+
+        views.systemView.text = uiState.systemLabel
+        views.policyView.text = uiState.policyLabel
+        views.effectiveView.text = uiState.effectiveLabel
+        views.authorizeButton.text = uiState.authorizeLabel
+
+        UiStatusSupport.styleChip(this, views.systemView, uiState.systemTone)
+        UiStatusSupport.styleChip(this, views.policyView, uiState.policyTone)
+        UiStatusSupport.styleChip(this, views.effectiveView, uiState.effectiveTone)
+    }
+
     companion object {
         private const val ACTION_ACCESSIBILITY_DETAILS_SETTINGS =
             "android.settings.ACCESSIBILITY_DETAILS_SETTINGS"
@@ -256,4 +227,12 @@ class PermissionsActivity : AppCompatActivity() {
 
         fun createRootIntent(context: Context): Intent = createIntent(context, FOCUS_ROOT)
     }
+
+    private data class PermissionCardViews(
+        val systemView: TextView,
+        val policyView: TextView,
+        val effectiveView: TextView,
+        val policySwitch: SwitchMaterial,
+        val authorizeButton: Button
+    )
 }

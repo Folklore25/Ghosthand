@@ -117,7 +117,18 @@ class LocalApiServer(
                 val queryParameters = target.queryParameters
                 val requestBody = GhosthandHttp.readUtf8Body(inputStream, headers["content-length"])
 
-                val response = when {
+                val response = CapabilityRoutePolicy.policyDeniedResponse(
+                    path = path,
+                    capabilityAccess = stateCoordinator.capabilityAccessSnapshot()
+                )?.let { denied ->
+                    buildJsonResponse(
+                        statusCode = 403,
+                        body = errorEnvelope(
+                            code = "CAPABILITY_POLICY_DENIED",
+                            message = denied
+                        )
+                    )
+                } ?: when {
                     method == "GET" && path == "/ping" -> buildPingResponse()
                     method == "GET" && path == "/health" -> buildHealthResponse()
                     method == "GET" && path == "/commands" -> buildCommandsResponse()
@@ -1698,6 +1709,62 @@ class LocalApiServer(
             "contentDescContains",
             "focused"
         )
+    }
+}
+
+internal object CapabilityRoutePolicy {
+    internal val accessibilityPaths = setOf(
+        "/tree",
+        "/find",
+        "/tap",
+        "/swipe",
+        "/type",
+        "/screen",
+        "/focused",
+        "/click",
+        "/input",
+        "/setText",
+        "/scroll",
+        "/longpress",
+        "/gesture",
+        "/back",
+        "/home",
+        "/recents",
+        "/wait"
+    )
+    private val screenshotPaths = setOf("/screenshot")
+    private val rootPaths = setOf("/launch", "/stop")
+
+    fun routeCapability(path: String): GhosthandCapability? {
+        return when {
+            path in accessibilityPaths -> GhosthandCapability.Accessibility
+            path in screenshotPaths -> GhosthandCapability.Screenshot
+            path in rootPaths -> GhosthandCapability.Root
+            else -> null
+        }
+    }
+
+    fun policyDeniedResponse(
+        path: String,
+        capabilityAccess: CapabilityAccessSnapshot
+    ): String? {
+        val capability = routeCapability(path) ?: return null
+        val gateState = capabilityAccess.gateStateFor(capability)
+        if (gateState.policyAllowed) {
+            return null
+        }
+        return denialMessage(capability)
+    }
+
+    fun denialMessage(capability: GhosthandCapability): String {
+        return when (capability) {
+            GhosthandCapability.Accessibility ->
+                "Accessibility control is disabled by app policy. Enable it on the Permissions page before using accessibility-backed Ghosthand routes."
+            GhosthandCapability.Screenshot ->
+                "Screenshot capture is disabled by app policy. Enable it on the Permissions page before using screenshot routes."
+            GhosthandCapability.Root ->
+                "Root capability is disabled by app policy. Enable it on the Permissions page before using root-backed routes."
+        }
     }
 }
 

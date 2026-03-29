@@ -19,8 +19,7 @@ import androidx.lifecycle.ViewModelProvider
 class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
-        RuntimeStateStore.refreshHomeDiagnostics(this)
-        RuntimeStateStore.refreshAccessibilityStatus(this)
+        RuntimeStateStore.refreshRuntimeSnapshot(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,17 +37,14 @@ class MainActivity : AppCompatActivity() {
         val runtimeAccessibilityChip: TextView = findViewById(R.id.homeAccessibilityStatusValue)
         val startRuntimeButton: Button = findViewById(R.id.startServiceButton)
 
-        val accessibilitySystemChip: TextView = findViewById(R.id.homeAccessibilitySystemValue)
-        val accessibilityPolicyChip: TextView = findViewById(R.id.homeAccessibilityPolicyValue)
-        val screenshotSystemChip: TextView = findViewById(R.id.homeScreenshotSystemValue)
-        val screenshotPolicyChip: TextView = findViewById(R.id.homeScreenshotPolicyValue)
-        val rootSystemChip: TextView = findViewById(R.id.homeRootSystemValue)
-        val rootPolicyChip: TextView = findViewById(R.id.homeRootPolicyValue)
         val permissionSummaryValue: TextView = findViewById(R.id.homePermissionSummaryValue)
+        val accessibilitySummaryValue: TextView = findViewById(R.id.homeAccessibilitySummaryValue)
+        val accessibilityEffectiveValue: TextView = findViewById(R.id.homeAccessibilityEffectiveValue)
+        val screenshotSummaryValue: TextView = findViewById(R.id.homeScreenshotSummaryValue)
+        val screenshotEffectiveValue: TextView = findViewById(R.id.homeScreenshotEffectiveValue)
 
-        accessibilityPolicyChip.visibility = android.view.View.GONE
-        screenshotPolicyChip.visibility = android.view.View.GONE
-        rootPolicyChip.visibility = android.view.View.GONE
+        val accessibilityRow = HomeCapabilityRowViews(accessibilitySummaryValue, accessibilityEffectiveValue)
+        val screenshotRow = HomeCapabilityRowViews(screenshotSummaryValue, screenshotEffectiveValue)
 
         val diagnosticsBuildValue: TextView = findViewById(R.id.homeDiagnosticsBuildValue)
         val diagnosticsLastActionValue: TextView = findViewById(R.id.homeDiagnosticsLastActionValue)
@@ -58,26 +54,22 @@ class MainActivity : AppCompatActivity() {
         val openDiagnosticsButton: Button = findViewById(R.id.openDiagnosticsButton)
         val rootEntryButton: Button = findViewById(R.id.rootEntryButton)
 
-        runtimeViewModel.runtimeState.observe(this) { state ->
+        runtimeViewModel.homeScreenState.observe(this) { state ->
             renderHome(
-                state = state,
-                versionBadge = versionBadge,
-                runtimeStatusValue = runtimeStatusValue,
-                runtimeApiChip = runtimeApiChip,
-                runtimeServiceChip = runtimeServiceChip,
-                runtimeAccessibilityChip = runtimeAccessibilityChip,
-                startRuntimeButton = startRuntimeButton,
-                accessibilitySystemChip = accessibilitySystemChip,
-                accessibilityPolicyChip = accessibilityPolicyChip,
-                screenshotSystemChip = screenshotSystemChip,
-                screenshotPolicyChip = screenshotPolicyChip,
-                rootSystemChip = rootSystemChip,
-                rootPolicyChip = rootPolicyChip,
-                permissionSummaryValue = permissionSummaryValue,
-                diagnosticsBuildValue = diagnosticsBuildValue,
-                diagnosticsLastActionValue = diagnosticsLastActionValue,
-                diagnosticsForegroundValue = diagnosticsForegroundValue,
-                rootEntryButton = rootEntryButton
+                state,
+                versionBadge,
+                runtimeStatusValue,
+                runtimeApiChip,
+                runtimeServiceChip,
+                runtimeAccessibilityChip,
+                startRuntimeButton,
+                permissionSummaryValue,
+                accessibilityRow,
+                screenshotRow,
+                diagnosticsBuildValue,
+                diagnosticsLastActionValue,
+                diagnosticsForegroundValue,
+                rootEntryButton
             )
         }
 
@@ -109,76 +101,52 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderHome(
-        state: RuntimeState,
+        state: HomeScreenUiState,
         versionBadge: TextView,
         runtimeStatusValue: TextView,
         runtimeApiChip: TextView,
         runtimeServiceChip: TextView,
         runtimeAccessibilityChip: TextView,
         startRuntimeButton: Button,
-        accessibilitySystemChip: TextView,
-        accessibilityPolicyChip: TextView,
-        screenshotSystemChip: TextView,
-        screenshotPolicyChip: TextView,
-        rootSystemChip: TextView,
-        rootPolicyChip: TextView,
         permissionSummaryValue: TextView,
+        accessibilityRow: HomeCapabilityRowViews,
+        screenshotRow: HomeCapabilityRowViews,
         diagnosticsBuildValue: TextView,
         diagnosticsLastActionValue: TextView,
         diagnosticsForegroundValue: TextView,
         rootEntryButton: Button
     ) {
-        versionBadge.text = getString(R.string.home_version_badge_template, localizeValue(state.buildVersion))
+        versionBadge.text = state.versionBadgeText
         UiStatusSupport.styleChip(this, versionBadge, StatusTone.Neutral)
-        runtimeStatusValue.text = state.statusText
-        runtimeApiChip.text = UiStatusSupport.booleanText(this, state.localApiServerRunning)
-        runtimeServiceChip.text = UiStatusSupport.booleanText(this, state.foregroundServiceRunning)
-        runtimeAccessibilityChip.text = UiStatusSupport.accessibilityStatusText(this, state.accessibilityStatus)
-        UiStatusSupport.styleChip(this, runtimeApiChip, UiStatusSupport.booleanTone(state.localApiServerRunning))
-        UiStatusSupport.styleChip(this, runtimeServiceChip, UiStatusSupport.booleanTone(state.foregroundServiceRunning))
-        UiStatusSupport.styleChip(this, runtimeAccessibilityChip, UiStatusSupport.accessibilityTone(state.accessibilityStatus))
+        runtimeStatusValue.text = state.runtimeSummary.statusText
+        runtimeApiChip.text = state.runtimeSummary.apiStatusText
+        runtimeServiceChip.text = state.runtimeSummary.serviceStatusText
+        runtimeAccessibilityChip.text = state.runtimeSummary.accessibilityStatusText
+        UiStatusSupport.styleChip(this, runtimeApiChip, state.runtimeSummary.apiTone)
+        UiStatusSupport.styleChip(this, runtimeServiceChip, state.runtimeSummary.serviceTone)
+        UiStatusSupport.styleChip(this, runtimeAccessibilityChip, state.runtimeSummary.accessibilityTone)
 
-        startRuntimeButton.isEnabled = !state.foregroundServiceRunning
-        startRuntimeButton.text = if (state.foregroundServiceRunning) {
-            getString(R.string.service_button_running_label)
-        } else {
-            getString(R.string.service_button_label)
-        }
+        startRuntimeButton.isEnabled = state.runtimeSummary.actionEnabled
+        startRuntimeButton.text = state.runtimeSummary.actionLabel
+        permissionSummaryValue.text = state.permissionsSummaryText
 
-        accessibilitySystemChip.text = UiStatusSupport.accessibilityStatusText(this, state.accessibilityStatus)
-        screenshotSystemChip.text = if (state.screenshotPermissionGranted) {
-            getString(R.string.permission_system_granted)
-        } else {
-            getString(R.string.permission_system_missing)
-        }
-        rootSystemChip.text = UiStatusSupport.rootStatusText(this, state.rootStatus)
+        bindHomeCapabilityRow(accessibilityRow, state.accessibilitySummary)
+        bindHomeCapabilityRow(screenshotRow, state.screenshotSummary)
 
-        UiStatusSupport.styleChip(this, accessibilitySystemChip, UiStatusSupport.accessibilityTone(state.accessibilityStatus))
-        UiStatusSupport.styleChip(this, screenshotSystemChip, UiStatusSupport.booleanTone(state.screenshotPermissionGranted))
-        UiStatusSupport.styleChip(this, rootSystemChip, UiStatusSupport.rootTone(state.rootStatus))
-
-        val allowedCount = listOf(
-            state.accessibilityEnabled,
-            state.screenshotPermissionGranted,
-            state.rootAvailable == true
-        ).count { it }
-        permissionSummaryValue.text = getString(R.string.home_permissions_summary_template, allowedCount, 3)
-
-        diagnosticsBuildValue.text = localizeValue(state.buildVersion)
-        diagnosticsLastActionValue.text = if (state.lastServiceAction.isBlank()) {
-            getString(R.string.last_service_action_default)
-        } else {
-            state.lastServiceAction
-        }
-        diagnosticsForegroundValue.text = localizeValue(state.foregroundPackage)
-
-        rootEntryButton.text = if (state.rootAvailable == true) {
-            getString(R.string.home_root_entry_available)
-        } else {
-            getString(R.string.home_root_entry_default)
-        }
+        diagnosticsBuildValue.text = state.diagnosticsSummary.buildText
+        diagnosticsLastActionValue.text = state.diagnosticsSummary.lastActionText
+        diagnosticsForegroundValue.text = state.diagnosticsSummary.foregroundText
+        rootEntryButton.text = state.rootEntryLabel
     }
 
+    private fun bindHomeCapabilityRow(
+        views: HomeCapabilityRowViews,
+        uiState: HomeCapabilitySummaryUiState
+    ) {
+        views.summaryView.text = uiState.detailText
+        views.effectiveView.text = uiState.effectiveText
+        UiStatusSupport.styleChip(this, views.effectiveView, uiState.effectiveTone)
+    }
 
     private fun openExternalUrl(url: String) {
         if (url.isBlank()) {
@@ -194,11 +162,8 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun localizeValue(value: String?): String {
-        return if (value.isNullOrBlank() || value == "unknown") {
-            getString(R.string.runtime_placeholder_unknown)
-        } else {
-            value
-        }
-    }
+    private data class HomeCapabilityRowViews(
+        val summaryView: TextView,
+        val effectiveView: TextView
+    )
 }

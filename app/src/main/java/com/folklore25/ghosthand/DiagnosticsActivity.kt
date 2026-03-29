@@ -20,8 +20,7 @@ class DiagnosticsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        RuntimeStateStore.refreshHomeDiagnostics(this)
-        RuntimeStateStore.refreshAccessibilityStatus(this)
+        RuntimeStateStore.refreshRuntimeSnapshot(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,8 +43,7 @@ class DiagnosticsActivity : AppCompatActivity() {
 
         runHelperButton.setOnClickListener {
             val result = devAccessibilityHelper.attemptEnableAccessibility()
-            RuntimeStateStore.refreshHomeDiagnostics(this)
-            RuntimeStateStore.refreshAccessibilityStatus(this)
+            RuntimeStateStore.refreshRuntimeSnapshot(this)
             RuntimeStateStore.markAccessibilityHelperResult(result.resultText)
             Toast.makeText(this, result.resultText, Toast.LENGTH_SHORT).show()
         }
@@ -70,12 +68,19 @@ class DiagnosticsActivity : AppCompatActivity() {
             apiServerValue.text = UiStatusSupport.booleanText(this, state.localApiServerRunning)
             serviceValue.text = UiStatusSupport.booleanText(this, state.foregroundServiceRunning)
             accessibilityValue.text = UiStatusSupport.accessibilityStatusText(this, state.accessibilityStatus)
-            screenshotValue.text = UiStatusSupport.booleanText(this, state.screenshotPermissionGranted)
+            screenshotValue.text = UiStatusSupport.screenshotSystemStatusText(
+                this,
+                state.capabilityAccess.screenshot.system
+            )
 
             UiStatusSupport.styleChip(this, apiServerValue, UiStatusSupport.booleanTone(state.localApiServerRunning))
             UiStatusSupport.styleChip(this, serviceValue, UiStatusSupport.booleanTone(state.foregroundServiceRunning))
             UiStatusSupport.styleChip(this, accessibilityValue, UiStatusSupport.accessibilityTone(state.accessibilityStatus))
-            UiStatusSupport.styleChip(this, screenshotValue, UiStatusSupport.booleanTone(state.screenshotPermissionGranted))
+            UiStatusSupport.styleChip(
+                this,
+                screenshotValue,
+                UiStatusSupport.screenshotSystemTone(state.capabilityAccess.screenshot.system)
+            )
 
             runHelperButton.isEnabled = state.writeSecureSettingsGranted == true
         }

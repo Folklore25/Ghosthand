@@ -23,6 +23,8 @@ data class RuntimeState(
     val rootHealthy: Boolean? = null,
     val rootStatus: String = "unknown",
     val screenshotPermissionGranted: Boolean = false,
+    val capabilityPolicy: CapabilityPolicySnapshot = CapabilityPolicySnapshot(),
+    val capabilityAccess: CapabilityAccessSnapshot = CapabilityAccessSnapshot(),
     val foregroundServiceRunning: Boolean = false,
     val tapProbeCount: Int = 0,
     val tapProbeUiBuildState: String = "unknown",

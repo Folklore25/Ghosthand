@@ -37,7 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/permissions_subtitle"
+            android:text="@string/permissions_subtitle_v2"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
             android:textColor="@color/gh_text_secondary" />
 
@@ -55,7 +55,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="18dp"
-                android:text="@string/permissions_layer_note"
+                android:text="@string/permissions_layer_note_v2"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                 android:textColor="@color/gh_text_primary" />
         </com.google.android.material.card.MaterialCardView>
@@ -113,74 +113,75 @@
                         app:trackTint="@color/gh_switch_track_tint" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
+                    android:layout_marginTop="18dp"
+                    android:text="@string/permission_system_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                <TextView
+                    android:id="@+id/accessibilitySystemStateChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/permission_system_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/permission_policy_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                        <TextView
-                            android:id="@+id/accessibilitySystemStateChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-                    </LinearLayout>
+                <TextView
+                    android:id="@+id/accessibilityPolicyValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/permission_effective_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/permission_policy_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
-
-                        <TextView
-                            android:id="@+id/accessibilityPolicyValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-                    </LinearLayout>
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/accessibilityEffectiveValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/accessibilityAuthorizeButton"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:text="@string/permission_authorize_accessibility_button"
                     android:textAllCaps="false"
                     android:textColor="@color/gh_brand_primary"
@@ -229,7 +230,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/permission_screenshot_description"
+                            android:text="@string/permission_screenshot_description_v2"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                             android:textColor="@color/gh_text_secondary" />
                     </LinearLayout>
@@ -242,74 +243,75 @@
                         app:trackTint="@color/gh_switch_track_tint" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
+                    android:layout_marginTop="18dp"
+                    android:text="@string/permission_system_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                <TextView
+                    android:id="@+id/screenshotSystemStateChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/permission_system_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/permission_policy_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                        <TextView
-                            android:id="@+id/screenshotSystemStateChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-                    </LinearLayout>
+                <TextView
+                    android:id="@+id/screenshotPolicyValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/permission_effective_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/permission_policy_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
-
-                        <TextView
-                            android:id="@+id/screenshotPolicyValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-                    </LinearLayout>
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/screenshotEffectiveValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/screenshotAuthorizeButton"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:text="@string/permission_authorize_screenshot_button"
                     android:textAllCaps="false"
                     android:textColor="@color/gh_brand_primary"
@@ -358,7 +360,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/permission_root_description"
+                            android:text="@string/permission_root_description_v2"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                             android:textColor="@color/gh_text_secondary" />
                     </LinearLayout>
@@ -371,79 +373,80 @@
                         app:trackTint="@color/gh_switch_track_tint" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
+                    android:layout_marginTop="18dp"
+                    android:text="@string/permission_system_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                <TextView
+                    android:id="@+id/rootSystemStateChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/permission_system_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/permission_policy_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                        <TextView
-                            android:id="@+id/rootSystemStateChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-                    </LinearLayout>
+                <TextView
+                    android:id="@+id/rootPolicyValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/permission_effective_label"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/gh_text_secondary" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/permission_policy_label"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="@color/gh_text_secondary" />
-
-                        <TextView
-                            android:id="@+id/rootPolicyValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_status_chip"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="@string/runtime_placeholder_unknown"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-                    </LinearLayout>
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/rootEffectiveValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/runtime_placeholder_unknown"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/rootAuthorizeButton"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:text="@string/permission_authorize_root_button"
                     android:textAllCaps="false"
-                    android:textColor="@color/gh_brand_primary"
+                    android:textColor="@color/gh_danger_red"
                     app:cornerRadius="18dp"
-                    app:strokeColor="@color/gh_surface_stroke" />
+                    app:strokeColor="@color/gh_danger_red" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

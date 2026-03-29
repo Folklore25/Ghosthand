@@ -24,6 +24,52 @@ object RuntimeStateStore {
 
     fun snapshot(): RuntimeState = runtimeState.value ?: RuntimeState()
 
+    fun refreshRuntimeSnapshot(context: Context) {
+        val appContext = context.applicationContext
+        val diagnosticsSnapshot = HomeDiagnosticsProvider(appContext).snapshot()
+        val permissionSnapshot = PermissionSnapshotProvider(appContext).snapshot()
+        val foregroundSnapshot = ForegroundAppProvider(appContext).snapshot()
+        val rootSnapshot = RootControlProvider().availability()
+        val executionStatus = GhostAccessibilityExecutionCoreRegistry.currentStatus()
+        val accessibilitySnapshot = AccessibilityStatusProvider(appContext)
+            .snapshot(
+                isConnected = executionStatus.connected,
+                isDispatchCapable = executionStatus.dispatchCapable
+            )
+        val screenshotPermissionGranted =
+            GhosthandServiceRegistry.getInstanceIfRunning()?.hasMediaProjection() == true
+        val capabilityPolicy = CapabilityPolicyStore(appContext).snapshot()
+        val capabilityAccess = CapabilityAccessSnapshotFactory.create(
+            accessibilityStatus = accessibilitySnapshot,
+            mediaProjectionGranted = screenshotPermissionGranted,
+            rootAvailability = rootSnapshot,
+            policy = capabilityPolicy
+        )
+
+        updateState { current ->
+            val next = current.copy(
+                buildVersion = diagnosticsSnapshot.buildVersion,
+                installIdentity = diagnosticsSnapshot.installIdentity,
+                tapProbeUiBuildState = diagnosticsSnapshot.tapProbeUiBuildState,
+                writeSecureSettingsGranted = permissionSnapshot.writeSecureSettings,
+                foregroundPackage = foregroundSnapshot.packageName,
+                rootAvailable = rootSnapshot.available,
+                rootHealthy = rootSnapshot.healthy,
+                rootStatus = rootSnapshot.status,
+                screenshotPermissionGranted = screenshotPermissionGranted,
+                accessibilityServiceConnected = accessibilitySnapshot.connected,
+                accessibilityDispatchCapable = accessibilitySnapshot.dispatchCapable,
+                accessibilityEnabled = accessibilitySnapshot.enabled,
+                accessibilityHealthy = accessibilitySnapshot.healthy,
+                accessibilityStatus = accessibilitySnapshot.status,
+                capabilityPolicy = capabilityPolicy,
+                capabilityAccess = capabilityAccess
+            )
+            logAccessibilityStateTransition(current, next, "runtime_snapshot")
+            next
+        }
+    }
+
     fun markAppStarted() {
         updateState { current ->
             current.copy(
@@ -41,25 +87,7 @@ object RuntimeStateStore {
     }
 
     fun refreshHomeDiagnostics(context: Context) {
-        val snapshot = HomeDiagnosticsProvider(context.applicationContext).snapshot()
-        val permissionSnapshot = PermissionSnapshotProvider(context.applicationContext).snapshot()
-        val foregroundSnapshot = ForegroundAppProvider(context.applicationContext).snapshot()
-        val rootSnapshot = RootControlProvider().availability()
-        val screenshotPermissionGranted =
-            GhosthandServiceRegistry.getInstanceIfRunning()?.hasMediaProjection() == true
-        updateState { current ->
-            current.copy(
-                buildVersion = snapshot.buildVersion,
-                installIdentity = snapshot.installIdentity,
-                tapProbeUiBuildState = snapshot.tapProbeUiBuildState,
-                writeSecureSettingsGranted = permissionSnapshot.writeSecureSettings,
-                foregroundPackage = foregroundSnapshot.packageName,
-                rootAvailable = rootSnapshot.available,
-                rootHealthy = rootSnapshot.healthy,
-                rootStatus = rootSnapshot.status,
-                screenshotPermissionGranted = screenshotPermissionGranted
-            )
-        }
+        refreshRuntimeSnapshot(context)
     }
 
     fun markLocalApiServerStarted() {
@@ -183,23 +211,7 @@ object RuntimeStateStore {
     }
 
     fun refreshAccessibilityStatus(context: Context) {
-        val executionStatus = GhostAccessibilityExecutionCoreRegistry.currentStatus()
-        val snapshot = AccessibilityStatusProvider(context.applicationContext)
-            .snapshot(
-                isConnected = executionStatus.connected,
-                isDispatchCapable = executionStatus.dispatchCapable
-            )
-        updateState { current ->
-            val next = current.copy(
-                accessibilityServiceConnected = snapshot.connected,
-                accessibilityDispatchCapable = snapshot.dispatchCapable,
-                accessibilityEnabled = snapshot.enabled,
-                accessibilityHealthy = snapshot.healthy,
-                accessibilityStatus = snapshot.status
-            )
-            logAccessibilityStateTransition(current, next, "status_refresh")
-            next
-        }
+        refreshRuntimeSnapshot(context)
     }
 
     private fun logAccessibilityStateTransition(

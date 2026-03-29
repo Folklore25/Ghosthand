@@ -14,12 +14,13 @@ class StateCoordinator(
     context: Context,
     private val runtimeStateProvider: () -> RuntimeState
 ) {
-    private val homeDiagnosticsProvider = HomeDiagnosticsProvider(context.applicationContext)
-    private val deviceSnapshotProvider = DeviceSnapshotProvider(context.applicationContext)
-    private val foregroundAppProvider = ForegroundAppProvider(context.applicationContext)
-    private val permissionSnapshotProvider = PermissionSnapshotProvider(context.applicationContext)
-    private val accessibilityStatusProvider = AccessibilityStatusProvider(context.applicationContext)
-    private val accessibilityTreeSnapshotProvider = AccessibilityTreeSnapshotProvider(context.applicationContext)
+    private val appContext = context.applicationContext
+    private val homeDiagnosticsProvider = HomeDiagnosticsProvider(appContext)
+    private val deviceSnapshotProvider = DeviceSnapshotProvider(appContext)
+    private val foregroundAppProvider = ForegroundAppProvider(appContext)
+    private val permissionSnapshotProvider = PermissionSnapshotProvider(appContext)
+    private val accessibilityStatusProvider = AccessibilityStatusProvider(appContext)
+    private val accessibilityTreeSnapshotProvider = AccessibilityTreeSnapshotProvider(appContext)
     private val accessibilityNodeFinder = AccessibilityNodeFinder()
     private val accessibilityTapper = AccessibilityTapper()
     private val accessibilityClicker = AccessibilityClicker()
@@ -27,9 +28,10 @@ class StateCoordinator(
     private val accessibilityTyper = AccessibilityTyper()
     private val accessibilityScroller = AccessibilityScroller()
     private val rootControlProvider = RootControlProvider()
-    private val clipboardProvider = ClipboardProvider(context.applicationContext)
-    private val mediaProjectionProvider = MediaProjectionProvider(context.applicationContext)
-    private val notificationDispatcher = NotificationDispatcher(context.applicationContext)
+    private val capabilityPolicyStore = CapabilityPolicyStore(appContext)
+    private val clipboardProvider = ClipboardProvider(appContext)
+    private val mediaProjectionProvider = MediaProjectionProvider(appContext)
+    private val notificationDispatcher = NotificationDispatcher(appContext)
     private val rootScreenshotProvider = RootScreenshotProvider()
 
     fun createPingPayload(): JSONObject {
@@ -70,6 +72,13 @@ class StateCoordinator(
         val accessibilitySnapshot = accessibilityStatusProvider.snapshot(
             isConnected = executionStatus.connected,
             isDispatchCapable = executionStatus.dispatchCapable
+        )
+        val capabilityPolicy = capabilityPolicyStore.snapshot()
+        val capabilityAccess = CapabilityAccessSnapshotFactory.create(
+            accessibilityStatus = accessibilitySnapshot,
+            mediaProjectionGranted = mediaProjectionProvider.hasProjection(),
+            rootAvailability = rootAvailability,
+            policy = capabilityPolicy
         )
         val runtimeUptimeMs = runtimeState.appStartedAtElapsedRealtimeMs?.let {
             (SystemClock.elapsedRealtime() - it).coerceAtLeast(0L)
@@ -121,13 +130,41 @@ class StateCoordinator(
                 .put("status", "not_implemented")
             )
             .put("permissions", JSONObject()
-                .put("implemented", false)
+                .put("implemented", true)
                 .put("usageAccess", permissionSnapshot.usageAccess ?: JSONObject.NULL)
                 .put("accessibility", accessibilitySnapshot.enabled)
                 .put("notifications", permissionSnapshot.notifications ?: JSONObject.NULL)
                 .put("overlay", permissionSnapshot.overlay ?: JSONObject.NULL)
                 .put("writeSecureSettings", permissionSnapshot.writeSecureSettings ?: JSONObject.NULL)
+                .put("capabilities", JSONObject()
+                    .put(
+                        "accessibility",
+                        GovernedCapabilityPayloads.accessibilityToJson(capabilityAccess.accessibility)
+                    )
+                    .put(
+                        "screenshot",
+                        GovernedCapabilityPayloads.screenshotToJson(capabilityAccess.screenshot)
+                    )
+                    .put(
+                        "root",
+                        GovernedCapabilityPayloads.rootToJson(capabilityAccess.root)
+                    )
+                )
             )
+    }
+
+    fun capabilityAccessSnapshot(): CapabilityAccessSnapshot {
+        val executionStatus = GhostAccessibilityExecutionCoreRegistry.currentStatus()
+        val accessibilitySnapshot = accessibilityStatusProvider.snapshot(
+            isConnected = executionStatus.connected,
+            isDispatchCapable = executionStatus.dispatchCapable
+        )
+        return CapabilityAccessSnapshotFactory.create(
+            accessibilityStatus = accessibilitySnapshot,
+            mediaProjectionGranted = mediaProjectionProvider.hasProjection(),
+            rootAvailability = rootControlProvider.availability(),
+            policy = capabilityPolicyStore.snapshot()
+        )
     }
 
     fun createForegroundPayload(): JSONObject {
@@ -535,7 +572,18 @@ class StateCoordinator(
             return projectionCapture
         }
 
-        val rootCapture = rootScreenshotProvider.captureScreenshot()
+        val rootCapture = if (capabilityPolicyStore.snapshot().rootAllowed) {
+            rootScreenshotProvider.captureScreenshot()
+        } else {
+            ScreenshotDispatchResult(
+                available = false,
+                base64 = null,
+                format = "png",
+                width = 0,
+                height = 0,
+                attemptedPath = "root_policy_blocked"
+            )
+        }
         if (rootCapture.available) {
             return rootCapture
         }
@@ -692,6 +740,76 @@ class StateCoordinator(
         val packageName: String?,
         val activity: String?
     )
+}
+
+internal object GovernedCapabilityPayloads {
+    fun accessibilityToJson(snapshot: GovernedCapabilitySnapshot<AccessibilitySystemAuthorizationState>): JSONObject {
+        return JSONObject(accessibilityFields(snapshot))
+    }
+
+    fun screenshotToJson(snapshot: GovernedCapabilitySnapshot<ScreenshotSystemAuthorizationState>): JSONObject {
+        return JSONObject(screenshotFields(snapshot))
+    }
+
+    fun rootToJson(snapshot: GovernedCapabilitySnapshot<RootSystemAuthorizationState>): JSONObject {
+        return JSONObject(rootFields(snapshot))
+    }
+
+    fun accessibilityFields(
+        snapshot: GovernedCapabilitySnapshot<AccessibilitySystemAuthorizationState>
+    ): Map<String, Any?> {
+        return linkedMapOf(
+            "system" to linkedMapOf(
+                "authorized" to snapshot.system.authorized,
+                "enabled" to snapshot.system.enabled,
+                "connected" to snapshot.system.connected,
+                "dispatchCapable" to snapshot.system.dispatchCapable,
+                "healthy" to snapshot.system.healthy,
+                "status" to snapshot.system.status
+            ),
+            "policy" to linkedMapOf("allowed" to snapshot.policy.allowed),
+            "effective" to linkedMapOf(
+                "usableNow" to snapshot.effective.usableNow,
+                "reason" to snapshot.effective.reason
+            )
+        )
+    }
+
+    fun screenshotFields(
+        snapshot: GovernedCapabilitySnapshot<ScreenshotSystemAuthorizationState>
+    ): Map<String, Any?> {
+        return linkedMapOf(
+            "system" to linkedMapOf(
+                "authorized" to snapshot.system.authorized,
+                "accessibilityCaptureReady" to snapshot.system.accessibilityCaptureReady,
+                "mediaProjectionGranted" to snapshot.system.mediaProjectionGranted,
+                "rootFallbackAvailable" to snapshot.system.rootFallbackAvailable
+            ),
+            "policy" to linkedMapOf("allowed" to snapshot.policy.allowed),
+            "effective" to linkedMapOf(
+                "usableNow" to snapshot.effective.usableNow,
+                "reason" to snapshot.effective.reason
+            )
+        )
+    }
+
+    fun rootFields(
+        snapshot: GovernedCapabilitySnapshot<RootSystemAuthorizationState>
+    ): Map<String, Any?> {
+        return linkedMapOf(
+            "system" to linkedMapOf(
+                "authorized" to snapshot.system.authorized,
+                "available" to snapshot.system.available,
+                "healthy" to snapshot.system.healthy,
+                "status" to snapshot.system.status
+            ),
+            "policy" to linkedMapOf("allowed" to snapshot.policy.allowed),
+            "effective" to linkedMapOf(
+                "usableNow" to snapshot.effective.usableNow,
+                "reason" to snapshot.effective.reason
+            )
+        )
+    }
 }
 
 data class InputOperationResult(

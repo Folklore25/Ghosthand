@@ -29,32 +29,82 @@ internal object UiStatusSupport {
         view.setTextColor(ContextCompat.getColor(context, tone.textRes))
     }
 
-    fun booleanText(context: Context, value: Boolean): String {
-        return if (value) context.getString(R.string.runtime_boolean_true)
-        else context.getString(R.string.runtime_boolean_false)
+    fun booleanText(textLookup: UiTextLookup, value: Boolean): String {
+        return if (value) textLookup.getString(R.string.runtime_boolean_true)
+        else textLookup.getString(R.string.runtime_boolean_false)
     }
 
-    fun accessibilityStatusText(context: Context, status: String): String {
+    fun booleanText(context: Context, value: Boolean): String =
+        booleanText(context.asTextLookup(), value)
+
+    fun accessibilityStatusText(textLookup: UiTextLookup, status: String): String {
         return when (status) {
-            "disabled" -> context.getString(R.string.accessibility_status_disabled)
-            "enabled_idle" -> context.getString(R.string.accessibility_status_enabled_idle)
-            "enabled_connected" -> context.getString(R.string.accessibility_status_enabled_connected)
+            "disabled" -> textLookup.getString(R.string.accessibility_status_disabled)
+            "enabled_idle" -> textLookup.getString(R.string.accessibility_status_enabled_idle)
+            "enabled_connected" -> textLookup.getString(R.string.accessibility_status_enabled_connected)
             else -> status
         }
     }
 
-    fun rootStatusText(context: Context, status: String): String {
+    fun accessibilityStatusText(context: Context, status: String): String =
+        accessibilityStatusText(context.asTextLookup(), status)
+
+    fun rootStatusText(textLookup: UiTextLookup, status: String): String {
         return when (status) {
-            "available" -> context.getString(R.string.root_status_available)
-            "authorization_required" -> context.getString(R.string.root_status_authorization_required)
-            "unavailable" -> context.getString(R.string.root_status_unavailable)
-            else -> context.getString(R.string.runtime_boolean_unknown)
+            "available" -> textLookup.getString(R.string.root_status_available)
+            "authorization_required" -> textLookup.getString(R.string.root_status_authorization_required)
+            "unavailable" -> textLookup.getString(R.string.root_status_unavailable)
+            else -> textLookup.getString(R.string.runtime_boolean_unknown)
         }
     }
 
-    fun policyStatusText(context: Context, allowed: Boolean): String {
-        return if (allowed) context.getString(R.string.permission_policy_allowed)
-        else context.getString(R.string.permission_policy_blocked)
+    fun rootStatusText(context: Context, status: String): String =
+        rootStatusText(context.asTextLookup(), status)
+
+    fun screenshotSystemStatusText(
+        textLookup: UiTextLookup,
+        system: ScreenshotSystemAuthorizationState
+    ): String {
+        return when {
+            system.mediaProjectionGranted ->
+                textLookup.getString(R.string.permission_screenshot_system_projection)
+            system.accessibilityCaptureReady ->
+                textLookup.getString(R.string.permission_screenshot_system_accessibility)
+            system.rootFallbackAvailable ->
+                textLookup.getString(R.string.permission_screenshot_system_root_fallback)
+            else ->
+                textLookup.getString(R.string.permission_system_missing)
+        }
+    }
+
+    fun screenshotSystemStatusText(context: Context, system: ScreenshotSystemAuthorizationState): String =
+        screenshotSystemStatusText(context.asTextLookup(), system)
+
+    fun policyStatusText(textLookup: UiTextLookup, allowed: Boolean): String {
+        return if (allowed) textLookup.getString(R.string.permission_policy_allowed)
+        else textLookup.getString(R.string.permission_policy_blocked)
+    }
+
+    fun policyStatusText(context: Context, allowed: Boolean): String =
+        policyStatusText(context.asTextLookup(), allowed)
+
+    fun effectiveStatusText(
+        textLookup: UiTextLookup,
+        effective: CapabilityEffectiveState
+    ): String {
+        if (!effective.usableNow) {
+            return when (effective.reason) {
+                "policy_blocked" -> textLookup.getString(R.string.permission_effective_policy_blocked)
+                "authorization_required" -> textLookup.getString(R.string.permission_effective_authorization_required)
+                "service_idle" -> textLookup.getString(R.string.permission_effective_service_idle)
+                else -> textLookup.getString(R.string.permission_effective_unavailable)
+            }
+        }
+
+        return when (effective.reason) {
+            "root_fallback" -> textLookup.getString(R.string.permission_effective_root_fallback)
+            else -> textLookup.getString(R.string.permission_effective_available)
+        }
     }
 
     fun booleanTone(value: Boolean): StatusTone = if (value) StatusTone.Success else StatusTone.Neutral
@@ -76,4 +126,23 @@ internal object UiStatusSupport {
     }
 
     fun policyTone(allowed: Boolean): StatusTone = if (allowed) StatusTone.Success else StatusTone.Neutral
+
+    fun screenshotSystemTone(system: ScreenshotSystemAuthorizationState): StatusTone {
+        return when {
+            system.mediaProjectionGranted ||
+                system.accessibilityCaptureReady ||
+                system.rootFallbackAvailable -> StatusTone.Success
+            else -> StatusTone.Neutral
+        }
+    }
+
+    fun effectiveTone(available: Boolean): StatusTone = if (available) StatusTone.Success else StatusTone.Warning
+
+    private fun Context.asTextLookup(): UiTextLookup {
+        return object : UiTextLookup {
+            override fun getString(resId: Int, vararg args: Any): String {
+                return this@asTextLookup.getString(resId, *args)
+            }
+        }
+    }
 }
