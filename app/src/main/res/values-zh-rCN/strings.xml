@@ -24,8 +24,8 @@
     <string name="dispatch_capable_label">可派发手势</string>
     <string name="root_available_label">Root 可用</string>
     <string name="root_status_label">Root 状态</string>
-    <string name="api_server_running_label">本地 API 服务运行中</string>
-    <string name="service_running_label">前台服务运行中</string>
+    <string name="api_server_running_label">本地 API</string>
+    <string name="service_running_label">前台服务</string>
     <string name="last_service_action_label">最近服务动作</string>
     <string name="last_service_action_default">未启动</string>
     <string name="runtime_status_label">运行时状态</string>
@@ -92,12 +92,12 @@
     <string name="home_root_entry_available">Root 权限已可用</string>
     <string name="service_button_running_label">运行时已激活</string>
     <string name="permissions_title">权限与授权</string>
-    <string name="permissions_subtitle">系统授权与应用策略是两层不同的许可。即使系统已授权，也仍可在应用层阻止 Ghosthand 与 OpenClaw 使用。</string>
-    <string name="permissions_layer_note">系统授权决定 Android 是否向应用暴露能力，应用策略决定 Ghosthand 与 OpenClaw 是否真的可以使用它。</string>
+    <string name="permissions_subtitle">此页面只反映敏感系统授权状态，并集中提供需要人工完成的授权入口。</string>
+    <string name="permissions_layer_note">这里应反映真实系统授权状态，不应再额外引入一层 Ghosthand 自己定义的应用权限控制。</string>
     <string name="permission_system_label">系统授权</string>
-    <string name="permission_policy_label">应用策略</string>
-    <string name="permission_policy_allowed">已允许</string>
-    <string name="permission_policy_blocked">已阻止</string>
+    <string name="permission_policy_label">当前状态</string>
+    <string name="permission_policy_allowed">已授权</string>
+    <string name="permission_policy_blocked">未授权</string>
     <string name="permission_system_granted">已授权</string>
     <string name="permission_system_missing">未授权</string>
     <string name="permission_review_button">查看授权</string>
@@ -117,10 +117,13 @@
     <string name="diagnostics_identity_title">构建与会话</string>
     <string name="diagnostics_recovery_title">恢复工具</string>
     <string name="diagnostics_recovery_subtitle">保留高级恢复入口，但不让它主导默认产品界面。</string>
-    <string name="policy_accessibility_disabled_message">无障碍控制当前已被应用策略阻止。请在权限页中允许后，再让 Ghosthand 与 OpenClaw 使用。</string>
-    <string name="policy_screenshot_disabled_message">截图能力当前已被应用策略阻止。请在权限页中允许后，再让 Ghosthand 与 OpenClaw 使用。</string>
-    <string name="policy_root_disabled_message">Root 能力当前已被应用策略阻止。请先在权限页中允许，Ghosthand 与 OpenClaw 才能使用 Root 相关动作。</string>
     <string name="root_check_available">Ghosthand 已可使用 Root。</string>
     <string name="root_check_authorization_required">Root 仍需在 Root 管理器中授权。</string>
     <string name="root_check_unavailable">此设备或当前应用进程无法使用 Root。</string>
+    <string name="home_update_button">更新</string>
+    <string name="home_github_button">GitHub</string>
+    <string name="home_version_badge_template">v%1$s</string>
+    <string name="home_update_url">https://github.com/folklore25/ghosthand/releases</string>
+    <string name="home_github_url">https://github.com/folklore25/ghosthand</string>
+    <string name="home_external_link_unavailable">链接尚未配置。</string>
 </resources>

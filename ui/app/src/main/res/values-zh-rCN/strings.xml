@@ -24,8 +24,8 @@
     <string name="dispatch_capable_label">可派发手势</string>
     <string name="root_available_label">Root 可用</string>
     <string name="root_status_label">Root 状态</string>
-    <string name="api_server_running_label">本地 API 服务运行中</string>
-    <string name="service_running_label">前台服务运行中</string>
+    <string name="api_server_running_label">本地 API</string>
+    <string name="service_running_label">前台服务</string>
     <string name="last_service_action_label">最近服务动作</string>
     <string name="last_service_action_default">未启动</string>
     <string name="runtime_status_label">运行时状态</string>
@@ -123,4 +123,10 @@
     <string name="root_check_available">Ghosthand 已可使用 Root。</string>
     <string name="root_check_authorization_required">Root 仍需在 Root 管理器中授权。</string>
     <string name="root_check_unavailable">此设备或当前应用进程无法使用 Root。</string>
+    <string name="home_update_button">更新</string>
+    <string name="home_github_button">GitHub</string>
+    <string name="home_version_badge_template">v%1$s</string>
+    <string name="home_update_url">https://github.com/folklore25/ghosthand/releases</string>
+    <string name="home_github_url">https://github.com/folklore25/ghosthand</string>
+    <string name="home_external_link_unavailable">链接尚未配置。</string>
 </resources>

@@ -13,7 +13,6 @@ class GhosthandApp : Application() {
     override fun onCreate() {
         super.onCreate()
         AppTextResolver.initialize(this)
-        CapabilityPolicyStore.initialize(this)
         RuntimeStateStore.markAppStarted()
         RuntimeStateStore.refreshHomeDiagnostics(this)
         RuntimeStateStore.refreshAccessibilityStatus(this)

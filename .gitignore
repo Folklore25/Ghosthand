@@ -26,6 +26,7 @@ ghosthand-window-latest.xml
 
 # Local-only reference and operating material
 references/
+ui/
 docs/ghosthanddev/
 docs/knowledgebase/
 docs/Architecture.md
@@ -40,3 +41,4 @@ AGENTS.md
 app/.gitignore
 icon.png
 icon.svg
+

@@ -26,9 +26,8 @@ class LocalApiServer(
     context: android.content.Context,
     runtimeStateProvider: () -> RuntimeState
 ) {
-    private val appContext = context.applicationContext
     private val stateCoordinator = StateCoordinator(
-        context = appContext,
+        context = context.applicationContext,
         runtimeStateProvider = runtimeStateProvider
     )
 
@@ -117,14 +116,6 @@ class LocalApiServer(
                 val path = target.path
                 val queryParameters = target.queryParameters
                 val requestBody = GhosthandHttp.readUtf8Body(inputStream, headers["content-length"])
-                val gatedResponse = buildCapabilityPolicyDeniedResponse(path)
-                if (gatedResponse != null) {
-                    OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8).use { writer ->
-                        writer.write(gatedResponse)
-                        writer.flush()
-                    }
-                    return
-                }
 
                 val response = when {
                     method == "GET" && path == "/ping" -> buildPingResponse()
@@ -1606,39 +1597,6 @@ class LocalApiServer(
             .put("meta", buildMeta())
     }
 
-    private fun buildCapabilityPolicyDeniedResponse(path: String): String? {
-        return when {
-            path in ACCESSIBILITY_POLICY_PATHS &&
-                !CapabilityPolicyStore.isAllowed(CapabilityPolicy.AccessibilityControl) ->
-                buildJsonResponse(
-                    403,
-                    errorEnvelope(
-                        "CAPABILITY_DISABLED",
-                        appContext.getString(R.string.policy_accessibility_disabled_message)
-                    )
-                )
-            path in SCREENSHOT_POLICY_PATHS &&
-                !CapabilityPolicyStore.isAllowed(CapabilityPolicy.ScreenshotCapture) ->
-                buildJsonResponse(
-                    403,
-                    errorEnvelope(
-                        "CAPABILITY_DISABLED",
-                        appContext.getString(R.string.policy_screenshot_disabled_message)
-                    )
-                )
-            path in ROOT_POLICY_PATHS &&
-                !CapabilityPolicyStore.isAllowed(CapabilityPolicy.RootCapability) ->
-                buildJsonResponse(
-                    403,
-                    errorEnvelope(
-                        "CAPABILITY_DISABLED",
-                        appContext.getString(R.string.policy_root_disabled_message)
-                    )
-                )
-            else -> null
-        }
-    }
-
     private fun buildMeta(): JSONObject {
         return JSONObject()
             .put("requestId", "req_${UUID.randomUUID().toString().replace("-", "")}")
@@ -1724,27 +1682,6 @@ class LocalApiServer(
         private const val GESTURE_LOG_TAG = "GhostGesture"
         private const val MAX_SWIPE_DURATION_MS = 5000L
         private const val ACTION_SETTLE_DELAY_MS = 300L
-        private val ACCESSIBILITY_POLICY_PATHS = setOf(
-            "/tree",
-            "/find",
-            "/tap",
-            "/swipe",
-            "/type",
-            "/screen",
-            "/focused",
-            "/click",
-            "/input",
-            "/setText",
-            "/scroll",
-            "/longpress",
-            "/gesture",
-            "/back",
-            "/home",
-            "/recents",
-            "/wait"
-        )
-        private val SCREENSHOT_POLICY_PATHS = setOf("/screenshot")
-        private val ROOT_POLICY_PATHS = setOf("/launch", "/stop")
         private val SUPPORTED_FIND_STRATEGIES = setOf(
             "text",
             "textContains",

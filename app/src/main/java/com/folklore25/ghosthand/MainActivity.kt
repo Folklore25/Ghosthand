@@ -7,6 +7,7 @@
 package com.folklore25.ghosthand
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -28,6 +29,9 @@ class MainActivity : AppCompatActivity() {
 
         val runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
 
+        val versionBadge: TextView = findViewById(R.id.homeVersionBadge)
+        val updateButton: Button = findViewById(R.id.homeUpdateButton)
+        val githubButton: Button = findViewById(R.id.homeGithubButton)
         val runtimeStatusValue: TextView = findViewById(R.id.homeRuntimeStatusValue)
         val runtimeApiChip: TextView = findViewById(R.id.homeApiStatusValue)
         val runtimeServiceChip: TextView = findViewById(R.id.homeServiceStatusValue)
@@ -42,6 +46,10 @@ class MainActivity : AppCompatActivity() {
         val rootPolicyChip: TextView = findViewById(R.id.homeRootPolicyValue)
         val permissionSummaryValue: TextView = findViewById(R.id.homePermissionSummaryValue)
 
+        accessibilityPolicyChip.visibility = android.view.View.GONE
+        screenshotPolicyChip.visibility = android.view.View.GONE
+        rootPolicyChip.visibility = android.view.View.GONE
+
         val diagnosticsBuildValue: TextView = findViewById(R.id.homeDiagnosticsBuildValue)
         val diagnosticsLastActionValue: TextView = findViewById(R.id.homeDiagnosticsLastActionValue)
         val diagnosticsForegroundValue: TextView = findViewById(R.id.homeDiagnosticsForegroundValue)
@@ -53,29 +61,7 @@ class MainActivity : AppCompatActivity() {
         runtimeViewModel.runtimeState.observe(this) { state ->
             renderHome(
                 state = state,
-                policies = CapabilityPolicyStore.snapshot(),
-                runtimeStatusValue = runtimeStatusValue,
-                runtimeApiChip = runtimeApiChip,
-                runtimeServiceChip = runtimeServiceChip,
-                runtimeAccessibilityChip = runtimeAccessibilityChip,
-                startRuntimeButton = startRuntimeButton,
-                accessibilitySystemChip = accessibilitySystemChip,
-                accessibilityPolicyChip = accessibilityPolicyChip,
-                screenshotSystemChip = screenshotSystemChip,
-                screenshotPolicyChip = screenshotPolicyChip,
-                rootSystemChip = rootSystemChip,
-                rootPolicyChip = rootPolicyChip,
-                permissionSummaryValue = permissionSummaryValue,
-                diagnosticsBuildValue = diagnosticsBuildValue,
-                diagnosticsLastActionValue = diagnosticsLastActionValue,
-                diagnosticsForegroundValue = diagnosticsForegroundValue,
-                rootEntryButton = rootEntryButton
-            )
-        }
-        CapabilityPolicyStore.observe().observe(this) { policies ->
-            renderHome(
-                state = RuntimeStateStore.snapshot(),
-                policies = policies,
+                versionBadge = versionBadge,
                 runtimeStatusValue = runtimeStatusValue,
                 runtimeApiChip = runtimeApiChip,
                 runtimeServiceChip = runtimeServiceChip,
@@ -101,6 +87,14 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.service_requested, Toast.LENGTH_SHORT).show()
         }
 
+        updateButton.setOnClickListener {
+            openExternalUrl(getString(R.string.home_update_url))
+        }
+
+        githubButton.setOnClickListener {
+            openExternalUrl(getString(R.string.home_github_url))
+        }
+
         managePermissionsButton.setOnClickListener {
             startActivity(PermissionsActivity.createIntent(this))
         }
@@ -110,13 +104,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         rootEntryButton.setOnClickListener {
-            startActivity(PermissionsActivity.createIntent(this, CapabilityPolicy.RootCapability))
+            startActivity(PermissionsActivity.createRootIntent(this))
         }
     }
 
     private fun renderHome(
         state: RuntimeState,
-        policies: CapabilityPolicyState,
+        versionBadge: TextView,
         runtimeStatusValue: TextView,
         runtimeApiChip: TextView,
         runtimeServiceChip: TextView,
@@ -134,6 +128,8 @@ class MainActivity : AppCompatActivity() {
         diagnosticsForegroundValue: TextView,
         rootEntryButton: Button
     ) {
+        versionBadge.text = getString(R.string.home_version_badge_template, localizeValue(state.buildVersion))
+        UiStatusSupport.styleChip(this, versionBadge, StatusTone.Neutral)
         runtimeStatusValue.text = state.statusText
         runtimeApiChip.text = UiStatusSupport.booleanText(this, state.localApiServerRunning)
         runtimeServiceChip.text = UiStatusSupport.booleanText(this, state.foregroundServiceRunning)
@@ -157,21 +153,14 @@ class MainActivity : AppCompatActivity() {
         }
         rootSystemChip.text = UiStatusSupport.rootStatusText(this, state.rootStatus)
 
-        accessibilityPolicyChip.text = UiStatusSupport.policyStatusText(this, policies.accessibilityControlAllowed)
-        screenshotPolicyChip.text = UiStatusSupport.policyStatusText(this, policies.screenshotCaptureAllowed)
-        rootPolicyChip.text = UiStatusSupport.policyStatusText(this, policies.rootCapabilityAllowed)
-
         UiStatusSupport.styleChip(this, accessibilitySystemChip, UiStatusSupport.accessibilityTone(state.accessibilityStatus))
         UiStatusSupport.styleChip(this, screenshotSystemChip, UiStatusSupport.booleanTone(state.screenshotPermissionGranted))
         UiStatusSupport.styleChip(this, rootSystemChip, UiStatusSupport.rootTone(state.rootStatus))
-        UiStatusSupport.styleChip(this, accessibilityPolicyChip, UiStatusSupport.policyTone(policies.accessibilityControlAllowed))
-        UiStatusSupport.styleChip(this, screenshotPolicyChip, UiStatusSupport.policyTone(policies.screenshotCaptureAllowed))
-        UiStatusSupport.styleChip(this, rootPolicyChip, UiStatusSupport.policyTone(policies.rootCapabilityAllowed))
 
         val allowedCount = listOf(
-            policies.accessibilityControlAllowed,
-            policies.screenshotCaptureAllowed,
-            policies.rootCapabilityAllowed
+            state.accessibilityEnabled,
+            state.screenshotPermissionGranted,
+            state.rootAvailable == true
         ).count { it }
         permissionSummaryValue.text = getString(R.string.home_permissions_summary_template, allowedCount, 3)
 
@@ -188,6 +177,21 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.home_root_entry_default)
         }
+    }
+
+
+    private fun openExternalUrl(url: String) {
+        if (url.isBlank()) {
+            Toast.makeText(this, R.string.home_external_link_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        if (intent.resolveActivity(packageManager) == null) {
+            Toast.makeText(this, R.string.home_external_link_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+        startActivity(intent)
     }
 
     private fun localizeValue(value: String?): String {

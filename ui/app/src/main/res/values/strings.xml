@@ -24,8 +24,8 @@
     <string name="dispatch_capable_label">Dispatch capable</string>
     <string name="root_available_label">Root available</string>
     <string name="root_status_label">Root status</string>
-    <string name="api_server_running_label">Local API server running</string>
-    <string name="service_running_label">Foreground service running</string>
+    <string name="api_server_running_label">Local API</string>
+    <string name="service_running_label">Service</string>
     <string name="last_service_action_label">Last service action</string>
     <string name="last_service_action_default">Not started</string>
     <string name="runtime_status_label">Runtime state</string>
@@ -127,4 +127,10 @@
     <string name="root_check_available">Root is available to Ghosthand.</string>
     <string name="root_check_authorization_required">Root still requires authorization in the root manager.</string>
     <string name="root_check_unavailable">Root is unavailable on this device or for this app process.</string>
+    <string name="home_update_button">Update</string>
+    <string name="home_github_button">GitHub</string>
+    <string name="home_version_badge_template">v%1$s</string>
+    <string name="home_update_url">https://github.com/folklore25/ghosthand/releases</string>
+    <string name="home_github_url">https://github.com/folklore25/ghosthand</string>
+    <string name="home_external_link_unavailable">Link is not configured yet.</string>
 </resources>

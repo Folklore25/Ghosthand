@@ -7,6 +7,7 @@
 package com.folklore25.ghosthand
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -28,6 +29,9 @@ class MainActivity : AppCompatActivity() {
 
         val runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
 
+        val versionBadge: TextView = findViewById(R.id.homeVersionBadge)
+        val updateButton: Button = findViewById(R.id.homeUpdateButton)
+        val githubButton: Button = findViewById(R.id.homeGithubButton)
         val runtimeStatusValue: TextView = findViewById(R.id.homeRuntimeStatusValue)
         val runtimeApiChip: TextView = findViewById(R.id.homeApiStatusValue)
         val runtimeServiceChip: TextView = findViewById(R.id.homeServiceStatusValue)
@@ -54,6 +58,7 @@ class MainActivity : AppCompatActivity() {
             renderHome(
                 state = state,
                 policies = CapabilityPolicyStore.snapshot(),
+                versionBadge = versionBadge,
                 runtimeStatusValue = runtimeStatusValue,
                 runtimeApiChip = runtimeApiChip,
                 runtimeServiceChip = runtimeServiceChip,
@@ -76,6 +81,7 @@ class MainActivity : AppCompatActivity() {
             renderHome(
                 state = RuntimeStateStore.snapshot(),
                 policies = policies,
+                versionBadge = versionBadge,
                 runtimeStatusValue = runtimeStatusValue,
                 runtimeApiChip = runtimeApiChip,
                 runtimeServiceChip = runtimeServiceChip,
@@ -101,6 +107,14 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.service_requested, Toast.LENGTH_SHORT).show()
         }
 
+        updateButton.setOnClickListener {
+            openExternalUrl(getString(R.string.home_update_url))
+        }
+
+        githubButton.setOnClickListener {
+            openExternalUrl(getString(R.string.home_github_url))
+        }
+
         managePermissionsButton.setOnClickListener {
             startActivity(PermissionsActivity.createIntent(this))
         }
@@ -117,6 +131,7 @@ class MainActivity : AppCompatActivity() {
     private fun renderHome(
         state: RuntimeState,
         policies: CapabilityPolicyState,
+        versionBadge: TextView,
         runtimeStatusValue: TextView,
         runtimeApiChip: TextView,
         runtimeServiceChip: TextView,
@@ -134,6 +149,8 @@ class MainActivity : AppCompatActivity() {
         diagnosticsForegroundValue: TextView,
         rootEntryButton: Button
     ) {
+        versionBadge.text = getString(R.string.home_version_badge_template, localizeValue(state.buildVersion))
+        UiStatusSupport.styleChip(this, versionBadge, StatusTone.Neutral)
         runtimeStatusValue.text = state.statusText
         runtimeApiChip.text = UiStatusSupport.booleanText(this, state.localApiServerRunning)
         runtimeServiceChip.text = UiStatusSupport.booleanText(this, state.foregroundServiceRunning)
@@ -188,6 +205,21 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.home_root_entry_default)
         }
+    }
+
+
+    private fun openExternalUrl(url: String) {
+        if (url.isBlank()) {
+            Toast.makeText(this, R.string.home_external_link_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        if (intent.resolveActivity(packageManager) == null) {
+            Toast.makeText(this, R.string.home_external_link_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+        startActivity(intent)
     }
 
     private fun localizeValue(value: String?): String {

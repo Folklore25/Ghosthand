@@ -66,8 +66,6 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var rootPolicySwitch: SwitchMaterial
     private lateinit var rootAuthorizeButton: Button
 
-    private var bindingPolicies = false
-
     override fun onResume() {
         super.onResume()
         RuntimeStateStore.refreshHomeDiagnostics(this)
@@ -100,20 +98,14 @@ class PermissionsActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.permissionsBackButton).setOnClickListener { finish() }
 
-        accessibilityPolicySwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (!bindingPolicies) {
-                CapabilityPolicyStore.setAllowed(CapabilityPolicy.AccessibilityControl, isChecked)
-            }
-        }
-        screenshotPolicySwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (!bindingPolicies) {
-                CapabilityPolicyStore.setAllowed(CapabilityPolicy.ScreenshotCapture, isChecked)
-            }
-        }
-        rootPolicySwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (!bindingPolicies) {
-                CapabilityPolicyStore.setAllowed(CapabilityPolicy.RootCapability, isChecked)
-            }
+        listOf(
+            accessibilityPolicySwitch,
+            screenshotPolicySwitch,
+            rootPolicySwitch
+        ).forEach { control ->
+            control.isEnabled = false
+            control.isClickable = false
+            control.isFocusable = false
         }
 
         accessibilityAuthorizeButton.setOnClickListener { openAccessibilitySettings() }
@@ -122,10 +114,7 @@ class PermissionsActivity : AppCompatActivity() {
 
         val runtimeViewModel = ViewModelProvider(this)[RuntimeStateViewModel::class.java]
         runtimeViewModel.runtimeState.observe(this) { state ->
-            render(state, CapabilityPolicyStore.snapshot())
-        }
-        CapabilityPolicyStore.observe().observe(this) { policy ->
-            render(RuntimeStateStore.snapshot(), policy)
+            render(state)
         }
 
         when (intent.getStringExtra(EXTRA_FOCUS_CAPABILITY)) {
@@ -135,16 +124,26 @@ class PermissionsActivity : AppCompatActivity() {
         }
     }
 
-    private fun render(runtimeState: RuntimeState, policyState: CapabilityPolicyState) {
-        bindingPolicies = true
-        accessibilityPolicySwitch.isChecked = policyState.accessibilityControlAllowed
-        screenshotPolicySwitch.isChecked = policyState.screenshotCaptureAllowed
-        rootPolicySwitch.isChecked = policyState.rootCapabilityAllowed
-        bindingPolicies = false
+    private fun render(runtimeState: RuntimeState) {
+        accessibilityPolicySwitch.isChecked = runtimeState.accessibilityEnabled
+        screenshotPolicySwitch.isChecked = runtimeState.screenshotPermissionGranted
+        rootPolicySwitch.isChecked = runtimeState.rootAvailable == true
 
-        accessibilityPolicyValue.text = UiStatusSupport.policyStatusText(this, policyState.accessibilityControlAllowed)
-        screenshotPolicyValue.text = UiStatusSupport.policyStatusText(this, policyState.screenshotCaptureAllowed)
-        rootPolicyValue.text = UiStatusSupport.policyStatusText(this, policyState.rootCapabilityAllowed)
+        accessibilityPolicyValue.text = if (runtimeState.accessibilityEnabled) {
+            getString(R.string.permission_system_granted)
+        } else {
+            getString(R.string.permission_system_missing)
+        }
+        screenshotPolicyValue.text = if (runtimeState.screenshotPermissionGranted) {
+            getString(R.string.permission_system_granted)
+        } else {
+            getString(R.string.permission_system_missing)
+        }
+        rootPolicyValue.text = if (runtimeState.rootAvailable == true) {
+            getString(R.string.permission_system_granted)
+        } else {
+            getString(R.string.permission_system_missing)
+        }
 
         accessibilitySystemChip.text = UiStatusSupport.accessibilityStatusText(this, runtimeState.accessibilityStatus)
         screenshotSystemChip.text = if (runtimeState.screenshotPermissionGranted) {
@@ -157,9 +156,9 @@ class PermissionsActivity : AppCompatActivity() {
         UiStatusSupport.styleChip(this, accessibilitySystemChip, UiStatusSupport.accessibilityTone(runtimeState.accessibilityStatus))
         UiStatusSupport.styleChip(this, screenshotSystemChip, UiStatusSupport.booleanTone(runtimeState.screenshotPermissionGranted))
         UiStatusSupport.styleChip(this, rootSystemChip, UiStatusSupport.rootTone(runtimeState.rootStatus))
-        UiStatusSupport.styleChip(this, accessibilityPolicyValue, UiStatusSupport.policyTone(policyState.accessibilityControlAllowed))
-        UiStatusSupport.styleChip(this, screenshotPolicyValue, UiStatusSupport.policyTone(policyState.screenshotCaptureAllowed))
-        UiStatusSupport.styleChip(this, rootPolicyValue, UiStatusSupport.policyTone(policyState.rootCapabilityAllowed))
+        UiStatusSupport.styleChip(this, accessibilityPolicyValue, UiStatusSupport.booleanTone(runtimeState.accessibilityEnabled))
+        UiStatusSupport.styleChip(this, screenshotPolicyValue, UiStatusSupport.booleanTone(runtimeState.screenshotPermissionGranted))
+        UiStatusSupport.styleChip(this, rootPolicyValue, UiStatusSupport.booleanTone(runtimeState.rootAvailable == true))
 
         accessibilityAuthorizeButton.text = if (runtimeState.accessibilityEnabled) {
             getString(R.string.permission_review_button)
@@ -249,18 +248,12 @@ class PermissionsActivity : AppCompatActivity() {
         private const val FOCUS_SCREENSHOT = "screenshot"
         private const val FOCUS_ROOT = "root"
 
-        fun createIntent(context: Context, focusCapability: CapabilityPolicy? = null): Intent {
+        fun createIntent(context: Context, focusCapability: String? = null): Intent {
             return Intent(context, PermissionsActivity::class.java).apply {
-                putExtra(
-                    EXTRA_FOCUS_CAPABILITY,
-                    when (focusCapability) {
-                        CapabilityPolicy.AccessibilityControl -> FOCUS_ACCESSIBILITY
-                        CapabilityPolicy.ScreenshotCapture -> FOCUS_SCREENSHOT
-                        CapabilityPolicy.RootCapability -> FOCUS_ROOT
-                        null -> null
-                    }
-                )
+                putExtra(EXTRA_FOCUS_CAPABILITY, focusCapability)
             }
         }
+
+        fun createRootIntent(context: Context): Intent = createIntent(context, FOCUS_ROOT)
     }
 }
