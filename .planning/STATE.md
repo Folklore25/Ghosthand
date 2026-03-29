@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-03-29T17:16:02.416Z"
+status: verifying
+last_updated: "2026-03-29T18:15:18.330Z"
 progress:
-  total_phases: 6
-  completed_phases: 3
-  total_plans: 11
-  completed_plans: 9
+  total_phases: 8
+  completed_phases: 4
+  total_plans: 16
+  completed_plans: 13
 ---
 
 # STATE.md — Ghosthand Project
@@ -21,13 +21,13 @@ Current focus: **Phase 11 documentation alignment / platform-truth consolidation
 
 ## Current Position
 
-Phase: 14 (release-1-0-polish-and-update-architecture) — EXECUTING
-Plan: 2 of 3
+Phase: 14.1 (release-1-0-technical-debt-cleanup) — EXECUTING
+Plan: 2 of 2
 
 - **Phase:** 14
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Ready to execute
+- **Status:** Phase complete — ready for verification
 
 ## Progress
 
@@ -104,6 +104,10 @@ Overall: Ghosthand is operating from an accepted Phase 09 baseline, a Phase 10 o
 
 - [Phase 14-release-1-0-polish-and-update-architecture]: Release status stays outside RuntimeStateStore and is merged at the home-screen state layer.
 - [Phase 14-release-1-0-polish-and-update-architecture]: GitHub latest-release metadata is used only for update truth and external handoff, never silent installation.
+- [Phase 15]: Set android:allowBackup to false because no concrete migration requirement justified app-data backup.
+- [Phase 15]: Removed manifest references to backup rule resources so the disabled-backup stance is the only active strategy.
+- [Phase 15]: Blocked __MACOSX alongside .DS_Store to keep packaging debris out of the repo.
+- [Phase 15]: Loopback malformed-request handling now fails early with bounded parsing and safe 400/408/413/431 responses before endpoint dispatch.
 
 ## Performance Metrics
 
@@ -120,10 +124,12 @@ Overall: Ghosthand is operating from an accepted Phase 09 baseline, a Phase 10 o
 - Working tree currently contains the uncommitted Phase 10 scenario/contract updates plus Stage 3 validation notes
 
 | Phase 14-release-1-0-polish-and-update-architecture P01 | 401 | 2 tasks | 6 files |
+| Phase 15 P01 | 7min | 2 tasks | 4 files |
+| Phase 15 P02 | 3 min | 2 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-29T17:16:02.414Z
+Last session: 2026-03-29T18:15:18.327Z
 Next action: keep the main-repo boundary explicit, then return to bounded Phase 11 platform remediation only if new evidence shows a real under-expressive substrate gap
 
 ## Context Notes

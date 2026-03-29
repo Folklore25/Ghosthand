@@ -16,6 +16,8 @@ Ghosthand is moving from an accepted runtime and operator-validation baseline in
 - [ ] **Phase 12: Release 1.0 Productization** - Rebuild governed capability consent and restructure the operator UI for a truthful 1.0 surface.
 - [x] **Phase 13: Remove Root From Ghosthand Product Surface And Runtime** - Remove root entirely so the app, runtime, and UI stay focused on the supported non-root local path. (completed 2026-03-29)
 - [ ] **Phase 14: Release 1.0 Polish And Update Architecture** - Add real GitHub-release update state, reusable feature explanations, and final product-copy polish without reopening the major UI architecture.
+- [ ] **Phase 14.1: Release 1.0 Technical Debt Cleanup** - Clean the lingering copy/resource debt, unify the explanation system, thin MainActivity further, and keep diagnostics-only fields out of product permission language.
+- [ ] **Phase 15: Stability And Engineering Hardening** - Harden backup boundaries, local API resource limits, async policy I/O, diagnostics logging, test coverage, and engineering hygiene without changing product direction.
 
 ## Phase Details
 
@@ -103,6 +105,38 @@ Plans:
 - [ ] 14-02: Product copy cleanup and reusable explanation pattern
 - [ ] 14-03: Bounded 1.0 surface polish and implementation cleanup
 
+### Phase 14.1: Release 1.0 Technical Debt Cleanup
+**Goal**: Remove the remaining Phase 14 technical debt by cleaning the active string system, unifying the explanation/help pattern, further reducing MainActivity binding weight, and keeping diagnostics-only permission detail out of product governance language.
+**Depends on**: Phase 14
+**Success Criteria** (what must be TRUE):
+  1. [TD-01] Versioned and process-style string leftovers are deleted so the active product copy set has one final name per string.
+  2. [TD-02] A unified reusable explanation entry pattern exists across the relevant product modules instead of one-off help calls.
+  3. [TD-03] MainActivity no longer accumulates direct product binding and entry-point behavior unnecessarily.
+  4. [TD-04] User-facing permission governance language is kept separate from diagnostics-only engineering fields such as `usageAccess`, `notifications`, `overlay`, and `writeSecureSettings`.
+  5. [TD-05] The project still compiles after the cleanup pass.
+**Plans**: TBD
+
+Plans:
+- [ ] 14.1-01: Copy/resource consolidation and unified explanation system cleanup
+- [ ] 14.1-02: MainActivity thinning and product-vs-diagnostics permission-surface cleanup
+
+### Phase 15: Stability And Engineering Hardening
+**Goal**: Tighten the Android loopback API and foreground-service baseline into a robust engineering substrate by fixing backup defaults, bounding local API resources, removing blocking policy I/O from hot paths, improving diagnostics, adding meaningful tests, and cleaning engineering debris.
+**Depends on**: Phase 14.1
+**Success Criteria** (what must be TRUE):
+  1. [STAB-01] Backup and data-extraction behavior are explicit engineering decisions with no sample boilerplate or unsafe defaults.
+  2. [STAB-02] The loopback local API uses bounded resources, rejects malformed or oversized input safely, and fully shuts down sockets/executors.
+  3. [STAB-03] No `runBlocking` remains in UI or state-refresh hot paths for capability policy I/O.
+  4. [STAB-04] Failures in the API/runtime/update/permission path log enough diagnostic context to classify the cause.
+  5. [STAB-05] Meaningful tests cover the hardening work, including comparator logic, request parsing, invalid content-length, oversized body handling, capability policy logic, and key state mapping branches.
+  6. [STAB-06] Source/resource directories are clean of packaging artifacts, placeholder rule files, meaningless TODO boilerplate, and similar debris.
+**Plans**: TBD
+
+Plans:
+- [x] 15-01: Backup-boundary and engineering-hygiene hardening
+- [x] 15-02: Local API resource-bounds, malformed-input handling, and shutdown correctness
+- [ ] 15-03: Async capability-policy I/O, observability hardening, tests, and final verification
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -113,3 +147,5 @@ Plans:
 | 12. Release 1.0 Productization | 3/3 | In progress | - |
 | 13. Remove Root From Ghosthand Product Surface And Runtime | 2/3 | Complete    | 2026-03-29 |
 | 14. Release 1.0 Polish And Update Architecture | 1/3 | In Progress|  |
+| 14.1. Release 1.0 Technical Debt Cleanup | 0/2 | Not started | - |
+| 15. Stability And Engineering Hardening | 2/3 | In Progress|  |
