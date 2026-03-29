@@ -37,7 +37,7 @@ object RuntimeStateStore {
             )
         val screenshotPermissionGranted =
             GhosthandServiceRegistry.getInstanceIfRunning()?.hasMediaProjection() == true
-        val capabilityPolicy = CapabilityPolicyStore(appContext).snapshot()
+        val capabilityPolicy = CapabilityPolicyStore.getInstance(appContext).snapshot()
         val capabilityAccess = CapabilityAccessSnapshotFactory.create(
             accessibilityStatus = accessibilitySnapshot,
             mediaProjectionGranted = screenshotPermissionGranted,

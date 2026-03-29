@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -63,5 +64,22 @@ class CapabilityPolicyStoreTest {
             ),
             migrated
         )
+    }
+
+    @Test
+    fun setAllowedUpdatesSnapshotImmediatelyBeforeDatastoreRoundTrip() {
+        val tempFile = Files.createTempFile("ghosthand-policy-immediate", ".preferences_pb").toFile()
+        val store = CapabilityPolicyStore(
+            dataStore = PreferenceDataStoreFactory.create(
+                scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                produceFile = { tempFile }
+            )
+        )
+
+        store.setAllowed(GhosthandCapability.Screenshot, true)
+
+        assertTrue(store.snapshot().screenshotAllowed)
+        val persisted = runBlocking { store.observe().first { it.screenshotAllowed } }
+        assertTrue(persisted.screenshotAllowed)
     }
 }

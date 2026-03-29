@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import android.util.Log
 import java.io.IOException
 
 enum class GhosthandCapability(
@@ -80,9 +81,21 @@ class CapabilityPolicyStore internal constructor(
     fun isAllowed(capability: GhosthandCapability): Boolean = snapshot().allowed(capability)
 
     fun setAllowed(capability: GhosthandCapability, allowed: Boolean) {
+        snapshotState.value = when (capability) {
+            GhosthandCapability.Accessibility -> snapshotState.value.copy(accessibilityAllowed = allowed)
+            GhosthandCapability.Screenshot -> snapshotState.value.copy(screenshotAllowed = allowed)
+        }
         scope.launch {
-            dataStore.edit { prefs ->
-                prefs[preferenceKey(capability)] = allowed
+            try {
+                dataStore.edit { prefs ->
+                    prefs[preferenceKey(capability)] = allowed
+                }
+            } catch (error: Exception) {
+                Log.w(
+                    LOG_TAG,
+                    "component=CapabilityPolicyStore operation=setAllowed capability=${capability.name} failure=${error.javaClass.simpleName}",
+                    error
+                )
             }
         }
     }
@@ -111,6 +124,14 @@ class CapabilityPolicyStore internal constructor(
         internal const val LEGACY_SHARED_PREFERENCES_NAME = "ghosthand_capability_policy"
         private const val LOG_TAG = "CapabilityPolicy"
         private const val PREFS_PREFIX = "capability"
+        @Volatile
+        private var instance: CapabilityPolicyStore? = null
+
+        fun getInstance(context: Context): CapabilityPolicyStore {
+            return instance ?: synchronized(this) {
+                instance ?: CapabilityPolicyStore(context.applicationContext).also { instance = it }
+            }
+        }
 
         internal fun preferenceKey(capability: GhosthandCapability) =
             booleanPreferencesKey("${PREFS_PREFIX}.${capability.prefKey}")

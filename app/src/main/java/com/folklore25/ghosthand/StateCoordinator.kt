@@ -27,7 +27,7 @@ class StateCoordinator(
     private val accessibilitySwiper = AccessibilitySwiper()
     private val accessibilityTyper = AccessibilityTyper()
     private val accessibilityScroller = AccessibilityScroller()
-    private val capabilityPolicyStore = CapabilityPolicyStore(appContext)
+    private val capabilityPolicyStore = CapabilityPolicyStore.getInstance(appContext)
     private val clipboardProvider = ClipboardProvider(appContext)
     private val mediaProjectionProvider = MediaProjectionProvider(appContext)
     private val notificationDispatcher = NotificationDispatcher(appContext)

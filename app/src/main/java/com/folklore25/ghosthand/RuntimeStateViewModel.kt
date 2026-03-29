@@ -18,7 +18,7 @@ import kotlin.concurrent.thread
 class RuntimeStateViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-    private val capabilityPolicyStore = CapabilityPolicyStore(application)
+    private val capabilityPolicyStore = CapabilityPolicyStore.getInstance(application)
     private val releaseRepository = GitHubReleaseRepository(application)
     private val updateState = MutableLiveData<UpdateUiState>().apply {
         value = UpdateUiStateFactory.fromReleaseCheck(
