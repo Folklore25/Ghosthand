@@ -28,17 +28,11 @@ ghosthand-window-latest.xml
 # Local-only reference and operating material
 references/
 ui/
-docs/ghosthanddev/
-docs/knowledgebase/
-docs/Architecture.md
-docs/Ghosthand-Engineering-Notes.md
-docs/ROADMAP.md
-docs/RPD.md
-docs/ghostfinger-miui-accessibility-notes.md
-docs/ghosthand-execution-core-guide.md
+docs/
 
 # Local guidance / assets not required for public build availability
 AGENTS.md
 app/.gitignore
 icon.png
 icon.svg
+*.zip
