@@ -16,7 +16,7 @@ data class GhosthandRequestTarget(
 )
 
 object GhosthandHttp {
-    fun readHttpLine(inputStream: InputStream): String? {
+    fun readHttpLine(inputStream: InputStream, maxBytes: Int = Int.MAX_VALUE): String? {
         val bytes = ArrayList<Byte>(64)
 
         while (true) {
@@ -31,16 +31,45 @@ object GhosthandHttp {
 
             if (next != '\r'.code) {
                 bytes.add(next.toByte())
+                if (bytes.size > maxBytes) {
+                    throw LocalApiServerRequestException(
+                        statusCode = 431,
+                        errorCode = "HEADERS_TOO_LARGE",
+                        message = "HTTP line exceeds the configured limit."
+                    )
+                }
             }
         }
 
         return bytes.toByteArray().toString(StandardCharsets.UTF_8)
     }
 
-    fun readUtf8Body(inputStream: InputStream, contentLengthHeader: String?): String {
-        val contentLength = contentLengthHeader?.toIntOrNull() ?: return ""
+    fun readUtf8Body(
+        inputStream: InputStream,
+        contentLengthHeader: String?,
+        maxBodyBytes: Int = Int.MAX_VALUE
+    ): String {
+        val normalizedHeader = contentLengthHeader?.trim()
+        if (normalizedHeader.isNullOrEmpty()) {
+            return ""
+        }
+
+        val contentLength = normalizedHeader.toIntOrNull()
+            ?: throw LocalApiServerRequestException(
+                statusCode = 400,
+                errorCode = "BAD_REQUEST",
+                message = "Content-Length must be a valid integer."
+            )
+
         if (contentLength <= 0) {
             return ""
+        }
+        if (contentLength > maxBodyBytes) {
+            throw LocalApiServerRequestException(
+                statusCode = 413,
+                errorCode = "REQUEST_TOO_LARGE",
+                message = "Request body exceeds the configured limit."
+            )
         }
 
         val bodyBytes = ByteArray(contentLength)
@@ -48,7 +77,11 @@ object GhosthandHttp {
         while (offset < contentLength) {
             val read = inputStream.read(bodyBytes, offset, contentLength - offset)
             if (read == -1) {
-                break
+                throw LocalApiServerRequestException(
+                    statusCode = 400,
+                    errorCode = "BAD_REQUEST",
+                    message = "Request body ended before Content-Length bytes were received."
+                )
             }
             offset += read
         }
@@ -67,9 +100,12 @@ object GhosthandHttp {
         return when (statusCode) {
             200 -> "OK"
             400 -> "Bad Request"
+            408 -> "Request Timeout"
             404 -> "Not Found"
             405 -> "Method Not Allowed"
+            413 -> "Payload Too Large"
             422 -> "Unprocessable Entity"
+            431 -> "Request Header Fields Too Large"
             503 -> "Service Unavailable"
             500 -> "Internal Server Error"
             else -> "Internal Server Error"
@@ -95,7 +131,7 @@ object GhosthandHttp {
                         URLDecoder.decode(key, StandardCharsets.UTF_8.name()),
                         URLDecoder.decode(entry.substringAfter('=', ""), StandardCharsets.UTF_8.name())
                     )
-                }
+            }
         }
     }
 }

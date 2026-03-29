@@ -16,11 +16,182 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentHashMap
+
+internal data class LocalApiServerParsedRequest(
+    val method: String,
+    val path: String,
+    val queryParameters: Map<String, String>,
+    val body: String
+)
+
+internal class LocalApiServerRequestException(
+    val statusCode: Int,
+    val errorCode: String,
+    override val message: String
+) : IllegalArgumentException(message)
+
+internal object LocalApiServerProtocol {
+    fun readRequest(
+        inputStream: java.io.InputStream,
+        maxRequestLineBytes: Int = LocalApiServer.MAX_REQUEST_LINE_BYTES,
+        maxHeaderLineBytes: Int = LocalApiServer.MAX_HEADER_LINE_BYTES,
+        maxHeaderCount: Int = LocalApiServer.MAX_HEADER_COUNT,
+        maxHeaderBytes: Int = LocalApiServer.MAX_HEADER_BYTES,
+        maxBodyBytes: Int = LocalApiServer.MAX_BODY_BYTES
+    ): LocalApiServerParsedRequest {
+        val requestLine = GhosthandHttp.readHttpLine(inputStream, maxRequestLineBytes)
+            ?: throw LocalApiServerRequestException(
+                statusCode = 400,
+                errorCode = "BAD_REQUEST",
+                message = "HTTP request line is required."
+            )
+        val requestParts = requestLine.split(" ", limit = 3)
+        if (requestParts.size < 2 || requestParts[0].isBlank() || requestParts[1].isBlank()) {
+            throw LocalApiServerRequestException(
+                statusCode = 400,
+                errorCode = "BAD_REQUEST",
+                message = "HTTP request line is malformed."
+            )
+        }
+
+        val headers = readHeaders(
+            inputStream = inputStream,
+            maxHeaderLineBytes = maxHeaderLineBytes,
+            maxHeaderCount = maxHeaderCount,
+            maxHeaderBytes = maxHeaderBytes
+        )
+        val target = GhosthandHttp.parseRequestTarget(requestParts[1])
+        val requestBody = GhosthandHttp.readUtf8Body(
+            inputStream = inputStream,
+            contentLengthHeader = headers["content-length"],
+            maxBodyBytes = maxBodyBytes
+        )
+
+        return LocalApiServerParsedRequest(
+            method = requestParts[0],
+            path = target.path,
+            queryParameters = target.queryParameters,
+            body = requestBody
+        )
+    }
+
+    private fun readHeaders(
+        inputStream: java.io.InputStream,
+        maxHeaderLineBytes: Int,
+        maxHeaderCount: Int,
+        maxHeaderBytes: Int
+    ): Map<String, String> {
+        val headers = linkedMapOf<String, String>()
+        var headerCount = 0
+        var totalHeaderBytes = 0
+
+        while (true) {
+            val headerLine = GhosthandHttp.readHttpLine(inputStream, maxHeaderLineBytes) ?: break
+            if (headerLine.isBlank()) {
+                return headers
+            }
+
+            headerCount += 1
+            totalHeaderBytes += headerLine.toByteArray(StandardCharsets.UTF_8).size
+            if (headerCount > maxHeaderCount || totalHeaderBytes > maxHeaderBytes) {
+                throw LocalApiServerRequestException(
+                    statusCode = 431,
+                    errorCode = "HEADERS_TOO_LARGE",
+                    message = "HTTP headers exceed the configured limit."
+                )
+            }
+
+            val separatorIndex = headerLine.indexOf(':')
+            if (separatorIndex <= 0) {
+                throw LocalApiServerRequestException(
+                    statusCode = 400,
+                    errorCode = "BAD_REQUEST",
+                    message = "HTTP header lines must contain a ':' separator."
+                )
+            }
+
+            val name = headerLine.substring(0, separatorIndex).trim().lowercase()
+            val value = headerLine.substring(separatorIndex + 1).trim()
+            if (name.isEmpty()) {
+                throw LocalApiServerRequestException(
+                    statusCode = 400,
+                    errorCode = "BAD_REQUEST",
+                    message = "HTTP header names cannot be empty."
+                )
+            }
+            if (name == "content-length" && headers.containsKey(name) && headers[name] != value) {
+                throw LocalApiServerRequestException(
+                    statusCode = 400,
+                    errorCode = "BAD_REQUEST",
+                    message = "Conflicting Content-Length headers are not allowed."
+                )
+            }
+
+            headers[name] = value
+        }
+
+        return headers
+    }
+}
+
+internal class LocalApiServerResources(
+    val serverExecutor: ExecutorService,
+    val clientExecutor: ExecutorService
+) {
+    private val activeClients = ConcurrentHashMap.newKeySet<Socket>()
+
+    @Volatile
+    private var serverSocket: ServerSocket? = null
+
+    fun attachServerSocket(socket: ServerSocket) {
+        serverSocket = socket
+    }
+
+    fun registerClient(socket: Socket) {
+        activeClients.add(socket)
+    }
+
+    fun unregisterClient(socket: Socket) {
+        activeClients.remove(socket)
+    }
+
+    fun hasActiveClients(): Boolean = activeClients.isNotEmpty()
+
+    fun stopAll() {
+        try {
+            serverSocket?.close()
+        } catch (_: Exception) {
+        } finally {
+            serverSocket = null
+        }
+
+        activeClients.toList().forEach { client ->
+            try {
+                client.close()
+            } catch (_: Exception) {
+            } finally {
+                activeClients.remove(client)
+            }
+        }
+
+        clientExecutor.shutdownNow()
+        serverExecutor.shutdownNow()
+    }
+}
 
 class LocalApiServer(
     context: android.content.Context,
@@ -37,31 +208,40 @@ class LocalApiServer(
 
     fun hasMediaProjection(): Boolean = stateCoordinator.hasMediaProjection()
     private val running = AtomicBoolean(false)
-    private val serverExecutor = Executors.newSingleThreadExecutor()
-    private val clientExecutor = Executors.newCachedThreadPool()
-
     @Volatile
-    private var serverSocket: ServerSocket? = null
+    private var resources = createResources()
 
     fun start() {
         if (!running.compareAndSet(false, true)) {
             return
         }
 
-        serverExecutor.execute {
+        if (resources.serverExecutor.isShutdown || resources.clientExecutor.isShutdown) {
+            resources = createResources()
+        }
+
+        val localResources = resources
+        localResources.serverExecutor.execute {
             try {
                 val socket = ServerSocket().apply {
                     reuseAddress = true
                     bind(InetSocketAddress(InetAddress.getByName(HOST), PORT))
                 }
-                serverSocket = socket
+                localResources.attachServerSocket(socket)
                 RuntimeStateStore.markLocalApiServerStarted()
                 Log.i(LOG_TAG, "Listening on $HOST:$PORT")
 
                 while (running.get()) {
                     val client = socket.accept()
-                    clientExecutor.execute {
-                        handleClient(client)
+                    client.soTimeout = CLIENT_READ_TIMEOUT_MS
+                    localResources.registerClient(client)
+                    try {
+                        localResources.clientExecutor.execute {
+                            handleClient(client, localResources)
+                        }
+                    } catch (error: RejectedExecutionException) {
+                        localResources.unregisterClient(client)
+                        rejectBusyClient(client)
                     }
                 }
             } catch (error: SocketException) {
@@ -70,10 +250,12 @@ class LocalApiServer(
                     Log.e(LOG_TAG, "Socket failure", error)
                 }
             } catch (error: Exception) {
-                RuntimeStateStore.markLocalApiServerFailed(error.message ?: "unknown error")
-                Log.e(LOG_TAG, "Startup failure", error)
+                if (running.get()) {
+                    RuntimeStateStore.markLocalApiServerFailed(error.message ?: "unknown error")
+                    Log.e(LOG_TAG, "Startup failure", error)
+                }
             } finally {
-                closeServerSocket()
+                localResources.stopAll()
                 running.set(false)
                 RuntimeStateStore.markLocalApiServerStopped()
                 Log.i(LOG_TAG, "Stopped")
@@ -85,37 +267,17 @@ class LocalApiServer(
         if (!running.compareAndSet(true, false)) {
             return
         }
-        closeServerSocket()
+        resources.stopAll()
     }
 
-    private fun handleClient(socket: Socket) {
+    private fun handleClient(socket: Socket, localResources: LocalApiServerResources) {
         socket.use { client ->
             try {
-                val inputStream = client.getInputStream()
-                val requestLine = GhosthandHttp.readHttpLine(inputStream) ?: return
-                val headers = mutableMapOf<String, String>()
-
-                while (true) {
-                    val headerLine = GhosthandHttp.readHttpLine(inputStream) ?: break
-                    if (headerLine.isBlank()) {
-                        break
-                    }
-                    val separatorIndex = headerLine.indexOf(':')
-                    if (separatorIndex <= 0) {
-                        continue
-                    }
-
-                    headers[headerLine.substring(0, separatorIndex).trim().lowercase()] =
-                        headerLine.substring(separatorIndex + 1).trim()
-                }
-
-                val requestParts = requestLine.split(" ")
-                val method = requestParts.getOrNull(0).orEmpty()
-                val requestTarget = requestParts.getOrNull(1).orEmpty()
-                val target = GhosthandHttp.parseRequestTarget(requestTarget)
-                val path = target.path
-                val queryParameters = target.queryParameters
-                val requestBody = GhosthandHttp.readUtf8Body(inputStream, headers["content-length"])
+                val request = LocalApiServerProtocol.readRequest(client.getInputStream())
+                val method = request.method
+                val path = request.path
+                val queryParameters = request.queryParameters
+                val requestBody = request.body
 
                 val response = CapabilityRoutePolicy.policyDeniedResponse(
                     path = path,
@@ -181,21 +343,71 @@ class LocalApiServer(
                     writer.write(response)
                     writer.flush()
                 }
-            } catch (error: Exception) {
-                Log.e(LOG_TAG, "Request handling failure", error)
-                OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8).use { writer ->
-                    writer.write(
-                        buildJsonResponse(
-                            statusCode = 500,
-                            body = errorEnvelope(
-                                code = "INTERNAL_ERROR",
-                                message = "Failed to handle request."
-                            )
+            } catch (error: LocalApiServerRequestException) {
+                Log.w(LOG_TAG, "Rejected malformed request: ${error.message}")
+                writeResponse(
+                    client,
+                    buildJsonResponse(
+                        statusCode = error.statusCode,
+                        body = errorEnvelope(
+                            code = error.errorCode,
+                            message = error.message
                         )
                     )
-                    writer.flush()
-                }
+                )
+            } catch (error: SocketTimeoutException) {
+                Log.w(LOG_TAG, "Client read timed out")
+                writeResponse(
+                    client,
+                    buildJsonResponse(
+                        statusCode = 408,
+                        body = errorEnvelope(
+                            code = "REQUEST_TIMEOUT",
+                            message = "Timed out waiting for the full HTTP request."
+                        )
+                    )
+                )
+            } catch (error: Exception) {
+                Log.e(LOG_TAG, "Request handling failure", error)
+                writeResponse(
+                    client,
+                    buildJsonResponse(
+                        statusCode = 500,
+                        body = errorEnvelope(
+                            code = "INTERNAL_ERROR",
+                            message = "Failed to handle request."
+                        )
+                    )
+                )
+            } finally {
+                localResources.unregisterClient(client)
             }
+        }
+    }
+
+    private fun rejectBusyClient(client: Socket) {
+        client.use {
+            writeResponse(
+                it,
+                buildJsonResponse(
+                    statusCode = 503,
+                    body = errorEnvelope(
+                        code = "SERVER_BUSY",
+                        message = "Local API server is at capacity. Retry the request."
+                    )
+                )
+            )
+        }
+    }
+
+    private fun writeResponse(client: Socket, response: String) {
+        try {
+            OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8).use { writer ->
+                writer.write(response)
+                writer.flush()
+            }
+        } catch (error: Exception) {
+            Log.w(LOG_TAG, "Failed to write HTTP response", error)
         }
     }
 
@@ -1511,12 +1723,25 @@ class LocalApiServer(
         return if (value is Number) value.toLong() else null
     }
 
-    private fun closeServerSocket() {
-        try {
-            serverSocket?.close()
-        } catch (_: Exception) {
-        } finally {
-            serverSocket = null
+    private fun createResources(): LocalApiServerResources {
+        return LocalApiServerResources(
+            serverExecutor = Executors.newSingleThreadExecutor(serverThreadFactory("ghosthand-local-api")),
+            clientExecutor = ThreadPoolExecutor(
+                CLIENT_POOL_SIZE,
+                CLIENT_POOL_SIZE,
+                0L,
+                TimeUnit.MILLISECONDS,
+                ArrayBlockingQueue(CLIENT_QUEUE_CAPACITY),
+                serverThreadFactory("ghosthand-local-client"),
+                ThreadPoolExecutor.AbortPolicy()
+            )
+        )
+    }
+
+    private fun serverThreadFactory(namePrefix: String): ThreadFactory {
+        val count = AtomicInteger(1)
+        return ThreadFactory { runnable ->
+            Thread(runnable, "$namePrefix-${count.getAndIncrement()}")
         }
     }
 
@@ -1524,6 +1749,14 @@ class LocalApiServer(
         const val HOST = "127.0.0.1"
         const val PORT = 5583
         const val LOG_TAG = "LocalApiServer"
+        const val MAX_REQUEST_LINE_BYTES = 4096
+        const val MAX_HEADER_LINE_BYTES = 8192
+        const val MAX_HEADER_COUNT = 40
+        const val MAX_HEADER_BYTES = 16 * 1024
+        const val MAX_BODY_BYTES = 256 * 1024
+        const val CLIENT_READ_TIMEOUT_MS = 5_000
+        const val CLIENT_POOL_SIZE = 4
+        const val CLIENT_QUEUE_CAPACITY = 16
         private const val TREE_MODE_RAW = "raw"
         private const val TREE_MODE_FLAT = "flat"
         private const val DEFAULT_TREE_MODE = TREE_MODE_RAW
