@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
+status: planning
 last_updated: "2026-03-30T00:00:00Z"
 progress:
-  total_phases: 8
+  total_phases: 9
   completed_phases: 7
-  total_plans: 20
+  total_plans: 22
   completed_plans: 19
 ---
 
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 16 release polish closeout completed** — the remaining work is final 1.0 release review rather than additional product-surface redesign.
+Current focus: **Phase 17 agent-perspective reconciliation** — process the latest zero-context OpenClaw exploratory run without letting misclassification overwrite accepted platform truth.
 
 ## Current Position
 
-Phase: 16 (release-polish-closeout) — COMPLETE
-Plan: All plans complete
+Phase: 17 (agent-perspective-reconciliation-01) — PLANNED
+Plan: 2 plans defined
 
-- **Phase:** 16
+- **Phase:** 17
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase complete
+- **Status:** Ready to execute Phase 17 planning
 
 ## Progress
 
@@ -47,8 +47,9 @@ Plan: All plans complete
 - Phase 14.1: **DONE IN CODE** — remaining technical debt on copy, explanation unification, MainActivity weight, and product-vs-diagnostics permission language was cleaned
 - Phase 15: **DONE IN CODE** — stability hardening landed across backup boundaries, loopback API bounds, async capability-policy I/O, diagnostics logging, and tests
 - Phase 16: **DONE IN CODE** — update interaction, version visibility, stale update-era resources, and final release-polish cleanup are closed
+- Phase 17: **PLANNED** — exploratory OpenClaw feedback will be reconciled into repo truth through explicit issue classification instead of reactive defect inflation
 
-Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-polished 1.0 product surface ready for final review.
+Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-polished 1.0 product surface. The next work is bounded reconciliation of agent-perspective feedback, not architectural churn.
 
 ## Decisions
 

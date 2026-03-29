@@ -19,6 +19,7 @@ Ghosthand is moving from an accepted runtime and operator-validation baseline in
 - [x] **Phase 14.1: Release 1.0 Technical Debt Cleanup** - Clean the lingering copy/resource debt, unify the explanation system, thin MainActivity further, and keep diagnostics-only fields out of product permission language. (completed 2026-03-30)
 - [x] **Phase 15: Stability And Engineering Hardening** - Harden backup boundaries, local API resource limits, async policy I/O, diagnostics logging, test coverage, and engineering hygiene without changing product direction. (completed 2026-03-29)
 - [x] **Phase 16: Release Polish Closeout** - Close the remaining update-interaction loop, delete stale product copy/resources, and finish the final 1.0 release-surface polish without reopening the accepted architecture. (completed 2026-03-30)
+- [ ] **Phase 17: Agent Perspective Reconciliation 01** - Reconcile the latest zero-context OpenClaw exploratory evaluation against accepted repo truth, preserve the useful signal, reject misclassifications, and narrow the next platform-owned direction honestly.
 
 ## Phase Details
 
@@ -154,6 +155,21 @@ Plans:
 - [x] 16-01: Update-state interaction closeout and version surface refinement
 - [x] 16-02: Resource/copy cleanup and bounded polish support cleanup
 
+### Phase 17: Agent Perspective Reconciliation 01
+**Goal**: Process the latest zero-context OpenClaw exploratory run as agent-perspective evidence without letting exploratory misunderstandings overwrite accepted platform truth.
+**Depends on**: Phase 16
+**Success Criteria** (what must be TRUE):
+  1. [APR-01] The exploratory report is preserved in repo truth as useful evidence instead of a raw complaint dump.
+  2. [APR-02] False missing-capability claims are corrected when accepted repo truth already proves the capability exists.
+  3. [APR-03] Real substrate defects are separated cleanly from discoverability weaknesses and app/platform constraints.
+  4. [APR-04] The next platform-owned improvement direction is narrower and more truthful than the raw exploratory report.
+  5. [APR-05] Phase 17 does not reopen a broad architecture rewrite or drift into skill-repo implementation.
+**Plans**: 2 plans
+
+Plans:
+- [ ] 17-01: Exploratory report reconciliation note and four-bucket issue classification
+- [ ] 17-02: Planning/state truth update and narrow next-direction definition
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -167,3 +183,4 @@ Plans:
 | 14.1. Release 1.0 Technical Debt Cleanup | 2/2 | Complete | 2026-03-30 |
 | 15. Stability And Engineering Hardening | 3/3 | Complete | 2026-03-30 |
 | 16. Release Polish Closeout | 2/2 | Complete | 2026-03-30 |
+| 17. Agent Perspective Reconciliation 01 | 0/2 | Planned | - |
