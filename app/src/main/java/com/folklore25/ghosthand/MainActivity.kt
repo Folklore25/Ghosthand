@@ -56,37 +56,33 @@ class MainActivity : AppCompatActivity() {
         val accessibilityEffectiveValue: TextView = findViewById(R.id.homeAccessibilityEffectiveValue)
         val screenshotSummaryValue: TextView = findViewById(R.id.homeScreenshotSummaryValue)
         val screenshotEffectiveValue: TextView = findViewById(R.id.homeScreenshotEffectiveValue)
-
-        val accessibilityRow = HomeCapabilityRowViews(accessibilitySummaryValue, accessibilityEffectiveValue)
-        val screenshotRow = HomeCapabilityRowViews(screenshotSummaryValue, screenshotEffectiveValue)
-
         val diagnosticsBuildValue: TextView = findViewById(R.id.homeDiagnosticsBuildValue)
         val diagnosticsLastActionValue: TextView = findViewById(R.id.homeDiagnosticsLastActionValue)
         val diagnosticsForegroundValue: TextView = findViewById(R.id.homeDiagnosticsForegroundValue)
-
         val managePermissionsButton: Button = findViewById(R.id.openPermissionsButton)
         val openDiagnosticsButton: Button = findViewById(R.id.openDiagnosticsButton)
+        val binder = HomeScreenBinder(
+            context = this,
+            versionBadge = versionBadge,
+            updateInstalledValue = updateInstalledValue,
+            updateLatestValue = updateLatestValue,
+            updateStatusValue = updateStatusValue,
+            updateButton = updateButton,
+            runtimeStatusValue = runtimeStatusValue,
+            runtimeApiChip = runtimeApiChip,
+            runtimeServiceChip = runtimeServiceChip,
+            runtimeAccessibilityChip = runtimeAccessibilityChip,
+            startRuntimeButton = startRuntimeButton,
+            permissionSummaryValue = permissionSummaryValue,
+            accessibilityRow = HomeCapabilityRowViews(accessibilitySummaryValue, accessibilityEffectiveValue),
+            screenshotRow = HomeCapabilityRowViews(screenshotSummaryValue, screenshotEffectiveValue),
+            diagnosticsBuildValue = diagnosticsBuildValue,
+            diagnosticsLastActionValue = diagnosticsLastActionValue,
+            diagnosticsForegroundValue = diagnosticsForegroundValue
+        )
 
         runtimeViewModel.homeScreenState.observe(this) { state ->
-            renderHome(
-                state,
-                versionBadge,
-                updateInstalledValue,
-                updateLatestValue,
-                updateStatusValue,
-                updateButton,
-                runtimeStatusValue,
-                runtimeApiChip,
-                runtimeServiceChip,
-                runtimeAccessibilityChip,
-                startRuntimeButton,
-                permissionSummaryValue,
-                accessibilityRow,
-                screenshotRow,
-                diagnosticsBuildValue,
-                diagnosticsLastActionValue,
-                diagnosticsForegroundValue
-            )
+            binder.bind(state)
         }
 
         startRuntimeButton.setOnClickListener {
@@ -114,68 +110,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
-    private fun renderHome(
-        state: HomeScreenUiState,
-        versionBadge: TextView,
-        updateInstalledValue: TextView,
-        updateLatestValue: TextView,
-        updateStatusValue: TextView,
-        updateButton: Button,
-        runtimeStatusValue: TextView,
-        runtimeApiChip: TextView,
-        runtimeServiceChip: TextView,
-        runtimeAccessibilityChip: TextView,
-        startRuntimeButton: Button,
-        permissionSummaryValue: TextView,
-        accessibilityRow: HomeCapabilityRowViews,
-        screenshotRow: HomeCapabilityRowViews,
-        diagnosticsBuildValue: TextView,
-        diagnosticsLastActionValue: TextView,
-        diagnosticsForegroundValue: TextView
-    ) {
-        versionBadge.text = state.versionBadgeText
-        UiStatusSupport.styleChip(this, versionBadge, StatusTone.Neutral)
-        updateInstalledValue.text = state.updateSummary.installedVersionText
-        updateLatestValue.text = state.updateSummary.latestReleaseText
-        updateStatusValue.text = state.updateSummary.statusText
-        UiStatusSupport.styleChip(this, updateStatusValue, state.updateSummary.statusTone)
-        if (state.updateSummary.actionLabel == null) {
-            updateButton.visibility = android.view.View.GONE
-        } else {
-            updateButton.visibility = android.view.View.VISIBLE
-            updateButton.text = state.updateSummary.actionLabel
-        }
-        updateButton.isEnabled = state.updateSummary.actionUrl != null
-        runtimeStatusValue.text = state.runtimeSummary.statusText
-        runtimeApiChip.text = state.runtimeSummary.apiStatusText
-        runtimeServiceChip.text = state.runtimeSummary.serviceStatusText
-        runtimeAccessibilityChip.text = state.runtimeSummary.accessibilityStatusText
-        UiStatusSupport.styleChip(this, runtimeApiChip, state.runtimeSummary.apiTone)
-        UiStatusSupport.styleChip(this, runtimeServiceChip, state.runtimeSummary.serviceTone)
-        UiStatusSupport.styleChip(this, runtimeAccessibilityChip, state.runtimeSummary.accessibilityTone)
-
-        startRuntimeButton.isEnabled = state.runtimeSummary.actionEnabled
-        startRuntimeButton.text = state.runtimeSummary.actionLabel
-        permissionSummaryValue.text = state.permissionsSummaryText
-
-        bindHomeCapabilityRow(accessibilityRow, state.accessibilitySummary)
-        bindHomeCapabilityRow(screenshotRow, state.screenshotSummary)
-
-        diagnosticsBuildValue.text = state.diagnosticsSummary.buildText
-        diagnosticsLastActionValue.text = state.diagnosticsSummary.lastActionText
-        diagnosticsForegroundValue.text = state.diagnosticsSummary.foregroundText
-    }
-
-    private fun bindHomeCapabilityRow(
-        views: HomeCapabilityRowViews,
-        uiState: HomeCapabilitySummaryUiState
-    ) {
-        views.summaryView.text = uiState.detailText
-        views.effectiveView.text = uiState.effectiveText
-        UiStatusSupport.styleChip(this, views.effectiveView, uiState.effectiveTone)
-    }
-
     private fun openExternalUrl(url: String) {
         if (url.isBlank()) {
             Toast.makeText(this, R.string.home_external_link_unavailable, Toast.LENGTH_SHORT).show()
@@ -189,9 +123,4 @@ class MainActivity : AppCompatActivity() {
         }
         startActivity(intent)
     }
-
-    private data class HomeCapabilityRowViews(
-        val summaryView: TextView,
-        val effectiveView: TextView
-    )
 }

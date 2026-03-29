@@ -254,6 +254,14 @@ When a route is blocked this way, Ghosthand returns:
 
 This is separate from system capability unavailability. A capability can be granted by Android and still intentionally blocked for Ghosthand/OpenClaw use.
 
+### 5.6 Product Update Surface
+
+The Ghosthand app may show release/update state in the operator surface by comparing the installed app version against GitHub latest-release metadata.
+
+- this is product UI state, not a localhost API installer path
+- Ghosthand does not claim silent or seamless in-app APK installation
+- when an update exists, the product hands the user off to the GitHub release page for a full APK update
+
 ---
 
 ## 6. Endpoint Overview
