@@ -20,6 +20,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(providers.gradleProperty("GHOSTHAND_RELEASE_STORE_FILE").get())
+            storePassword = providers.gradleProperty("GHOSTHAND_RELEASE_STORE_PASSWORD").get()
+            keyAlias = providers.gradleProperty("GHOSTHAND_RELEASE_KEY_ALIAS").get()
+            keyPassword = providers.gradleProperty("GHOSTHAND_RELEASE_KEY_PASSWORD").get()
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -27,6 +36,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
