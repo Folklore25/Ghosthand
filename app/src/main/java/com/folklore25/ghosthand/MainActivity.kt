@@ -29,7 +29,6 @@ class MainActivity : AppCompatActivity() {
         val views = HomeScreenViews.bind(this)
         val binder = HomeScreenBinder(
             context = this,
-            versionBadge = views.versionBadge,
             updateButton = views.updateButton,
             runtimeStatusValue = views.runtimeStatusValue,
             runtimeApiChip = views.runtimeApiChip,
@@ -40,8 +39,7 @@ class MainActivity : AppCompatActivity() {
             accessibilityRow = views.accessibilityRow,
             screenshotRow = views.screenshotRow,
             diagnosticsBuildValue = views.diagnosticsBuildValue,
-            diagnosticsLastActionValue = views.diagnosticsLastActionValue,
-            diagnosticsForegroundValue = views.diagnosticsForegroundValue
+            diagnosticsLastActionValue = views.diagnosticsLastActionValue
         )
         HomeScreenActions(this, runtimeViewModel, views).bind()
 

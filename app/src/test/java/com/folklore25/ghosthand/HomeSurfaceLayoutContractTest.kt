@@ -27,7 +27,7 @@ class HomeSurfaceLayoutContractTest {
         assertFalse(layout.contains("@+id/homeEyebrow"))
         assertFalse(layout.contains("@android:drawable/ic_dialog_info"))
         assertTrue(layout.contains("@+id/homeUpdateButton"))
-        assertTrue(layout.contains("@+id/homeVersionBadge"))
+        assertFalse(layout.contains("@+id/homeVersionBadge"))
         assertTrue(layout.contains("@+id/homeRuntimeSignalsStack"))
         assertTrue(layout.contains("@+id/homeRuntimeInfoButton"))
         assertTrue(layout.contains("@+id/homePermissionsInfoButton"))

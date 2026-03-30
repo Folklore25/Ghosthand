@@ -36,14 +36,6 @@
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline3"
                     android:textColor="@color/gh_text_primary" />
 
-                <TextView
-                    android:id="@+id/homeVersionBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/home_version_badge_template"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                    android:textColor="@color/gh_text_secondary" />
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
@@ -471,23 +463,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/last_service_action_default"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                    android:textColor="@color/gh_text_primary" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/foreground_package_label"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                    android:textColor="@color/gh_text_secondary" />
-
-                <TextView
-                    android:id="@+id/homeDiagnosticsForegroundValue"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/runtime_placeholder_unknown"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                     android:textColor="@color/gh_text_primary" />
 

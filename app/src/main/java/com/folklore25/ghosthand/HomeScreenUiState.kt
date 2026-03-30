@@ -26,8 +26,7 @@ internal data class HomeCapabilitySummaryUiState(
 
 internal data class DiagnosticsSummaryUiState(
     val buildText: String,
-    val lastActionText: String,
-    val foregroundText: String
+    val lastActionText: String
 )
 
 internal enum class UpdateActionMode {
@@ -51,7 +50,6 @@ internal data class UpdateSummaryUiState(
 )
 
 internal data class HomeScreenUiState(
-    val versionBadgeText: String,
     val updateSummary: UpdateSummaryUiState,
     val runtimeSummary: RuntimeSummaryUiState,
     val permissionsSummaryText: String,
@@ -88,10 +86,6 @@ internal object HomeScreenUiStateFactory {
         ).count { it }
 
         return HomeScreenUiState(
-            versionBadgeText = textLookup.getString(
-                R.string.home_version_badge_template,
-                localizedValue(runtimeState.buildVersion, textLookup)
-            ),
             updateSummary = updateSummary(updateUiState, textLookup),
             runtimeSummary = RuntimeSummaryUiState(
                 statusText = runtimeState.statusText,
@@ -149,8 +143,7 @@ internal object HomeScreenUiStateFactory {
                     textLookup.getString(R.string.last_service_action_default)
                 } else {
                     runtimeState.lastServiceAction
-                },
-                foregroundText = localizedValue(runtimeState.foregroundPackage, textLookup)
+                }
             )
         )
     }

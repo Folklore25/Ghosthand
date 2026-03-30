@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity
 
 internal class HomeScreenBinder(
     private val context: Context,
-    private val versionBadge: TextView,
     private val updateButton: Button,
     private val runtimeStatusValue: TextView,
     private val runtimeApiChip: TextView,
@@ -25,11 +24,9 @@ internal class HomeScreenBinder(
     private val accessibilityRow: HomeCapabilityRowViews,
     private val screenshotRow: HomeCapabilityRowViews,
     private val diagnosticsBuildValue: TextView,
-    private val diagnosticsLastActionValue: TextView,
-    private val diagnosticsForegroundValue: TextView
+    private val diagnosticsLastActionValue: TextView
 ) {
     fun bind(state: HomeScreenUiState) {
-        versionBadge.text = state.versionBadgeText
         updateButton.visibility = View.VISIBLE
         updateButton.isEnabled = true
 
@@ -50,7 +47,6 @@ internal class HomeScreenBinder(
 
         diagnosticsBuildValue.text = state.diagnosticsSummary.buildText
         diagnosticsLastActionValue.text = state.diagnosticsSummary.lastActionText
-        diagnosticsForegroundValue.text = state.diagnosticsSummary.foregroundText
     }
 
     private fun bindCapabilityRow(
@@ -64,7 +60,6 @@ internal class HomeScreenBinder(
 }
 
 internal data class HomeScreenViews(
-    val versionBadge: TextView,
     val updateButton: Button,
     val runtimeStatusValue: TextView,
     val runtimeApiChip: TextView,
@@ -76,7 +71,6 @@ internal data class HomeScreenViews(
     val screenshotRow: HomeCapabilityRowViews,
     val diagnosticsBuildValue: TextView,
     val diagnosticsLastActionValue: TextView,
-    val diagnosticsForegroundValue: TextView,
     val managePermissionsButton: Button,
     val openDiagnosticsButton: Button,
     val runtimeInfoButton: TextView,
@@ -86,7 +80,6 @@ internal data class HomeScreenViews(
     companion object {
         fun bind(activity: android.app.Activity): HomeScreenViews {
             return HomeScreenViews(
-                versionBadge = activity.findViewById(R.id.homeVersionBadge),
                 updateButton = activity.findViewById(R.id.homeUpdateButton),
                 runtimeStatusValue = activity.findViewById(R.id.homeRuntimeStatusValue),
                 runtimeApiChip = activity.findViewById(R.id.homeApiStatusValue),
@@ -104,7 +97,6 @@ internal data class HomeScreenViews(
                 ),
                 diagnosticsBuildValue = activity.findViewById(R.id.homeDiagnosticsBuildValue),
                 diagnosticsLastActionValue = activity.findViewById(R.id.homeDiagnosticsLastActionValue),
-                diagnosticsForegroundValue = activity.findViewById(R.id.homeDiagnosticsForegroundValue),
                 managePermissionsButton = activity.findViewById(R.id.openPermissionsButton),
                 openDiagnosticsButton = activity.findViewById(R.id.openDiagnosticsButton),
                 runtimeInfoButton = activity.findViewById(R.id.homeRuntimeInfoButton),
