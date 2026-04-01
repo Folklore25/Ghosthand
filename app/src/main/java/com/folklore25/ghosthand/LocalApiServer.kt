@@ -988,21 +988,56 @@ class LocalApiServer(
     }
 
     private fun buildScreenResponse(queryParameters: Map<String, String>): String {
+        val mode = ScreenReadMode.fromWireValue(queryParameters["source"]) ?: ScreenReadMode.ACCESSIBILITY
+        val editableOnly = queryParameters["editable"] == "true"
+        val scrollableOnly = queryParameters["scrollable"] == "true"
+        val clickableOnly = queryParameters["clickable"] == "true"
+        if (mode != ScreenReadMode.ACCESSIBILITY && (editableOnly || scrollableOnly || clickableOnly)) {
+            return buildJsonResponse(
+                statusCode = 400,
+                body = errorEnvelope(
+                    code = "INVALID_ARGUMENT",
+                    message = "editable, scrollable, and clickable filters are only supported for source=accessibility."
+                )
+            )
+        }
+
         val treeSnapshotResult = stateCoordinator.getTreeSnapshotResult()
-        if (!treeSnapshotResult.available) {
+        if (mode == ScreenReadMode.ACCESSIBILITY && !treeSnapshotResult.available) {
             return buildTreeUnavailableResponse(treeSnapshotResult.reason)
         }
 
         val snapshot = treeSnapshotResult.snapshot
-            ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT)
-
-        val payload = stateCoordinator.createScreenPayload(
-            snapshot = snapshot,
-            editableOnly = queryParameters["editable"] == "true",
-            scrollableOnly = queryParameters["scrollable"] == "true",
-            packageFilter = queryParameters["package"],
-            clickableOnly = queryParameters["clickable"] == "true"
-        )
+        val payload = when (mode) {
+            ScreenReadMode.ACCESSIBILITY -> {
+                val requiredSnapshot = snapshot
+                    ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT)
+                stateCoordinator.createScreenPayload(
+                    snapshot = requiredSnapshot,
+                    editableOnly = editableOnly,
+                    scrollableOnly = scrollableOnly,
+                    packageFilter = queryParameters["package"],
+                    clickableOnly = clickableOnly
+                )
+            }
+            ScreenReadMode.OCR -> GhosthandApiPayloads.screenReadPayload(
+                stateCoordinator.createOcrScreenPayload()
+            )
+            ScreenReadMode.HYBRID -> {
+                if (snapshot != null) {
+                    GhosthandApiPayloads.screenReadPayload(
+                        stateCoordinator.createHybridScreenPayload(
+                            snapshot = snapshot,
+                            packageFilter = queryParameters["package"]
+                        )
+                    )
+                } else {
+                    GhosthandApiPayloads.screenReadPayload(
+                        stateCoordinator.createOcrScreenPayload()
+                    )
+                }
+            }
+        }
 
         return buildJsonResponse(
             statusCode = 200,

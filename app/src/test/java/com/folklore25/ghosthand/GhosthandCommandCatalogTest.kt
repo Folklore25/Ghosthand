@@ -139,7 +139,12 @@ class GhosthandCommandCatalogTest {
     fun paramsExposeMachineReadableLocationsAndCommandsExposeResponseFields() {
         val screenRoute = GhosthandCommandCatalog.commands.first { it.id == "screen" }
         assertTrue(screenRoute.params.all { it.location == "query" })
+        assertTrue(screenRoute.params.any { it.name == "source" })
         assertTrue(screenRoute.responseFields.contains("elements"))
+        assertTrue(screenRoute.responseFields.contains("source"))
+        assertTrue(screenRoute.responseFields.contains("accessibilityElementCount"))
+        assertTrue(screenRoute.responseFields.contains("ocrElementCount"))
+        assertTrue(screenRoute.responseFields.contains("usedOcrFallback"))
         assertTrue(screenRoute.responseFields.contains("foregroundStableDuringCapture"))
         assertTrue(screenRoute.responseFields.contains("partialOutput"))
         assertTrue(screenRoute.responseFields.contains("candidateNodeCount"))
@@ -155,7 +160,8 @@ class GhosthandCommandCatalogTest {
         assertEquals("snapshot_ephemeral", screenRoute.referenceStability)
         assertEquals("same_snapshot_only", screenRoute.snapshotScope)
         assertEquals("selector_reresolution", screenRoute.recommendedInteractionModel)
-        assertTrue(screenRoute.description.contains("partial-output"))
+        assertTrue(screenRoute.description.contains("source=accessibility"))
+        assertTrue(screenRoute.description.contains("hybrid"))
 
         val foregroundRoute = GhosthandCommandCatalog.commands.first { it.id == "foreground" }
         assertEquals("observer_context", foregroundRoute.stateTruth)

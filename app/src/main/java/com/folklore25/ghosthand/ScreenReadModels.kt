@@ -1,0 +1,63 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+package com.folklore25.ghosthand
+
+enum class ScreenReadMode(val wireValue: String) {
+    ACCESSIBILITY("accessibility"),
+    OCR("ocr"),
+    HYBRID("hybrid");
+
+    companion object {
+        fun fromWireValue(raw: String?): ScreenReadMode? {
+            return entries.firstOrNull { it.wireValue == raw?.trim()?.lowercase() }
+        }
+    }
+}
+
+data class ScreenReadElement(
+    val nodeId: String? = null,
+    val text: String = "",
+    val desc: String = "",
+    val id: String = "",
+    val clickable: Boolean = false,
+    val editable: Boolean = false,
+    val scrollable: Boolean = false,
+    val bounds: String,
+    val centerX: Int,
+    val centerY: Int,
+    val source: String
+)
+
+data class ScreenReadPayload(
+    val packageName: String?,
+    val activity: String?,
+    val snapshotToken: String?,
+    val capturedAt: String?,
+    val foregroundStableDuringCapture: Boolean,
+    val partialOutput: Boolean,
+    val candidateNodeCount: Int,
+    val returnedElementCount: Int,
+    val warnings: List<String>,
+    val omittedInvalidBoundsCount: Int,
+    val omittedLowSignalCount: Int,
+    val omittedNodeCount: Int,
+    val elements: List<ScreenReadElement>,
+    val source: String,
+    val accessibilityElementCount: Int,
+    val ocrElementCount: Int,
+    val usedOcrFallback: Boolean
+) {
+    fun accessibilityTreeIsOperationallyInsufficient(): Boolean {
+        return returnedElementCount == 0 || (partialOutput && returnedElementCount <= 1)
+    }
+}
+
+data class ScreenOcrResult(
+    val elements: List<ScreenReadElement>,
+    val attemptedPath: String,
+    val warnings: List<String> = emptyList()
+)

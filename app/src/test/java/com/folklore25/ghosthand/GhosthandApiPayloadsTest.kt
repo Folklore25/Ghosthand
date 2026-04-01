@@ -77,6 +77,7 @@ class GhosthandApiPayloadsTest {
         assertEquals(10, button["centerX"])
         assertEquals(20, button["centerY"])
         assertEquals("[0,0][100,100]", button["bounds"])
+        assertEquals("accessibility", button["source"])
         assertEquals(true, payload["foregroundStableDuringCapture"])
     }
 

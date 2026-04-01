@@ -32,6 +32,7 @@ class StateCoordinator(
     private val clipboardProvider = ClipboardProvider(appContext)
     private val mediaProjectionProvider = MediaProjectionProvider(appContext)
     private val notificationDispatcher = NotificationDispatcher(appContext)
+    private val screenOcrProvider = ScreenOcrProvider()
 
     fun createPingPayload(): JSONObject {
         val diagnosticsSnapshot = homeDiagnosticsProvider.snapshot()
@@ -197,6 +198,64 @@ class StateCoordinator(
             scrollableOnly = scrollableOnly,
             packageFilter = packageFilter,
             clickableOnly = clickableOnly
+        )
+    }
+
+    fun createOcrScreenPayload(): ScreenReadPayload {
+        val screenshotResult = captureBestScreenshot(0, 0)
+        val foregroundSnapshot = foregroundAppProvider.snapshot()
+        val ocrResult = screenOcrProvider.read(screenshotResult)
+
+        return ScreenReadPayload(
+            packageName = foregroundSnapshot.packageName,
+            activity = foregroundSnapshot.activity,
+            snapshotToken = null,
+            capturedAt = null,
+            foregroundStableDuringCapture = true,
+            partialOutput = false,
+            candidateNodeCount = 0,
+            returnedElementCount = ocrResult.elements.size,
+            warnings = ocrResult.warnings,
+            omittedInvalidBoundsCount = 0,
+            omittedLowSignalCount = 0,
+            omittedNodeCount = 0,
+            elements = ocrResult.elements,
+            source = ScreenReadMode.OCR.wireValue,
+            accessibilityElementCount = 0,
+            ocrElementCount = ocrResult.elements.size,
+            usedOcrFallback = false
+        )
+    }
+
+    fun createHybridScreenPayload(
+        snapshot: AccessibilityTreeSnapshot,
+        packageFilter: String?
+    ): ScreenReadPayload {
+        val accessibilityPayload = GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = packageFilter,
+            clickableOnly = false
+        )
+        if (!accessibilityPayload.accessibilityTreeIsOperationallyInsufficient()) {
+            return accessibilityPayload
+        }
+
+        val ocrPayload = createOcrScreenPayload()
+        if (ocrPayload.elements.isEmpty()) {
+            return accessibilityPayload.copy(
+                warnings = (accessibilityPayload.warnings + ocrPayload.warnings).distinct()
+            )
+        }
+
+        return accessibilityPayload.copy(
+            returnedElementCount = accessibilityPayload.elements.size + ocrPayload.elements.size,
+            warnings = (accessibilityPayload.warnings + listOf("ocr_fallback_used") + ocrPayload.warnings).distinct(),
+            elements = accessibilityPayload.elements + ocrPayload.elements,
+            source = ScreenReadMode.HYBRID.wireValue,
+            ocrElementCount = ocrPayload.ocrElementCount,
+            usedOcrFallback = true
         )
     }
 

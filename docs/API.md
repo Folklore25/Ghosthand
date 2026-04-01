@@ -1238,7 +1238,7 @@ Current preferred baseline is accessibility screenshot capability. MediaProjecti
 
 ### Purpose
 
-Return the current visible-surface accessibility snapshot with action-ready geometry.
+Return the current visible-surface read with explicit source provenance. Accessibility remains the default structured path, while explicit OCR or hybrid fallback can be requested when the accessibility surface is operationally insufficient.
 
 ### Query Parameters
 
@@ -1246,6 +1246,7 @@ Return the current visible-surface accessibility snapshot with action-ready geom
 * `scrollable` — *(optional)* filter to scrollable elements only
 * `clickable` — *(optional)* filter to clickable elements only
 * `package` — *(optional)* restrict results to one package name
+* `source` — *(optional)* `accessibility` | `ocr` | `hybrid`; defaults to `accessibility`
 
 ### Success Response
 
@@ -1265,6 +1266,10 @@ Return the current visible-surface accessibility snapshot with action-ready geom
     "omittedInvalidBoundsCount": 0,
     "omittedLowSignalCount": 0,
     "omittedNodeCount": 0,
+    "source": "accessibility",
+    "accessibilityElementCount": 1,
+    "ocrElementCount": 0,
+    "usedOcrFallback": false,
     "elements": [
       {
         "nodeId": "p0.0.1@tabcd1234",
@@ -1276,7 +1281,8 @@ Return the current visible-surface accessibility snapshot with action-ready geom
         "scrollable": false,
         "bounds": "[211,1270][359,1338]",
         "centerX": 285,
-        "centerY": 1304
+        "centerY": 1304,
+        "source": "accessibility"
       }
     ]
   },
@@ -1302,10 +1308,13 @@ Return the current visible-surface accessibility snapshot with action-ready geom
 ### Notes
 
 - `/screen` is the structured actionable surface route. It is not image capture.
-- `/screen` is the primary structured truth source for selector planning and action geometry on this device path.
+- `/screen?source=accessibility` is the primary structured truth source for selector planning and action geometry on this device path.
+- `/screen?source=ocr` returns OCR-derived output explicitly marked as OCR-derived. It does not pretend OCR blocks are native accessibility nodes.
+- `/screen?source=hybrid` tries accessibility first and only supplements the payload with OCR-derived elements when the accessibility surface is empty or badly truncated enough to be operationally insufficient.
 - `/screen` should be paired with `/screenshot` when structured output looks stale, geometry looks invalid, or the visible surface is hard to interpret.
 - `snapshotToken` is a freshness marker for the current visible accessibility tree and should change when the visible surface changes materially.
 - `elements[].nodeId` is snapshot-ephemeral and should only be reused inside the same trusted snapshot context.
+- OCR-derived `elements[]` may have `nodeId = null` and always carry `source = "ocr"`.
 - After the UI changes, prefer selector-based re-resolution instead of reusing an older `nodeId`.
 - `/screen` omits nodes whose bounds are not actionable and reports that omission explicitly through `warnings` and `omittedInvalidBoundsCount`.
 - This keeps `/screen` aligned with its role as the actionable surface route instead of pretending invalid geometry is usable.
@@ -1316,6 +1325,8 @@ Return the current visible-surface accessibility snapshot with action-ready geom
 - This keeps `/screen` readable on complex surfaces by foregrounding visible/actionable signal instead of deep container noise.
 - `partialOutput = true` means `/screen` is a reduced actionable subset, not an exhaustive structured surface dump.
 - `candidateNodeCount`, `returnedElementCount`, and `omittedNodeCount` make that reduction explicit so operators do not misread omission as absence.
+- `source`, `accessibilityElementCount`, `ocrElementCount`, and `usedOcrFallback` make OCR provenance explicit instead of silently merging OCR and accessibility into one indistinguishable truth surface.
+- `editable`, `scrollable`, and `clickable` filters only apply to `source=accessibility`. OCR-derived output does not claim those accessibility semantics.
 
 ---
 
