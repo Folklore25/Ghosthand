@@ -8,6 +8,12 @@ See the [LICENSE](./LICENSE) file for the full text.
 
 # Ghosthand
 
+[![Website](https://img.shields.io/badge/Website-ghosthand.cc-111111?style=for-the-badge&logo=googlechrome&logoColor=white)](https://ghosthand.cc/)
+[![Open Site](https://img.shields.io/badge/Open-Live%20Site-f97316?style=for-the-badge&logo=safari&logoColor=white)](https://ghosthand.cc/)
+
+> Explore the project site: **[ghosthand.cc](https://ghosthand.cc/)**  
+> Product overview, positioning, and latest public entry point.
+
 Inspired by Karry × Orb 🔮 https://github.com/cflank/orb-eye
 
 **Ghosthand** is an Android-native, agent-oriented control substrate for **OpenClaw-like mobile agents**.
