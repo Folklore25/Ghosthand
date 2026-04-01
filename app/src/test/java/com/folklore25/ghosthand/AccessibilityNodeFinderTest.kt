@@ -109,12 +109,87 @@ class AccessibilityNodeFinderTest {
         assertNotNull(result.clickResolution)
         assertEquals("text", result.clickResolution?.requestedStrategy)
         assertEquals("textContains", result.clickResolution?.effectiveStrategy)
+        assertEquals("text", result.clickResolution?.requestedSurface)
+        assertEquals("text", result.clickResolution?.matchedSurface)
+        assertEquals("exact", result.clickResolution?.requestedMatchSemantics)
+        assertEquals("contains", result.clickResolution?.matchedMatchSemantics)
+        assertEquals(false, result.clickResolution?.usedSurfaceFallback)
         assertEquals(true, result.clickResolution?.usedContainsFallback)
         assertEquals("p0.0.0@tsnap", result.clickResolution?.matchedNodeId)
         assertEquals(false, result.clickResolution?.matchedNodeClickable)
         assertEquals("p0.0@tsnap", result.clickResolution?.resolvedNodeId)
         assertEquals("clickable_ancestor", result.clickResolution?.resolutionKind)
         assertEquals(1, result.clickResolution?.ancestorDepth)
+    }
+
+    @Test
+    fun clickResolutionFallsBackFromTextToContentDescription() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(
+                node("p0@tsnap", clickable = false),
+                node("p0.0@tsnap", clickable = true),
+                node("p0.0.0@tsnap", contentDesc = "Settings", clickable = false)
+            )
+        )
+
+        val result = finder.findNodesForClick(
+            snapshot = snapshot,
+            strategy = "text",
+            query = "Settings",
+            clickableOnly = true,
+            index = 0
+        )
+
+        assertTrue(result.found)
+        assertEquals("p0.0@tsnap", result.node?.nodeId)
+        assertEquals("text", result.clickResolution?.requestedStrategy)
+        assertEquals("contentDesc", result.clickResolution?.effectiveStrategy)
+        assertEquals("text", result.clickResolution?.requestedSurface)
+        assertEquals("contentDesc", result.clickResolution?.matchedSurface)
+        assertEquals("exact", result.clickResolution?.requestedMatchSemantics)
+        assertEquals("exact", result.clickResolution?.matchedMatchSemantics)
+        assertEquals(true, result.clickResolution?.usedSurfaceFallback)
+        assertEquals(false, result.clickResolution?.usedContainsFallback)
+        assertEquals("p0.0.0@tsnap", result.clickResolution?.matchedNodeId)
+    }
+
+    @Test
+    fun clickResolutionFallsBackFromContentDescriptionToText() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(
+                node("p0@tsnap", clickable = false),
+                node("p0.0@tsnap", clickable = true),
+                node("p0.0.0@tsnap", text = "Profile", clickable = false)
+            )
+        )
+
+        val result = finder.findNodesForClick(
+            snapshot = snapshot,
+            strategy = "contentDesc",
+            query = "Profile",
+            clickableOnly = true,
+            index = 0
+        )
+
+        assertTrue(result.found)
+        assertEquals("p0.0@tsnap", result.node?.nodeId)
+        assertEquals("contentDesc", result.clickResolution?.requestedStrategy)
+        assertEquals("text", result.clickResolution?.effectiveStrategy)
+        assertEquals("contentDesc", result.clickResolution?.requestedSurface)
+        assertEquals("text", result.clickResolution?.matchedSurface)
+        assertEquals("exact", result.clickResolution?.requestedMatchSemantics)
+        assertEquals("exact", result.clickResolution?.matchedMatchSemantics)
+        assertEquals(true, result.clickResolution?.usedSurfaceFallback)
+        assertEquals(false, result.clickResolution?.usedContainsFallback)
+        assertEquals("p0.0.0@tsnap", result.clickResolution?.matchedNodeId)
     }
 
     @Test
@@ -186,15 +261,45 @@ class AccessibilityNodeFinderTest {
         assertTrue(result.missHint?.suggestedAlternateStrategies?.contains("contentDescContains") == true)
     }
 
+    @Test
+    fun contentDescriptionContainsMissSeparatesContainsMismatchFromSurfaceFallback() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(
+                node("p0@tsnap", clickable = false),
+                node("p0.0@tsnap", text = "Settings and privacy", clickable = false)
+            )
+        )
+
+        val result = finder.findNodes(
+            snapshot = snapshot,
+            strategy = "contentDesc",
+            query = "Settings",
+            clickableOnly = false,
+            index = 0
+        )
+
+        assertFalse(result.found)
+        assertEquals("contentDesc", result.missHint?.searchedSurface)
+        assertEquals("exact", result.missHint?.matchSemantics)
+        assertEquals("meaningful_label_may_live_in_text", result.missHint?.likelyMissReason)
+        assertEquals(listOf("text"), result.missHint?.suggestedAlternateSurfaces)
+        assertEquals(listOf("textContains"), result.missHint?.suggestedAlternateStrategies)
+    }
+
     private fun node(
         nodeId: String,
         text: String? = null,
+        contentDesc: String? = null,
         clickable: Boolean = false
     ): FlatAccessibilityNode {
         return FlatAccessibilityNode(
             nodeId = nodeId,
             text = text,
-            contentDesc = null,
+            contentDesc = contentDesc,
             resourceId = null,
             className = "android.widget.TextView",
             clickable = clickable,
