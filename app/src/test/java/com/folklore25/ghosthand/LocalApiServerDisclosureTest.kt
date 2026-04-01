@@ -119,6 +119,40 @@ class LocalApiServerDisclosureTest {
     }
 
     @Test
+    fun clickDisclosureExplainsCrossSurfaceFallback() {
+        val disclosure = buildClickDisclosure(
+            strategy = "text",
+            clickableOnly = true,
+            result = ClickAttemptResult.success(
+                attemptedPath = "node_click",
+                selectorResolution = ClickSelectorResolution(
+                    requestedStrategy = "text",
+                    effectiveStrategy = "contentDescContains",
+                    requestedSurface = "text",
+                    matchedSurface = "contentDesc",
+                    requestedMatchSemantics = "exact",
+                    matchedMatchSemantics = "contains",
+                    usedSurfaceFallback = true,
+                    usedContainsFallback = true,
+                    matchedNodeId = "p0.0.0@tsnap",
+                    matchedNodeClickable = false,
+                    resolvedNodeId = "p0.0@tsnap",
+                    resolutionKind = "clickable_ancestor",
+                    ancestorDepth = 1
+                )
+            )
+        )
+
+        assertNotNull(disclosure)
+        assertEquals("fallback", disclosure!!.kind)
+        assertTrue(disclosure.summary.contains("another surface"))
+        assertEquals(
+            "The meaningful label must live on the exact selector surface I requested.",
+            disclosure.assumptionToCorrect
+        )
+    }
+
+    @Test
     fun screenDisclosureExplainsReducedOutput() {
         val disclosure = buildScreenDisclosure(
             partialOutput = true,

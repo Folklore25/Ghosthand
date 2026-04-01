@@ -2129,6 +2129,14 @@ internal fun buildClickDisclosure(
     if (result.performed && resolution != null) {
         if (resolution.usedContainsFallback || resolution.resolutionKind != "matched_node") {
             val summary = when {
+                resolution.usedSurfaceFallback && resolution.usedContainsFallback && resolution.resolutionKind == "clickable_ancestor" ->
+                    "Ghosthand crossed from the requested selector surface to a bounded contains match on another surface, then dispatched the click on a clickable ancestor."
+                resolution.usedSurfaceFallback && resolution.resolutionKind == "clickable_ancestor" ->
+                    "Ghosthand matched the label on a different selector surface and dispatched the click on its clickable ancestor."
+                resolution.usedSurfaceFallback && resolution.usedContainsFallback ->
+                    "Ghosthand crossed to a bounded contains match on another selector surface before clicking."
+                resolution.usedSurfaceFallback ->
+                    "Ghosthand matched the label on a different selector surface before dispatching the click."
                 resolution.usedContainsFallback && resolution.resolutionKind == "clickable_ancestor" ->
                     "Ghosthand widened the selector match and dispatched the click on a clickable ancestor."
                 resolution.resolutionKind == "clickable_ancestor" ->
@@ -2141,7 +2149,11 @@ internal fun buildClickDisclosure(
             return GhosthandDisclosure(
                 kind = "fallback",
                 summary = summary,
-                assumptionToCorrect = "The matched visible label is always the directly clickable node.",
+                assumptionToCorrect = if (resolution.usedSurfaceFallback) {
+                    "The meaningful label must live on the exact selector surface I requested."
+                } else {
+                    "The matched visible label is always the directly clickable node."
+                },
                 nextBestActions = listOf(
                     "Use /find if you need to inspect the matched node before clicking.",
                     alternateSelectorAction(strategy ?: resolution.requestedStrategy)

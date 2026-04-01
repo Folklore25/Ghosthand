@@ -205,6 +205,12 @@ object GhosthandApiPayloads {
         result.missHint?.let { hint ->
             payload["searchedSurface"] = hint.searchedSurface
             payload["matchSemantics"] = hint.matchSemantics
+            payload["requestedSurface"] = hint.requestedSurface
+            payload["requestedMatchSemantics"] = hint.requestedMatchSemantics
+            payload["matchedSurface"] = hint.matchedSurface
+            payload["matchedMatchSemantics"] = hint.matchedMatchSemantics
+            payload["usedSurfaceFallback"] = hint.usedSurfaceFallback
+            payload["usedContainsFallback"] = hint.usedContainsFallback
             if (hint.suggestedAlternateSurfaces.isNotEmpty()) {
                 payload["suggestedAlternateSurfaces"] = hint.suggestedAlternateSurfaces
             }
@@ -236,6 +242,11 @@ object GhosthandApiPayloads {
         return linkedMapOf(
             "requestedStrategy" to resolution.requestedStrategy,
             "effectiveStrategy" to resolution.effectiveStrategy,
+            "requestedSurface" to resolution.requestedSurface,
+            "matchedSurface" to resolution.matchedSurface,
+            "requestedMatchSemantics" to resolution.requestedMatchSemantics,
+            "matchedMatchSemantics" to resolution.matchedMatchSemantics,
+            "usedSurfaceFallback" to resolution.usedSurfaceFallback,
             "usedContainsFallback" to resolution.usedContainsFallback,
             "matchedNodeId" to resolution.matchedNodeId,
             "matchedNodeClickable" to resolution.matchedNodeClickable,
