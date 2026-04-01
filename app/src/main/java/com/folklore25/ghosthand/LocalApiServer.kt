@@ -1599,6 +1599,9 @@ class LocalApiServer(
             successEnvelope(
                 data = JSONObject()
                     .put("changed", result.changed)
+                    .put("conditionMet", JSONObject.NULL)
+                    .put("stateChanged", result.outcome.stateChanged)
+                    .put("timedOut", result.outcome.timedOut)
                     .put("elapsedMs", result.elapsedMs)
                     .put("snapshotToken", result.snapshotToken ?: JSONObject.NULL)
                     .put("packageName", result.packageName ?: JSONObject.NULL)
@@ -1647,6 +1650,9 @@ class LocalApiServer(
             buildJsonResponse(200, successEnvelope(
                 data = JSONObject()
                     .put("satisfied", true)
+                    .put("conditionMet", result.outcome.conditionMet)
+                    .put("stateChanged", result.outcome.stateChanged)
+                    .put("timedOut", result.outcome.timedOut)
                     .put("elapsedMs", result.elapsedMs)
                     .put("node", result.node?.let { node ->
                         JSONObject()
@@ -1660,6 +1666,9 @@ class LocalApiServer(
             buildJsonResponse(200, successEnvelope(
                 data = JSONObject()
                     .put("satisfied", false)
+                    .put("conditionMet", result.outcome.conditionMet)
+                    .put("stateChanged", result.outcome.stateChanged)
+                    .put("timedOut", result.outcome.timedOut)
                     .put("elapsedMs", result.elapsedMs)
                     .put("reason", result.attemptedPath),
                 disclosure = buildWaitConditionDisclosure(strategy, result)

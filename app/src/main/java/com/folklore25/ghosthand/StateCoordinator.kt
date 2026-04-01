@@ -658,6 +658,13 @@ class StateCoordinator(
         timeoutMs: Long,
         intervalMs: Long
     ): WaitConditionResult {
+        val initialTree = getTreeSnapshotResult().snapshot
+        val initialForeground = foregroundAppProvider.snapshot()
+        val initialState = UiStateSnapshot(
+            snapshotToken = initialTree?.snapshotToken,
+            packageName = initialForeground.packageName,
+            activity = initialForeground.activity
+        )
         val startTime = System.currentTimeMillis()
         val deadline = startTime + timeoutMs.coerceAtLeast(0L)
 
@@ -670,8 +677,20 @@ class StateCoordinator(
                     query = query
                 )
                 if (found.found && found.node != null) {
+                    val currentForeground = foregroundAppProvider.snapshot()
+                    val finalState = UiStateSnapshot(
+                        snapshotToken = treeResult.snapshot.snapshotToken,
+                        packageName = currentForeground.packageName,
+                        activity = currentForeground.activity
+                    )
                     return WaitConditionResult(
                         satisfied = true,
+                        outcome = WaitOutcome.forCondition(
+                            conditionMet = true,
+                            initialState = initialState,
+                            finalState = finalState,
+                            timedOut = false
+                        ),
                         node = found.node,
                         elapsedMs = System.currentTimeMillis() - startTime,
                         polledCount = 0, // approximate
@@ -685,8 +704,21 @@ class StateCoordinator(
             }
         }
 
+        val finalTree = getTreeSnapshotResult().snapshot
+        val finalForeground = foregroundAppProvider.snapshot()
+        val finalState = UiStateSnapshot(
+            snapshotToken = finalTree?.snapshotToken,
+            packageName = finalForeground.packageName,
+            activity = finalForeground.activity
+        )
         return WaitConditionResult(
             satisfied = false,
+            outcome = WaitOutcome.forCondition(
+                conditionMet = false,
+                initialState = initialState,
+                finalState = finalState,
+                timedOut = true
+            ),
             node = null,
             elapsedMs = timeoutMs,
             polledCount = 0,
@@ -717,6 +749,10 @@ class StateCoordinator(
             if (GhosthandWaitLogic.hasUiChanged(initialState, currentState)) {
                 return WaitUiChangeResult(
                     changed = true,
+                    outcome = WaitOutcome.forUiChange(
+                        stateChanged = true,
+                        timedOut = false
+                    ),
                     elapsedMs = System.currentTimeMillis() - startTime,
                     snapshotToken = currentState.snapshotToken ?: initialState.snapshotToken,
                     packageName = currentForeground.packageName,
@@ -740,6 +776,10 @@ class StateCoordinator(
         if (GhosthandWaitLogic.hasUiChanged(initialState, finalState)) {
             return WaitUiChangeResult(
                 changed = true,
+                outcome = WaitOutcome.forUiChange(
+                    stateChanged = true,
+                    timedOut = false
+                ),
                 elapsedMs = System.currentTimeMillis() - startTime,
                 snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
                 packageName = finalForeground.packageName,
@@ -749,6 +789,10 @@ class StateCoordinator(
 
         return WaitUiChangeResult(
             changed = false,
+            outcome = WaitOutcome.forUiChange(
+                stateChanged = false,
+                timedOut = true
+            ),
             elapsedMs = System.currentTimeMillis() - startTime,
             snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
             packageName = finalForeground.packageName ?: initialState.packageName,
@@ -770,6 +814,7 @@ class StateCoordinator(
 
     data class WaitConditionResult(
         val satisfied: Boolean,
+        val outcome: WaitOutcome,
         val node: FlatAccessibilityNode?,
         val elapsedMs: Long,
         val polledCount: Int,
@@ -778,6 +823,7 @@ class StateCoordinator(
 
     data class WaitUiChangeResult(
         val changed: Boolean,
+        val outcome: WaitOutcome,
         val elapsedMs: Long,
         val snapshotToken: String?,
         val packageName: String?,

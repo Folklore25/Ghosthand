@@ -453,8 +453,8 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "GET",
             path = "/wait",
-            description = "Wait for UI change; changed reports whether a transition was observed during the wait window, while packageName/activity report the final observed settled state; successful responses may include compact disclosure when wait semantics are easy to overread",
-            responseFields = listOf("changed", "elapsedMs", "snapshotToken", "packageName", "activity", "disclosure"),
+            description = "Wait for UI change; changed is kept for compatibility, while conditionMet, stateChanged, and timedOut separate wait outcome truth from the final observed settled state",
+            responseFields = listOf("changed", "conditionMet", "stateChanged", "timedOut", "elapsedMs", "snapshotToken", "packageName", "activity", "disclosure"),
             stateTruth = "final_settled_state",
             changeSignal = "transition_observed_during_window",
             params = listOf(
@@ -469,8 +469,8 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "POST",
             path = "/wait",
-            description = "Wait for a matching tree condition; successful responses may include compact disclosure when condition-wait semantics are easy to confuse with settle waiting",
-            responseFields = listOf("satisfied", "elapsedMs", "node", "reason", "disclosure"),
+            description = "Wait for a matching tree condition; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change",
+            responseFields = listOf("satisfied", "conditionMet", "stateChanged", "timedOut", "elapsedMs", "node", "reason", "disclosure"),
             params = listOf(
                 GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition"),
                 GhosthandCommandParam("timeoutMs", "long", "body", false, "Maximum wait duration in milliseconds"),

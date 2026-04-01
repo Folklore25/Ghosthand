@@ -1895,6 +1895,9 @@ Supported strategies match `/find`, including `focused`.
   "ok": true,
   "data": {
     "satisfied": true,
+    "conditionMet": true,
+    "stateChanged": false,
+    "timedOut": false,
     "elapsedMs": 800,
     "node": {
       "nodeId": "n42",
@@ -1917,6 +1920,9 @@ Supported strategies match `/find`, including `focused`.
   "ok": true,
   "data": {
     "satisfied": false,
+    "conditionMet": false,
+    "stateChanged": true,
+    "timedOut": true,
     "elapsedMs": 5000,
     "reason": "timeout"
   }
@@ -1948,6 +1954,9 @@ Wait for a foreground or tree change event and return the final observed UI stat
   "ok": true,
   "data": {
     "changed": true,
+    "conditionMet": null,
+    "stateChanged": true,
+    "timedOut": false,
     "elapsedMs": 1024,
     "snapshotToken": "abcd1234",
     "packageName": "com.android.settings",
@@ -1960,6 +1969,9 @@ Wait for a foreground or tree change event and return the final observed UI stat
 
 - `changed = true` means Ghosthand observed a transition during the wait window.
 - `changed = false` means Ghosthand did not observe a transition during that wait window.
+- `conditionMet` is always `null` for `GET /wait` because no selector condition is involved.
+- `stateChanged` tells you explicitly whether Ghosthand observed a UI-state transition.
+- `timedOut` tells you explicitly whether the wait window expired before such a transition was observed.
 - `packageName`, `activity`, and `snapshotToken` always describe the final observed settled state at the end of the wait.
 - Agents should treat `packageName`, `activity`, and `snapshotToken` as the final-state truth source for `/wait`, not `changed` alone.
 
@@ -1968,7 +1980,7 @@ On this ROM/device, `packageName` and `activity` are the more trustworthy post-a
 ### Operator Guidance
 
 - After visible-state-changing actions, `/wait` should be the standard settle path before using arbitrary fixed sleeps.
-- If `changed = false` but final `packageName` / `activity` / `snapshotToken` match the expected target, treat the action as settled.
+- If `timedOut = false` and final `packageName` / `activity` / `snapshotToken` match the expected target, treat the action as settled even when `stateChanged = false`.
 - On same-activity surfaces, follow final `/wait` settled fields with a subsequent `/screen` to confirm that the visible content actually changed.
 - Use a bounded fixed sleep only when `/wait` cannot express the relevant settle condition, and report that as a caveat rather than treating it as normal practice.
 - Coordinate fallback should be treated as an exception path, not the default interaction model.

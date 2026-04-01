@@ -18,6 +18,10 @@ class LocalApiServerDisclosureTest {
         val disclosure = buildWaitUiChangeDisclosure(
             StateCoordinator.WaitUiChangeResult(
                 changed = false,
+                outcome = WaitOutcome.forUiChange(
+                    stateChanged = false,
+                    timedOut = true
+                ),
                 elapsedMs = 1200,
                 snapshotToken = "snap",
                 packageName = "pkg",
@@ -37,6 +41,12 @@ class LocalApiServerDisclosureTest {
             strategy = "text",
             result = StateCoordinator.WaitConditionResult(
                 satisfied = false,
+                outcome = WaitOutcome.forCondition(
+                    conditionMet = false,
+                    initialState = UiStateSnapshot("snap1", "pkg", "Activity"),
+                    finalState = UiStateSnapshot("snap1", "pkg", "Activity"),
+                    timedOut = true
+                ),
                 node = null,
                 elapsedMs = 5000,
                 polledCount = 0,
