@@ -819,7 +819,11 @@ class StateCoordinator(
         val elapsedMs: Long,
         val polledCount: Int,
         val attemptedPath: String
-    )
+    ) {
+        fun matchedCondition(): Boolean {
+            return satisfied && outcome.conditionMet == true && node != null
+        }
+    }
 
     data class WaitUiChangeResult(
         val changed: Boolean,

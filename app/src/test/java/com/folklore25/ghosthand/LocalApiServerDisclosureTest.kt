@@ -75,9 +75,9 @@ class LocalApiServerDisclosureTest {
 
         assertEquals(false, normalized.satisfied)
         assertEquals(false, normalized.conditionMet)
-        assertEquals(true, normalized.timedOut.not())
+        assertEquals(true, normalized.timedOut)
         assertEquals(null, normalized.node)
-        assertEquals("condition_met", normalized.reason)
+        assertEquals("timeout", normalized.reason)
     }
 
     @Test

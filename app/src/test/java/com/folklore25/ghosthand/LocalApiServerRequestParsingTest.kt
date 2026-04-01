@@ -8,6 +8,7 @@ package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -19,6 +20,34 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class LocalApiServerRequestParsingTest {
+    @Test
+    fun parseSelectorSupportsTextAliasInsideWaitCondition() {
+        val selector = GhosthandSelectors.normalize(
+            text = "XYZdefinitelydoesnotexist999",
+            desc = null,
+            id = null,
+            strategy = "text",
+            query = null
+        )
+
+        assertEquals("text", selector?.strategy)
+        assertEquals("XYZdefinitelydoesnotexist999", selector?.query)
+    }
+
+    @Test
+    fun selectorNormalizationLeavesNonFocusedStrategyQueryNullWhenAliasMissing() {
+        val selector = GhosthandSelectors.normalize(
+            text = null,
+            desc = null,
+            id = null,
+            strategy = "text",
+            query = null
+        )
+
+        assertEquals("text", selector?.strategy)
+        assertNull(selector?.query)
+    }
+
     @Test
     fun readRequestParsesValidRequest() {
         val input = ByteArrayInputStream(

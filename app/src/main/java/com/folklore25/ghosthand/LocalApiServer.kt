@@ -1618,21 +1618,20 @@ class LocalApiServer(
         val condition = body.optJSONObject("condition")
             ?: return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "condition is required."))
 
-        val strategy = condition.optString("strategy").trim()
-        if (strategy.isEmpty()) {
+        val selector = parseSelector(condition)
+        if (selector == null) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "condition.strategy is required."))
         }
+        val strategy = selector.strategy
 
         if (strategy !in SUPPORTED_WAIT_STRATEGIES) {
             return buildJsonResponse(422, errorEnvelope("UNSUPPORTED_OPERATION", "Unsupported /wait strategy: $strategy."))
         }
 
-        val query = condition.opt("query").let { value ->
-            when {
-                value == null || value == JSONObject.NULL -> null
-                else -> value.toString()
-            }
+        if (selector.query == null && strategy != "focused") {
+            return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "condition query is required for strategy: $strategy."))
         }
+        val query = selector.query
 
         val timeoutMs = body.optLongOrNull("timeoutMs") ?: 5000L
         if (timeoutMs < 0) {
@@ -2105,13 +2104,14 @@ internal data class NormalizedWaitConditionResult(
 internal fun normalizeWaitConditionResult(
     result: StateCoordinator.WaitConditionResult
 ): NormalizedWaitConditionResult {
-    val conditionMet = result.outcome.conditionMet == true
-    val hasNode = result.node != null
-    val normalizedSatisfied = result.satisfied && conditionMet && hasNode
+    val normalizedSatisfied = result.matchedCondition()
     val normalizedTimedOut = if (normalizedSatisfied) {
         false
     } else {
-        result.outcome.timedOut || result.attemptedPath == "timeout"
+        result.outcome.timedOut ||
+            result.attemptedPath == "timeout" ||
+            result.satisfied ||
+            result.outcome.conditionMet == true
     }
 
     return NormalizedWaitConditionResult(
@@ -2120,7 +2120,13 @@ internal fun normalizeWaitConditionResult(
         stateChanged = result.outcome.stateChanged,
         timedOut = normalizedTimedOut,
         node = if (normalizedSatisfied) result.node else null,
-        reason = if (normalizedSatisfied) "condition_met" else result.attemptedPath
+        reason = if (normalizedSatisfied) {
+            "condition_met"
+        } else if (normalizedTimedOut) {
+            "timeout"
+        } else {
+            result.attemptedPath
+        }
     )
 }
 
