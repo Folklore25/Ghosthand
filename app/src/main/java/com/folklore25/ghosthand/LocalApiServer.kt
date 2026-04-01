@@ -1645,16 +1645,17 @@ class LocalApiServer(
         }
 
         val result = stateCoordinator.waitForCondition(strategy, query, timeoutMs, intervalMs)
+        val normalized = normalizeWaitConditionResult(result)
 
-        return if (result.satisfied) {
+        return if (normalized.satisfied) {
             buildJsonResponse(200, successEnvelope(
                 data = JSONObject()
                     .put("satisfied", true)
-                    .put("conditionMet", result.outcome.conditionMet)
-                    .put("stateChanged", result.outcome.stateChanged)
-                    .put("timedOut", result.outcome.timedOut)
+                    .put("conditionMet", normalized.conditionMet)
+                    .put("stateChanged", normalized.stateChanged)
+                    .put("timedOut", normalized.timedOut)
                     .put("elapsedMs", result.elapsedMs)
-                    .put("node", result.node?.let { node ->
+                    .put("node", normalized.node?.let { node ->
                         JSONObject()
                             .put("nodeId", node.nodeId)
                             .put("text", node.text ?: JSONObject.NULL)
@@ -1666,12 +1667,12 @@ class LocalApiServer(
             buildJsonResponse(200, successEnvelope(
                 data = JSONObject()
                     .put("satisfied", false)
-                    .put("conditionMet", result.outcome.conditionMet)
-                    .put("stateChanged", result.outcome.stateChanged)
-                    .put("timedOut", result.outcome.timedOut)
+                    .put("conditionMet", normalized.conditionMet)
+                    .put("stateChanged", normalized.stateChanged)
+                    .put("timedOut", normalized.timedOut)
                     .put("elapsedMs", result.elapsedMs)
-                    .put("reason", result.attemptedPath),
-                disclosure = buildWaitConditionDisclosure(strategy, result)
+                    .put("reason", normalized.reason),
+                disclosure = buildWaitConditionDisclosure(strategy, normalized)
             ))
         }
     }
@@ -2076,7 +2077,7 @@ internal fun buildWaitUiChangeDisclosure(
 
 internal fun buildWaitConditionDisclosure(
     strategy: String,
-    result: StateCoordinator.WaitConditionResult
+    result: NormalizedWaitConditionResult
 ): GhosthandDisclosure? {
     if (result.satisfied) {
         return null
@@ -2089,6 +2090,37 @@ internal fun buildWaitConditionDisclosure(
             "Use GET /wait when you need a settle window after an action.",
             "Use /find with ${selectorAliasForStrategy(strategy)} when you need to inspect selector availability first."
         )
+    )
+}
+
+internal data class NormalizedWaitConditionResult(
+    val satisfied: Boolean,
+    val conditionMet: Boolean,
+    val stateChanged: Boolean,
+    val timedOut: Boolean,
+    val node: FlatAccessibilityNode?,
+    val reason: String
+)
+
+internal fun normalizeWaitConditionResult(
+    result: StateCoordinator.WaitConditionResult
+): NormalizedWaitConditionResult {
+    val conditionMet = result.outcome.conditionMet == true
+    val hasNode = result.node != null
+    val normalizedSatisfied = result.satisfied && conditionMet && hasNode
+    val normalizedTimedOut = if (normalizedSatisfied) {
+        false
+    } else {
+        result.outcome.timedOut || result.attemptedPath == "timeout"
+    }
+
+    return NormalizedWaitConditionResult(
+        satisfied = normalizedSatisfied,
+        conditionMet = normalizedSatisfied,
+        stateChanged = result.outcome.stateChanged,
+        timedOut = normalizedTimedOut,
+        node = if (normalizedSatisfied) result.node else null,
+        reason = if (normalizedSatisfied) "condition_met" else result.attemptedPath
     )
 }
 

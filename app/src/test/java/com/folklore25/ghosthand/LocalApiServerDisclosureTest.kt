@@ -39,18 +39,13 @@ class LocalApiServerDisclosureTest {
     fun waitConditionDisclosureClarifiesSelectorWaitSemantics() {
         val disclosure = buildWaitConditionDisclosure(
             strategy = "text",
-            result = StateCoordinator.WaitConditionResult(
+            result = NormalizedWaitConditionResult(
                 satisfied = false,
-                outcome = WaitOutcome.forCondition(
-                    conditionMet = false,
-                    initialState = UiStateSnapshot("snap1", "pkg", "Activity"),
-                    finalState = UiStateSnapshot("snap1", "pkg", "Activity"),
-                    timedOut = true
-                ),
+                conditionMet = false,
+                stateChanged = false,
+                timedOut = true,
                 node = null,
-                elapsedMs = 5000,
-                polledCount = 0,
-                attemptedPath = "timeout"
+                reason = "timeout"
             )
         )
 
@@ -58,6 +53,31 @@ class LocalApiServerDisclosureTest {
         assertEquals("discoverability", disclosure!!.kind)
         assertTrue(disclosure.summary.contains("POST /wait"))
         assertTrue(disclosure.nextBestActions.first().contains("GET /wait"))
+    }
+
+    @Test
+    fun normalizeWaitConditionResultRejectsConditionMetTrueWithoutNode() {
+        val normalized = normalizeWaitConditionResult(
+            StateCoordinator.WaitConditionResult(
+                satisfied = true,
+                outcome = WaitOutcome.forCondition(
+                    conditionMet = true,
+                    initialState = UiStateSnapshot("snap1", "pkg", "Activity"),
+                    finalState = UiStateSnapshot("snap1", "pkg", "Activity"),
+                    timedOut = false
+                ),
+                node = null,
+                elapsedMs = 100,
+                polledCount = 1,
+                attemptedPath = "condition_met"
+            )
+        )
+
+        assertEquals(false, normalized.satisfied)
+        assertEquals(false, normalized.conditionMet)
+        assertEquals(true, normalized.timedOut.not())
+        assertEquals(null, normalized.node)
+        assertEquals("condition_met", normalized.reason)
     }
 
     @Test
