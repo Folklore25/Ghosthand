@@ -46,6 +46,7 @@
     <string name="accessibility_helper_status">status</string>
     <string name="accessibility_settings_unavailable">此设备无法打开无障碍设置。</string>
     <string name="service_requested">已请求启动前台服务</string>
+    <string name="runtime_start_failed_toast">此设备无法启动 Ghosthand 运行时。</string>
     <string name="service_channel_name">Ghosthand 运行时</string>
     <string name="service_channel_description">Ghosthand 的前台运行时占位服务</string>
     <string name="service_notification_title">Ghosthand 运行中</string>
@@ -68,6 +69,14 @@
     <string name="status_service_without_api">前台服务正在运行，但本地 API 监听未启动。</string>
     <string name="status_api_stopped">本地 API 服务已停止。</string>
     <string name="status_api_failed">本地 API 服务启动失败：%1$s</string>
+    <string name="status_runtime_start_failed">运行时启动失败。Ghosthand 保持打开，便于您恢复。</string>
+    <string name="status_runtime_start_failed_action">运行时启动失败（%1$s）。</string>
+    <string name="status_accessibility_settings_failed">无法打开无障碍设置。Ghosthand 保持打开，便于您恢复。</string>
+    <string name="status_accessibility_settings_failed_action">无障碍设置跳转失败（%1$s）。</string>
+    <string name="status_runtime_snapshot_failed">运行时状态刷新失败。Ghosthand 保持打开，并保留上一次已知状态。</string>
+    <string name="status_runtime_snapshot_failed_action">运行时刷新降级（%1$s）。</string>
+    <string name="status_service_bootstrap_failed">运行时引导失败。Ghosthand 保持打开，便于您重试或查看诊断。</string>
+    <string name="status_service_bootstrap_failed_action">运行时引导失败（%1$s）。</string>
     <string name="common_back">返回</string>
     <string name="common_info">更多信息</string>
     <string name="common_info_short">info</string>

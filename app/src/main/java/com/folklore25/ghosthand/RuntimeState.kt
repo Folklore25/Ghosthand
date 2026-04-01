@@ -30,7 +30,9 @@ data class RuntimeState(
     val swipeProbeSignalText: String = "Swipe probe scrollY: 0 | top item: 01",
     val writeSecureSettingsGranted: Boolean? = null,
     val lastServiceAction: String = "",
+    val recoverableFailureAction: String? = null,
     val lastAccessibilityHelperResult: String = "",
     val tapProbeResultText: String = "Tap probe count: 0",
+    val recoverableFailureStatus: String? = null,
     val statusText: String = "Ghosthand runtime placeholder is idle."
 )
