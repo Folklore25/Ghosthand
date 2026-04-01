@@ -14,8 +14,8 @@ android {
         applicationId = "com.folklore25.ghosthand"
         minSdk = 30
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,6 +47,7 @@ android {
 
 dependencies {
     implementation("androidx.datastore:datastore-preferences:1.2.1")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.livedata.ktx)

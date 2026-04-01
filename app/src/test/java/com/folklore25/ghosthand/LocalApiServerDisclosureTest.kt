@@ -18,6 +18,10 @@ class LocalApiServerDisclosureTest {
         val disclosure = buildWaitUiChangeDisclosure(
             StateCoordinator.WaitUiChangeResult(
                 changed = false,
+                outcome = WaitOutcome.forUiChange(
+                    stateChanged = false,
+                    timedOut = true
+                ),
                 elapsedMs = 1200,
                 snapshotToken = "snap",
                 packageName = "pkg",
@@ -35,12 +39,13 @@ class LocalApiServerDisclosureTest {
     fun waitConditionDisclosureClarifiesSelectorWaitSemantics() {
         val disclosure = buildWaitConditionDisclosure(
             strategy = "text",
-            result = StateCoordinator.WaitConditionResult(
+            result = NormalizedWaitConditionResult(
                 satisfied = false,
+                conditionMet = false,
+                stateChanged = false,
+                timedOut = true,
                 node = null,
-                elapsedMs = 5000,
-                polledCount = 0,
-                attemptedPath = "timeout"
+                reason = "timeout"
             )
         )
 
@@ -48,6 +53,31 @@ class LocalApiServerDisclosureTest {
         assertEquals("discoverability", disclosure!!.kind)
         assertTrue(disclosure.summary.contains("POST /wait"))
         assertTrue(disclosure.nextBestActions.first().contains("GET /wait"))
+    }
+
+    @Test
+    fun normalizeWaitConditionResultRejectsConditionMetTrueWithoutNode() {
+        val normalized = normalizeWaitConditionResult(
+            StateCoordinator.WaitConditionResult(
+                satisfied = true,
+                outcome = WaitOutcome.forCondition(
+                    conditionMet = true,
+                    initialState = UiStateSnapshot("snap1", "pkg", "Activity"),
+                    finalState = UiStateSnapshot("snap1", "pkg", "Activity"),
+                    timedOut = false
+                ),
+                node = null,
+                elapsedMs = 100,
+                polledCount = 1,
+                attemptedPath = "condition_met"
+            )
+        )
+
+        assertEquals(false, normalized.satisfied)
+        assertEquals(false, normalized.conditionMet)
+        assertEquals(true, normalized.timedOut)
+        assertEquals(null, normalized.node)
+        assertEquals("timeout", normalized.reason)
     }
 
     @Test
@@ -116,6 +146,40 @@ class LocalApiServerDisclosureTest {
         assertNotNull(disclosure)
         assertEquals("fallback", disclosure!!.kind)
         assertTrue(disclosure.summary.contains("clickable ancestor"))
+    }
+
+    @Test
+    fun clickDisclosureExplainsCrossSurfaceFallback() {
+        val disclosure = buildClickDisclosure(
+            strategy = "text",
+            clickableOnly = true,
+            result = ClickAttemptResult.success(
+                attemptedPath = "node_click",
+                selectorResolution = ClickSelectorResolution(
+                    requestedStrategy = "text",
+                    effectiveStrategy = "contentDescContains",
+                    requestedSurface = "text",
+                    matchedSurface = "contentDesc",
+                    requestedMatchSemantics = "exact",
+                    matchedMatchSemantics = "contains",
+                    usedSurfaceFallback = true,
+                    usedContainsFallback = true,
+                    matchedNodeId = "p0.0.0@tsnap",
+                    matchedNodeClickable = false,
+                    resolvedNodeId = "p0.0@tsnap",
+                    resolutionKind = "clickable_ancestor",
+                    ancestorDepth = 1
+                )
+            )
+        )
+
+        assertNotNull(disclosure)
+        assertEquals("fallback", disclosure!!.kind)
+        assertTrue(disclosure.summary.contains("another surface"))
+        assertEquals(
+            "The meaningful label must live on the exact selector surface I requested.",
+            disclosure.assumptionToCorrect
+        )
     }
 
     @Test

@@ -988,21 +988,56 @@ class LocalApiServer(
     }
 
     private fun buildScreenResponse(queryParameters: Map<String, String>): String {
+        val mode = ScreenReadMode.fromWireValue(queryParameters["source"]) ?: ScreenReadMode.ACCESSIBILITY
+        val editableOnly = queryParameters["editable"] == "true"
+        val scrollableOnly = queryParameters["scrollable"] == "true"
+        val clickableOnly = queryParameters["clickable"] == "true"
+        if (mode != ScreenReadMode.ACCESSIBILITY && (editableOnly || scrollableOnly || clickableOnly)) {
+            return buildJsonResponse(
+                statusCode = 400,
+                body = errorEnvelope(
+                    code = "INVALID_ARGUMENT",
+                    message = "editable, scrollable, and clickable filters are only supported for source=accessibility."
+                )
+            )
+        }
+
         val treeSnapshotResult = stateCoordinator.getTreeSnapshotResult()
-        if (!treeSnapshotResult.available) {
+        if (mode == ScreenReadMode.ACCESSIBILITY && !treeSnapshotResult.available) {
             return buildTreeUnavailableResponse(treeSnapshotResult.reason)
         }
 
         val snapshot = treeSnapshotResult.snapshot
-            ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT)
-
-        val payload = stateCoordinator.createScreenPayload(
-            snapshot = snapshot,
-            editableOnly = queryParameters["editable"] == "true",
-            scrollableOnly = queryParameters["scrollable"] == "true",
-            packageFilter = queryParameters["package"],
-            clickableOnly = queryParameters["clickable"] == "true"
-        )
+        val payload = when (mode) {
+            ScreenReadMode.ACCESSIBILITY -> {
+                val requiredSnapshot = snapshot
+                    ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT)
+                stateCoordinator.createScreenPayload(
+                    snapshot = requiredSnapshot,
+                    editableOnly = editableOnly,
+                    scrollableOnly = scrollableOnly,
+                    packageFilter = queryParameters["package"],
+                    clickableOnly = clickableOnly
+                )
+            }
+            ScreenReadMode.OCR -> GhosthandApiPayloads.screenReadPayload(
+                stateCoordinator.createOcrScreenPayload()
+            )
+            ScreenReadMode.HYBRID -> {
+                if (snapshot != null) {
+                    GhosthandApiPayloads.screenReadPayload(
+                        stateCoordinator.createHybridScreenPayload(
+                            snapshot = snapshot,
+                            packageFilter = queryParameters["package"]
+                        )
+                    )
+                } else {
+                    GhosthandApiPayloads.screenReadPayload(
+                        stateCoordinator.createOcrScreenPayload()
+                    )
+                }
+            }
+        }
 
         return buildJsonResponse(
             statusCode = 200,
@@ -1564,6 +1599,9 @@ class LocalApiServer(
             successEnvelope(
                 data = JSONObject()
                     .put("changed", result.changed)
+                    .put("conditionMet", JSONObject.NULL)
+                    .put("stateChanged", result.outcome.stateChanged)
+                    .put("timedOut", result.outcome.timedOut)
                     .put("elapsedMs", result.elapsedMs)
                     .put("snapshotToken", result.snapshotToken ?: JSONObject.NULL)
                     .put("packageName", result.packageName ?: JSONObject.NULL)
@@ -1580,21 +1618,20 @@ class LocalApiServer(
         val condition = body.optJSONObject("condition")
             ?: return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "condition is required."))
 
-        val strategy = condition.optString("strategy").trim()
-        if (strategy.isEmpty()) {
+        val selector = parseSelector(condition)
+        if (selector == null) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "condition.strategy is required."))
         }
+        val strategy = selector.strategy
 
         if (strategy !in SUPPORTED_WAIT_STRATEGIES) {
             return buildJsonResponse(422, errorEnvelope("UNSUPPORTED_OPERATION", "Unsupported /wait strategy: $strategy."))
         }
 
-        val query = condition.opt("query").let { value ->
-            when {
-                value == null || value == JSONObject.NULL -> null
-                else -> value.toString()
-            }
+        if (selector.query == null && strategy != "focused") {
+            return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "condition query is required for strategy: $strategy."))
         }
+        val query = selector.query
 
         val timeoutMs = body.optLongOrNull("timeoutMs") ?: 5000L
         if (timeoutMs < 0) {
@@ -1607,13 +1644,17 @@ class LocalApiServer(
         }
 
         val result = stateCoordinator.waitForCondition(strategy, query, timeoutMs, intervalMs)
+        val normalized = normalizeWaitConditionResult(result)
 
-        return if (result.satisfied) {
+        return if (normalized.satisfied) {
             buildJsonResponse(200, successEnvelope(
                 data = JSONObject()
                     .put("satisfied", true)
+                    .put("conditionMet", normalized.conditionMet)
+                    .put("stateChanged", normalized.stateChanged)
+                    .put("timedOut", normalized.timedOut)
                     .put("elapsedMs", result.elapsedMs)
-                    .put("node", result.node?.let { node ->
+                    .put("node", normalized.node?.let { node ->
                         JSONObject()
                             .put("nodeId", node.nodeId)
                             .put("text", node.text ?: JSONObject.NULL)
@@ -1625,9 +1666,12 @@ class LocalApiServer(
             buildJsonResponse(200, successEnvelope(
                 data = JSONObject()
                     .put("satisfied", false)
+                    .put("conditionMet", normalized.conditionMet)
+                    .put("stateChanged", normalized.stateChanged)
+                    .put("timedOut", normalized.timedOut)
                     .put("elapsedMs", result.elapsedMs)
-                    .put("reason", result.attemptedPath),
-                disclosure = buildWaitConditionDisclosure(strategy, result)
+                    .put("reason", normalized.reason),
+                disclosure = buildWaitConditionDisclosure(strategy, normalized)
             ))
         }
     }
@@ -2032,7 +2076,7 @@ internal fun buildWaitUiChangeDisclosure(
 
 internal fun buildWaitConditionDisclosure(
     strategy: String,
-    result: StateCoordinator.WaitConditionResult
+    result: NormalizedWaitConditionResult
 ): GhosthandDisclosure? {
     if (result.satisfied) {
         return null
@@ -2045,6 +2089,44 @@ internal fun buildWaitConditionDisclosure(
             "Use GET /wait when you need a settle window after an action.",
             "Use /find with ${selectorAliasForStrategy(strategy)} when you need to inspect selector availability first."
         )
+    )
+}
+
+internal data class NormalizedWaitConditionResult(
+    val satisfied: Boolean,
+    val conditionMet: Boolean,
+    val stateChanged: Boolean,
+    val timedOut: Boolean,
+    val node: FlatAccessibilityNode?,
+    val reason: String
+)
+
+internal fun normalizeWaitConditionResult(
+    result: StateCoordinator.WaitConditionResult
+): NormalizedWaitConditionResult {
+    val normalizedSatisfied = result.matchedCondition()
+    val normalizedTimedOut = if (normalizedSatisfied) {
+        false
+    } else {
+        result.outcome.timedOut ||
+            result.attemptedPath == "timeout" ||
+            result.satisfied ||
+            result.outcome.conditionMet == true
+    }
+
+    return NormalizedWaitConditionResult(
+        satisfied = normalizedSatisfied,
+        conditionMet = normalizedSatisfied,
+        stateChanged = result.outcome.stateChanged,
+        timedOut = normalizedTimedOut,
+        node = if (normalizedSatisfied) result.node else null,
+        reason = if (normalizedSatisfied) {
+            "condition_met"
+        } else if (normalizedTimedOut) {
+            "timeout"
+        } else {
+            result.attemptedPath
+        }
     )
 }
 
@@ -2129,6 +2211,14 @@ internal fun buildClickDisclosure(
     if (result.performed && resolution != null) {
         if (resolution.usedContainsFallback || resolution.resolutionKind != "matched_node") {
             val summary = when {
+                resolution.usedSurfaceFallback && resolution.usedContainsFallback && resolution.resolutionKind == "clickable_ancestor" ->
+                    "Ghosthand crossed from the requested selector surface to a bounded contains match on another surface, then dispatched the click on a clickable ancestor."
+                resolution.usedSurfaceFallback && resolution.resolutionKind == "clickable_ancestor" ->
+                    "Ghosthand matched the label on a different selector surface and dispatched the click on its clickable ancestor."
+                resolution.usedSurfaceFallback && resolution.usedContainsFallback ->
+                    "Ghosthand crossed to a bounded contains match on another selector surface before clicking."
+                resolution.usedSurfaceFallback ->
+                    "Ghosthand matched the label on a different selector surface before dispatching the click."
                 resolution.usedContainsFallback && resolution.resolutionKind == "clickable_ancestor" ->
                     "Ghosthand widened the selector match and dispatched the click on a clickable ancestor."
                 resolution.resolutionKind == "clickable_ancestor" ->
@@ -2141,7 +2231,11 @@ internal fun buildClickDisclosure(
             return GhosthandDisclosure(
                 kind = "fallback",
                 summary = summary,
-                assumptionToCorrect = "The matched visible label is always the directly clickable node.",
+                assumptionToCorrect = if (resolution.usedSurfaceFallback) {
+                    "The meaningful label must live on the exact selector surface I requested."
+                } else {
+                    "The matched visible label is always the directly clickable node."
+                },
                 nextBestActions = listOf(
                     "Use /find if you need to inspect the matched node before clicking.",
                     alternateSelectorAction(strategy ?: resolution.requestedStrategy)

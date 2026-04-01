@@ -32,6 +32,7 @@ class StateCoordinator(
     private val clipboardProvider = ClipboardProvider(appContext)
     private val mediaProjectionProvider = MediaProjectionProvider(appContext)
     private val notificationDispatcher = NotificationDispatcher(appContext)
+    private val screenOcrProvider = ScreenOcrProvider()
 
     fun createPingPayload(): JSONObject {
         val diagnosticsSnapshot = homeDiagnosticsProvider.snapshot()
@@ -197,6 +198,64 @@ class StateCoordinator(
             scrollableOnly = scrollableOnly,
             packageFilter = packageFilter,
             clickableOnly = clickableOnly
+        )
+    }
+
+    fun createOcrScreenPayload(): ScreenReadPayload {
+        val screenshotResult = captureBestScreenshot(0, 0)
+        val foregroundSnapshot = foregroundAppProvider.snapshot()
+        val ocrResult = screenOcrProvider.read(screenshotResult)
+
+        return ScreenReadPayload(
+            packageName = foregroundSnapshot.packageName,
+            activity = foregroundSnapshot.activity,
+            snapshotToken = null,
+            capturedAt = null,
+            foregroundStableDuringCapture = true,
+            partialOutput = false,
+            candidateNodeCount = 0,
+            returnedElementCount = ocrResult.elements.size,
+            warnings = ocrResult.warnings,
+            omittedInvalidBoundsCount = 0,
+            omittedLowSignalCount = 0,
+            omittedNodeCount = 0,
+            elements = ocrResult.elements,
+            source = ScreenReadMode.OCR.wireValue,
+            accessibilityElementCount = 0,
+            ocrElementCount = ocrResult.elements.size,
+            usedOcrFallback = false
+        )
+    }
+
+    fun createHybridScreenPayload(
+        snapshot: AccessibilityTreeSnapshot,
+        packageFilter: String?
+    ): ScreenReadPayload {
+        val accessibilityPayload = GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = packageFilter,
+            clickableOnly = false
+        )
+        if (!accessibilityPayload.accessibilityTreeIsOperationallyInsufficient()) {
+            return accessibilityPayload
+        }
+
+        val ocrPayload = createOcrScreenPayload()
+        if (ocrPayload.elements.isEmpty()) {
+            return accessibilityPayload.copy(
+                warnings = (accessibilityPayload.warnings + ocrPayload.warnings).distinct()
+            )
+        }
+
+        return accessibilityPayload.copy(
+            returnedElementCount = accessibilityPayload.elements.size + ocrPayload.elements.size,
+            warnings = (accessibilityPayload.warnings + listOf("ocr_fallback_used") + ocrPayload.warnings).distinct(),
+            elements = accessibilityPayload.elements + ocrPayload.elements,
+            source = ScreenReadMode.HYBRID.wireValue,
+            ocrElementCount = ocrPayload.ocrElementCount,
+            usedOcrFallback = true
         )
     }
 
@@ -599,6 +658,13 @@ class StateCoordinator(
         timeoutMs: Long,
         intervalMs: Long
     ): WaitConditionResult {
+        val initialTree = getTreeSnapshotResult().snapshot
+        val initialForeground = foregroundAppProvider.snapshot()
+        val initialState = UiStateSnapshot(
+            snapshotToken = initialTree?.snapshotToken,
+            packageName = initialForeground.packageName,
+            activity = initialForeground.activity
+        )
         val startTime = System.currentTimeMillis()
         val deadline = startTime + timeoutMs.coerceAtLeast(0L)
 
@@ -611,8 +677,20 @@ class StateCoordinator(
                     query = query
                 )
                 if (found.found && found.node != null) {
+                    val currentForeground = foregroundAppProvider.snapshot()
+                    val finalState = UiStateSnapshot(
+                        snapshotToken = treeResult.snapshot.snapshotToken,
+                        packageName = currentForeground.packageName,
+                        activity = currentForeground.activity
+                    )
                     return WaitConditionResult(
                         satisfied = true,
+                        outcome = WaitOutcome.forCondition(
+                            conditionMet = true,
+                            initialState = initialState,
+                            finalState = finalState,
+                            timedOut = false
+                        ),
                         node = found.node,
                         elapsedMs = System.currentTimeMillis() - startTime,
                         polledCount = 0, // approximate
@@ -626,8 +704,21 @@ class StateCoordinator(
             }
         }
 
+        val finalTree = getTreeSnapshotResult().snapshot
+        val finalForeground = foregroundAppProvider.snapshot()
+        val finalState = UiStateSnapshot(
+            snapshotToken = finalTree?.snapshotToken,
+            packageName = finalForeground.packageName,
+            activity = finalForeground.activity
+        )
         return WaitConditionResult(
             satisfied = false,
+            outcome = WaitOutcome.forCondition(
+                conditionMet = false,
+                initialState = initialState,
+                finalState = finalState,
+                timedOut = true
+            ),
             node = null,
             elapsedMs = timeoutMs,
             polledCount = 0,
@@ -658,6 +749,10 @@ class StateCoordinator(
             if (GhosthandWaitLogic.hasUiChanged(initialState, currentState)) {
                 return WaitUiChangeResult(
                     changed = true,
+                    outcome = WaitOutcome.forUiChange(
+                        stateChanged = true,
+                        timedOut = false
+                    ),
                     elapsedMs = System.currentTimeMillis() - startTime,
                     snapshotToken = currentState.snapshotToken ?: initialState.snapshotToken,
                     packageName = currentForeground.packageName,
@@ -681,6 +776,10 @@ class StateCoordinator(
         if (GhosthandWaitLogic.hasUiChanged(initialState, finalState)) {
             return WaitUiChangeResult(
                 changed = true,
+                outcome = WaitOutcome.forUiChange(
+                    stateChanged = true,
+                    timedOut = false
+                ),
                 elapsedMs = System.currentTimeMillis() - startTime,
                 snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
                 packageName = finalForeground.packageName,
@@ -690,6 +789,10 @@ class StateCoordinator(
 
         return WaitUiChangeResult(
             changed = false,
+            outcome = WaitOutcome.forUiChange(
+                stateChanged = false,
+                timedOut = true
+            ),
             elapsedMs = System.currentTimeMillis() - startTime,
             snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
             packageName = finalForeground.packageName ?: initialState.packageName,
@@ -711,14 +814,20 @@ class StateCoordinator(
 
     data class WaitConditionResult(
         val satisfied: Boolean,
+        val outcome: WaitOutcome,
         val node: FlatAccessibilityNode?,
         val elapsedMs: Long,
         val polledCount: Int,
         val attemptedPath: String
-    )
+    ) {
+        fun matchedCondition(): Boolean {
+            return satisfied && outcome.conditionMet == true && node != null
+        }
+    }
 
     data class WaitUiChangeResult(
         val changed: Boolean,
+        val outcome: WaitOutcome,
         val elapsedMs: Long,
         val snapshotToken: String?,
         val packageName: String?,

@@ -79,34 +79,35 @@ class AccessibilityNodeFinder {
         clickableOnly: Boolean,
         index: Int
     ): FindNodeResult {
-        val primary = findNodesForClickWithStrategy(
+        val requestedStrategy = strategy.trim()
+        val chain = boundedFallbackChainFor(requestedStrategy)
+        val primaryAttempt = findNodesForClickWithStrategy(
             snapshot = snapshot,
-            requestedStrategy = strategy,
-            effectiveStrategy = strategy,
+            requestedStrategy = requestedStrategy,
+            effectiveStrategy = requestedStrategy,
             query = query,
             clickableOnly = clickableOnly,
-            index = index,
-            usedContainsFallback = false
+            index = index
         )
-        if (primary.found || !clickableOnly) {
-            return primary
+        if (primaryAttempt.found || !clickableOnly || chain.size == 1) {
+            return primaryAttempt
         }
 
-        val fallbackStrategy = when (strategy) {
-            "text" -> "textContains"
-            "contentDesc" -> "contentDescContains"
-            else -> null
-        } ?: return primary
+        for (fallbackStrategy in chain.drop(1)) {
+            val fallbackAttempt = findNodesForClickWithStrategy(
+                snapshot = snapshot,
+                requestedStrategy = requestedStrategy,
+                effectiveStrategy = fallbackStrategy,
+                query = query,
+                clickableOnly = clickableOnly,
+                index = index
+            )
+            if (fallbackAttempt.found) {
+                return fallbackAttempt
+            }
+        }
 
-        return findNodesForClickWithStrategy(
-            snapshot = snapshot,
-            requestedStrategy = strategy,
-            effectiveStrategy = fallbackStrategy,
-            query = query,
-            clickableOnly = clickableOnly,
-            index = index,
-            usedContainsFallback = true
-        )
+        return primaryAttempt
     }
 
     private fun findNodesForClickWithStrategy(
@@ -115,22 +116,20 @@ class AccessibilityNodeFinder {
         effectiveStrategy: String,
         query: String?,
         clickableOnly: Boolean,
-        index: Int,
-        usedContainsFallback: Boolean
+        index: Int
     ): FindNodeResult {
         val normalizedStrategy = effectiveStrategy.trim()
         val normalizedQuery = query?.takeIf { it.isNotBlank() }
         val matches = snapshot.nodes.filter { node ->
-            when (normalizedStrategy) {
-                "text" -> node.text == normalizedQuery
-                "textContains" -> normalizedQuery != null && node.text?.contains(normalizedQuery) == true
-                "resourceId" -> node.resourceId == normalizedQuery
-                "contentDesc" -> node.contentDesc == normalizedQuery
-                "contentDescContains" -> normalizedQuery != null && node.contentDesc?.contains(normalizedQuery) == true
-                "focused" -> node.focused
-                else -> false
-            }
+            matchesStrategy(node = node, strategy = normalizedStrategy, query = normalizedQuery)
         }
+        val requestedSurface = searchedSurfaceForStrategy(requestedStrategy)
+        val matchedSurface = searchedSurfaceForStrategy(normalizedStrategy)
+        val requestedMatchSemantics = matchSemanticsForStrategy(requestedStrategy)
+        val matchedMatchSemantics = matchSemanticsForStrategy(normalizedStrategy)
+        val usedSurfaceFallback = requestedSurface != matchedSurface
+        val usedContainsFallback =
+            requestedMatchSemantics != matchedMatchSemantics && matchedMatchSemantics == "contains"
 
         val selectedIndex = index.coerceAtLeast(0)
         if (!clickableOnly) {
@@ -144,6 +143,11 @@ class AccessibilityNodeFinder {
                     ClickSelectorResolution(
                         requestedStrategy = requestedStrategy,
                         effectiveStrategy = effectiveStrategy,
+                        requestedSurface = requestedSurface,
+                        matchedSurface = matchedSurface,
+                        requestedMatchSemantics = requestedMatchSemantics,
+                        matchedMatchSemantics = matchedMatchSemantics,
+                        usedSurfaceFallback = usedSurfaceFallback,
                         usedContainsFallback = usedContainsFallback,
                         matchedNodeId = matched.nodeId,
                         matchedNodeClickable = matched.clickable,
@@ -186,6 +190,11 @@ class AccessibilityNodeFinder {
                 ClickSelectorResolution(
                     requestedStrategy = requestedStrategy,
                     effectiveStrategy = effectiveStrategy,
+                    requestedSurface = requestedSurface,
+                    matchedSurface = matchedSurface,
+                    requestedMatchSemantics = requestedMatchSemantics,
+                    matchedMatchSemantics = matchedMatchSemantics,
+                    usedSurfaceFallback = usedSurfaceFallback,
                     usedContainsFallback = usedContainsFallback,
                     matchedNodeId = match.matchedNode.nodeId,
                     matchedNodeClickable = match.matchedNode.clickable,
@@ -227,6 +236,9 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "text",
+                        matchedMatchSemantics = "contains",
+                        usedContainsFallback = true,
                         likelyMissReason = "visible_text_is_part_of_a_longer_text_block",
                         suggestedAlternateStrategies = listOf("textContains")
                     )
@@ -234,6 +246,10 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "contentDesc",
+                        matchedMatchSemantics = "contains",
+                        usedSurfaceFallback = true,
+                        usedContainsFallback = true,
                         likelyMissReason = "meaningful_label_may_live_in_content_description",
                         suggestedAlternateSurfaces = listOf("contentDesc"),
                         suggestedAlternateStrategies = listOf("contentDescContains")
@@ -256,6 +272,9 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "contentDesc",
+                        matchedMatchSemantics = "contains",
+                        usedSurfaceFallback = true,
                         likelyMissReason = "meaningful_label_may_live_in_content_description",
                         suggestedAlternateSurfaces = listOf("contentDesc"),
                         suggestedAlternateStrategies = listOf("contentDescContains")
@@ -271,6 +290,9 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "contentDesc",
+                        matchedMatchSemantics = "contains",
+                        usedContainsFallback = true,
                         likelyMissReason = "visible_desc_is_part_of_a_longer_content_description",
                         suggestedAlternateStrategies = listOf("contentDescContains")
                     )
@@ -278,6 +300,10 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "text",
+                        matchedMatchSemantics = "contains",
+                        usedSurfaceFallback = true,
+                        usedContainsFallback = true,
                         likelyMissReason = "meaningful_label_may_live_in_text",
                         suggestedAlternateSurfaces = listOf("text"),
                         suggestedAlternateStrategies = listOf("textContains")
@@ -293,6 +319,9 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "text",
+                        matchedMatchSemantics = "contains",
+                        usedSurfaceFallback = true,
                         likelyMissReason = "meaningful_label_may_live_in_text",
                         suggestedAlternateSurfaces = listOf("text"),
                         suggestedAlternateStrategies = listOf("textContains")
@@ -308,6 +337,10 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "text",
+                        matchedMatchSemantics = "contains",
+                        usedSurfaceFallback = true,
+                        usedContainsFallback = true,
                         likelyMissReason = "visible_label_is_not_the_same_as_a_resource_id",
                         suggestedAlternateSurfaces = listOf("text"),
                         suggestedAlternateStrategies = listOf("textContains")
@@ -316,6 +349,10 @@ class AccessibilityNodeFinder {
                     FindMissHint(
                         searchedSurface = searchedSurface,
                         matchSemantics = matchSemantics,
+                        matchedSurface = "contentDesc",
+                        matchedMatchSemantics = "contains",
+                        usedSurfaceFallback = true,
+                        usedContainsFallback = true,
                         likelyMissReason = "visible_label_is_not_the_same_as_a_resource_id",
                         suggestedAlternateSurfaces = listOf("contentDesc"),
                         suggestedAlternateStrategies = listOf("contentDescContains")
@@ -330,6 +367,32 @@ class AccessibilityNodeFinder {
         }
 
         return hint
+    }
+
+    private fun boundedFallbackChainFor(strategy: String): List<String> {
+        return when (strategy) {
+            "text" -> listOf("text", "textContains", "contentDesc", "contentDescContains")
+            "contentDesc" -> listOf("contentDesc", "contentDescContains", "text", "textContains")
+            "textContains" -> listOf("textContains", "contentDescContains")
+            "contentDescContains" -> listOf("contentDescContains", "textContains")
+            else -> listOf(strategy)
+        }
+    }
+
+    private fun matchesStrategy(
+        node: FlatAccessibilityNode,
+        strategy: String,
+        query: String?
+    ): Boolean {
+        return when (strategy) {
+            "text" -> node.text == query
+            "textContains" -> query != null && node.text?.contains(query) == true
+            "resourceId" -> node.resourceId == query
+            "contentDesc" -> node.contentDesc == query
+            "contentDescContains" -> query != null && node.contentDesc?.contains(query) == true
+            "focused" -> node.focused
+            else -> false
+        }
     }
 
     private fun searchedSurfaceForStrategy(strategy: String): String {
@@ -393,6 +456,12 @@ data class FindNodeResult(
 data class FindMissHint(
     val searchedSurface: String,
     val matchSemantics: String,
+    val requestedSurface: String = searchedSurface,
+    val requestedMatchSemantics: String = matchSemantics,
+    val matchedSurface: String? = null,
+    val matchedMatchSemantics: String? = null,
+    val usedSurfaceFallback: Boolean = false,
+    val usedContainsFallback: Boolean = false,
     val likelyMissReason: String? = null,
     val suggestedAlternateSurfaces: List<String> = emptyList(),
     val suggestedAlternateStrategies: List<String> = emptyList()
@@ -401,6 +470,11 @@ data class FindMissHint(
 data class ClickSelectorResolution(
     val requestedStrategy: String,
     val effectiveStrategy: String,
+    val requestedSurface: String = "",
+    val matchedSurface: String = "",
+    val requestedMatchSemantics: String = "",
+    val matchedMatchSemantics: String = "",
+    val usedSurfaceFallback: Boolean = false,
     val usedContainsFallback: Boolean,
     val matchedNodeId: String,
     val matchedNodeClickable: Boolean,

@@ -32,8 +32,8 @@ object GhosthandApiPayloads {
         packageFilter: String?,
         clickableOnly: Boolean
     ): JSONObject {
-        return fieldsToJson(
-            screenFields(
+        return screenReadPayload(
+            accessibilityScreenRead(
                 snapshot = snapshot,
                 editableOnly = editableOnly,
                 scrollableOnly = scrollableOnly,
@@ -41,6 +41,10 @@ object GhosthandApiPayloads {
                 clickableOnly = clickableOnly
             )
         )
+    }
+
+    fun screenReadPayload(payload: ScreenReadPayload): JSONObject {
+        return fieldsToJson(screenReadFields(payload))
     }
 
     fun nodePayload(node: FlatAccessibilityNode): JSONObject {
@@ -114,6 +118,24 @@ object GhosthandApiPayloads {
         packageFilter: String?,
         clickableOnly: Boolean
     ): Map<String, Any?> {
+        return screenReadFields(
+            accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = editableOnly,
+                scrollableOnly = scrollableOnly,
+                packageFilter = packageFilter,
+                clickableOnly = clickableOnly
+            )
+        )
+    }
+
+    fun accessibilityScreenRead(
+        snapshot: AccessibilityTreeSnapshot,
+        editableOnly: Boolean,
+        scrollableOnly: Boolean,
+        packageFilter: String?,
+        clickableOnly: Boolean
+    ): ScreenReadPayload {
         val filteredNodes = snapshot.nodes
             .asSequence()
             .filter { !editableOnly || it.editable }
@@ -130,40 +152,81 @@ object GhosthandApiPayloads {
         val elements = readableNodes
             .asSequence()
             .map { node ->
-                linkedMapOf(
-                    "nodeId" to node.nodeId,
-                    "text" to (node.text ?: ""),
-                    "desc" to (node.contentDesc ?: ""),
-                    "id" to (node.resourceId ?: ""),
-                    "clickable" to node.clickable,
-                    "editable" to node.editable,
-                    "scrollable" to node.scrollable,
-                    "bounds" to "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]",
-                    "centerX" to node.centerX,
-                    "centerY" to node.centerY
+                ScreenReadElement(
+                    nodeId = node.nodeId,
+                    text = node.text ?: "",
+                    desc = node.contentDesc ?: "",
+                    id = node.resourceId ?: "",
+                    clickable = node.clickable,
+                    editable = node.editable,
+                    scrollable = node.scrollable,
+                    bounds = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]",
+                    centerX = node.centerX,
+                    centerY = node.centerY,
+                    source = ScreenReadMode.ACCESSIBILITY.wireValue
                 )
             }
             .toList()
 
-        return linkedMapOf(
-            "packageName" to snapshot.packageName,
-            "activity" to snapshot.activity,
-            "snapshotToken" to snapshot.snapshotToken,
-            "capturedAt" to snapshot.capturedAt,
-            "foregroundStableDuringCapture" to snapshot.foregroundStableDuringCapture,
-            "partialOutput" to partialOutput,
-            "candidateNodeCount" to filteredNodes.size,
-            "returnedElementCount" to elements.size,
-            "warnings" to combinedWarnings(
+        return ScreenReadPayload(
+            packageName = snapshot.packageName,
+            activity = snapshot.activity,
+            snapshotToken = snapshot.snapshotToken,
+            capturedAt = snapshot.capturedAt,
+            foregroundStableDuringCapture = snapshot.foregroundStableDuringCapture,
+            partialOutput = partialOutput,
+            candidateNodeCount = filteredNodes.size,
+            returnedElementCount = elements.size,
+            warnings = combinedWarnings(
                 freshnessWarnings = snapshot.freshnessWarnings,
                 geometryWarnings = warningsForInvalidBounds(omittedInvalidBoundsCount, "screen"),
                 readabilityWarnings = warningsForLowSignal(omittedLowSignalCount, "screen"),
                 partialWarnings = warningsForPartialOutput(partialOutput)
             ),
-            "omittedInvalidBoundsCount" to omittedInvalidBoundsCount,
-            "omittedLowSignalCount" to omittedLowSignalCount,
-            "omittedNodeCount" to omittedNodeCount,
-            "elements" to elements
+            omittedInvalidBoundsCount = omittedInvalidBoundsCount,
+            omittedLowSignalCount = omittedLowSignalCount,
+            omittedNodeCount = omittedNodeCount,
+            elements = elements,
+            source = ScreenReadMode.ACCESSIBILITY.wireValue,
+            accessibilityElementCount = elements.size,
+            ocrElementCount = 0,
+            usedOcrFallback = false
+        )
+    }
+
+    fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
+        return linkedMapOf(
+            "packageName" to payload.packageName,
+            "activity" to payload.activity,
+            "snapshotToken" to payload.snapshotToken,
+            "capturedAt" to payload.capturedAt,
+            "foregroundStableDuringCapture" to payload.foregroundStableDuringCapture,
+            "partialOutput" to payload.partialOutput,
+            "candidateNodeCount" to payload.candidateNodeCount,
+            "returnedElementCount" to payload.returnedElementCount,
+            "warnings" to payload.warnings,
+            "omittedInvalidBoundsCount" to payload.omittedInvalidBoundsCount,
+            "omittedLowSignalCount" to payload.omittedLowSignalCount,
+            "omittedNodeCount" to payload.omittedNodeCount,
+            "source" to payload.source,
+            "accessibilityElementCount" to payload.accessibilityElementCount,
+            "ocrElementCount" to payload.ocrElementCount,
+            "usedOcrFallback" to payload.usedOcrFallback,
+            "elements" to payload.elements.map { element ->
+                linkedMapOf(
+                    "nodeId" to element.nodeId,
+                    "text" to element.text,
+                    "desc" to element.desc,
+                    "id" to element.id,
+                    "clickable" to element.clickable,
+                    "editable" to element.editable,
+                    "scrollable" to element.scrollable,
+                    "bounds" to element.bounds,
+                    "centerX" to element.centerX,
+                    "centerY" to element.centerY,
+                    "source" to element.source
+                )
+            }
         )
     }
 
@@ -205,6 +268,12 @@ object GhosthandApiPayloads {
         result.missHint?.let { hint ->
             payload["searchedSurface"] = hint.searchedSurface
             payload["matchSemantics"] = hint.matchSemantics
+            payload["requestedSurface"] = hint.requestedSurface
+            payload["requestedMatchSemantics"] = hint.requestedMatchSemantics
+            payload["matchedSurface"] = hint.matchedSurface
+            payload["matchedMatchSemantics"] = hint.matchedMatchSemantics
+            payload["usedSurfaceFallback"] = hint.usedSurfaceFallback
+            payload["usedContainsFallback"] = hint.usedContainsFallback
             if (hint.suggestedAlternateSurfaces.isNotEmpty()) {
                 payload["suggestedAlternateSurfaces"] = hint.suggestedAlternateSurfaces
             }
@@ -236,6 +305,11 @@ object GhosthandApiPayloads {
         return linkedMapOf(
             "requestedStrategy" to resolution.requestedStrategy,
             "effectiveStrategy" to resolution.effectiveStrategy,
+            "requestedSurface" to resolution.requestedSurface,
+            "matchedSurface" to resolution.matchedSurface,
+            "requestedMatchSemantics" to resolution.requestedMatchSemantics,
+            "matchedMatchSemantics" to resolution.matchedMatchSemantics,
+            "usedSurfaceFallback" to resolution.usedSurfaceFallback,
             "usedContainsFallback" to resolution.usedContainsFallback,
             "matchedNodeId" to resolution.matchedNodeId,
             "matchedNodeClickable" to resolution.matchedNodeClickable,

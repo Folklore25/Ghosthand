@@ -77,6 +77,7 @@ class GhosthandApiPayloadsTest {
         assertEquals(10, button["centerX"])
         assertEquals(20, button["centerY"])
         assertEquals("[0,0][100,100]", button["bounds"])
+        assertEquals("accessibility", button["source"])
         assertEquals(true, payload["foregroundStableDuringCapture"])
     }
 
@@ -310,6 +311,12 @@ class GhosthandApiPayloadsTest {
                 missHint = FindMissHint(
                     searchedSurface = "text",
                     matchSemantics = "exact",
+                    requestedSurface = "text",
+                    requestedMatchSemantics = "exact",
+                    matchedSurface = "contentDesc",
+                    matchedMatchSemantics = "contains",
+                    usedSurfaceFallback = true,
+                    usedContainsFallback = true,
                     suggestedAlternateStrategies = listOf("textContains")
                 )
             )
@@ -318,6 +325,12 @@ class GhosthandApiPayloadsTest {
         assertEquals(0, payload["matchCount"])
         assertEquals("text", payload["searchedSurface"])
         assertEquals("exact", payload["matchSemantics"])
+        assertEquals("text", payload["requestedSurface"])
+        assertEquals("exact", payload["requestedMatchSemantics"])
+        assertEquals("contentDesc", payload["matchedSurface"])
+        assertEquals("contains", payload["matchedMatchSemantics"])
+        assertEquals(true, payload["usedSurfaceFallback"])
+        assertEquals(true, payload["usedContainsFallback"])
         assertEquals(listOf("textContains"), payload["suggestedAlternateStrategies"])
     }
 
@@ -327,6 +340,11 @@ class GhosthandApiPayloadsTest {
             ClickSelectorResolution(
                 requestedStrategy = "text",
                 effectiveStrategy = "textContains",
+                requestedSurface = "text",
+                matchedSurface = "text",
+                requestedMatchSemantics = "exact",
+                matchedMatchSemantics = "contains",
+                usedSurfaceFallback = false,
                 usedContainsFallback = true,
                 matchedNodeId = "p0.0.0@tsnap",
                 matchedNodeClickable = false,
@@ -338,12 +356,52 @@ class GhosthandApiPayloadsTest {
 
         assertEquals("text", resolution["requestedStrategy"])
         assertEquals("textContains", resolution["effectiveStrategy"])
+        assertEquals("text", resolution["requestedSurface"])
+        assertEquals("text", resolution["matchedSurface"])
+        assertEquals("exact", resolution["requestedMatchSemantics"])
+        assertEquals("contains", resolution["matchedMatchSemantics"])
+        assertEquals(false, resolution["usedSurfaceFallback"])
         assertEquals(true, resolution["usedContainsFallback"])
         assertEquals("p0.0.0@tsnap", resolution["matchedNodeId"])
         assertEquals(false, resolution["matchedNodeClickable"])
         assertEquals("p0.0@tsnap", resolution["resolvedNodeId"])
         assertEquals("clickable_ancestor", resolution["resolutionKind"])
         assertEquals(1, resolution["ancestorDepth"])
+    }
+
+    @Test
+    fun findPayloadIncludesMatchedSurfaceTruthForSuccessfulFallbackSearch() {
+        val match = node(
+            nodeId = "p0.1@tsnap",
+            text = "Settings",
+            clickable = true
+        )
+        val payload = GhosthandApiPayloads.findFields(
+            FindNodeResult(
+                found = true,
+                node = match,
+                matches = listOf(match),
+                selectedIndex = 0,
+                missHint = FindMissHint(
+                    searchedSurface = "contentDesc",
+                    matchSemantics = "exact",
+                    requestedSurface = "contentDesc",
+                    requestedMatchSemantics = "exact",
+                    matchedSurface = "text",
+                    matchedMatchSemantics = "exact",
+                    usedSurfaceFallback = true,
+                    usedContainsFallback = false
+                )
+            )
+        )
+
+        assertEquals(true, payload["found"])
+        assertEquals("contentDesc", payload["requestedSurface"])
+        assertEquals("text", payload["matchedSurface"])
+        assertEquals("exact", payload["matchedMatchSemantics"])
+        assertEquals(true, payload["usedSurfaceFallback"])
+        assertEquals(false, payload["usedContainsFallback"])
+        assertEquals("Settings", payload["text"])
     }
 
     @Test
