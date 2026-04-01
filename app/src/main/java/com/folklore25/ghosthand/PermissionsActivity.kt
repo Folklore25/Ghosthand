@@ -11,6 +11,7 @@ import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
@@ -123,9 +124,16 @@ class PermissionsActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_COMPONENT_NAME, serviceComponent)
         }
 
-        if (launchSettingsIntent(accessibilityDetailsIntent)) return
-        if (launchSettingsIntent(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))) return
+        val detailsResult = launchSettingsIntent("accessibility_details", accessibilityDetailsIntent)
+        if (detailsResult.launched) return
+        val genericResult = launchSettingsIntent("accessibility_settings", Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        if (genericResult.launched) return
 
+        val failureClass = genericResult.failureClass ?: detailsResult.failureClass ?: "Unavailable"
+        RuntimeStateStore.recordAccessibilitySettingsFailure(
+            preconditions = "detailsFailure=${detailsResult.failureClass ?: "none"} genericFailure=${genericResult.failureClass ?: "none"}",
+            failureClass = failureClass
+        )
         Toast.makeText(this, R.string.accessibility_settings_unavailable, Toast.LENGTH_SHORT).show()
     }
 
@@ -133,9 +141,22 @@ class PermissionsActivity : AppCompatActivity() {
         val state = RuntimeStateStore.snapshot()
         if (!state.foregroundServiceRunning) {
             RuntimeStateStore.markServiceStartRequested()
-            ContextCompat.startForegroundService(this, Intent(this, GhosthandForegroundService::class.java))
-            Toast.makeText(this, R.string.service_requested, Toast.LENGTH_SHORT).show()
-            window.decorView.postDelayed({ launchScreenshotConsent() }, FOREGROUND_SERVICE_WARMUP_MS)
+            try {
+                ContextCompat.startForegroundService(this, Intent(this, GhosthandForegroundService::class.java))
+                Toast.makeText(this, R.string.service_requested, Toast.LENGTH_SHORT).show()
+                window.decorView.postDelayed({ launchScreenshotConsent() }, FOREGROUND_SERVICE_WARMUP_MS)
+            } catch (error: Exception) {
+                RuntimeStateStore.recordRuntimeStartFailure(
+                    preconditions = "serviceRunning=${state.foregroundServiceRunning} source=screenshot_permission",
+                    error = error
+                )
+                Log.e(
+                    LOG_TAG,
+                    "event=start_runtime_failed source=screenshot_permission serviceRunning=${state.foregroundServiceRunning} failureClass=${error.javaClass.simpleName} fallback=skip_screenshot_consent",
+                    error
+                )
+                Toast.makeText(this, R.string.runtime_start_failed_toast, Toast.LENGTH_LONG).show()
+            }
             return
         }
         launchScreenshotConsent()
@@ -145,16 +166,25 @@ class PermissionsActivity : AppCompatActivity() {
         screenshotPermissionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
     }
 
-    private fun launchSettingsIntent(intent: Intent): Boolean {
+    private fun launchSettingsIntent(label: String, intent: Intent): SettingsLaunchResult {
         return try {
             if (intent.resolveActivity(packageManager) == null) {
-                false
+                Log.w(
+                    LOG_TAG,
+                    "event=settings_launch_unavailable action=$label failureClass=ResolveActivityMissing fallback=next_intent"
+                )
+                SettingsLaunchResult(false, "ResolveActivityMissing")
             } else {
                 startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                true
+                SettingsLaunchResult(true, null)
             }
-        } catch (_: Exception) {
-            false
+        } catch (error: Exception) {
+            Log.e(
+                LOG_TAG,
+                "event=settings_launch_failed action=$label failureClass=${error.javaClass.simpleName} fallback=next_intent",
+                error
+            )
+            SettingsLaunchResult(false, error.javaClass.simpleName)
         }
     }
 
@@ -184,6 +214,7 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val LOG_TAG = "GhostBootstrap"
         private const val ACTION_ACCESSIBILITY_DETAILS_SETTINGS =
             "android.settings.ACCESSIBILITY_DETAILS_SETTINGS"
         private const val FOREGROUND_SERVICE_WARMUP_MS = 400L
@@ -204,5 +235,10 @@ class PermissionsActivity : AppCompatActivity() {
         val effectiveView: TextView,
         val policySwitch: SwitchMaterial,
         val authorizeButton: Button
+    )
+
+    private data class SettingsLaunchResult(
+        val launched: Boolean,
+        val failureClass: String?
     )
 }

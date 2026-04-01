@@ -50,6 +50,7 @@
     <string name="accessibility_helper_status">status</string>
     <string name="accessibility_settings_unavailable">Accessibility settings are unavailable on this device.</string>
     <string name="service_requested">Foreground service start requested</string>
+    <string name="runtime_start_failed_toast">Unable to start the Ghosthand runtime on this device.</string>
     <string name="service_channel_name">Ghosthand Runtime</string>
     <string name="service_channel_description">Foreground runtime placeholder for Ghosthand</string>
     <string name="service_notification_title">Ghosthand runtime active</string>
@@ -72,6 +73,14 @@
     <string name="status_service_without_api">Foreground service is running without a local API listener.</string>
     <string name="status_api_stopped">Local API server is stopped.</string>
     <string name="status_api_failed">Local API server failed: %1$s</string>
+    <string name="status_runtime_start_failed">Runtime start failed. Ghosthand stayed open so you can recover.</string>
+    <string name="status_runtime_start_failed_action">Runtime start failed (%1$s).</string>
+    <string name="status_accessibility_settings_failed">Accessibility settings could not be opened. Ghosthand stayed open so you can recover.</string>
+    <string name="status_accessibility_settings_failed_action">Accessibility settings launch failed (%1$s).</string>
+    <string name="status_runtime_snapshot_failed">Runtime state refresh failed. Ghosthand stayed open with the last known state.</string>
+    <string name="status_runtime_snapshot_failed_action">Runtime refresh degraded (%1$s).</string>
+    <string name="status_service_bootstrap_failed">Runtime bootstrap failed. Ghosthand stayed open so you can retry or inspect diagnostics.</string>
+    <string name="status_service_bootstrap_failed_action">Runtime bootstrap failed (%1$s).</string>
     <string name="common_back">Back</string>
     <string name="common_info">More information</string>
     <string name="common_info_short">info</string>

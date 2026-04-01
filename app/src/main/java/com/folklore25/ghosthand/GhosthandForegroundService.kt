@@ -29,32 +29,52 @@ class GhosthandForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        GhosthandServiceRegistry.register(this)
-        createNotificationChannel()
-        RuntimeStateStore.refreshHomeDiagnostics(this)
-        RuntimeStateStore.refreshAccessibilityStatus(this)
-        RuntimeStateStore.markServiceCreated()
-        localApiServer.start()
-        Log.i(LOG_TAG, "Foreground service created")
+        try {
+            GhosthandServiceRegistry.register(this)
+            createNotificationChannel()
+            RuntimeStateStore.refreshHomeDiagnostics(this)
+            RuntimeStateStore.refreshAccessibilityStatus(this)
+            RuntimeStateStore.markServiceCreated()
+            localApiServer.start()
+            Log.i(LOG_TAG, "Foreground service created")
+        } catch (error: Exception) {
+            RuntimeStateStore.recordServiceBootstrapFailure(
+                stage = "service_onCreate",
+                preconditions = "serviceRegistered=${GhosthandServiceRegistry.getInstanceIfRunning() != null}",
+                error = error
+            )
+            Log.e(LOG_TAG, "Foreground service bootstrap failed in onCreate", error)
+            stopSelf()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC or
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+        return try {
+            val notification = buildNotification()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+            RuntimeStateStore.refreshHomeDiagnostics(this)
+            RuntimeStateStore.refreshAccessibilityStatus(this)
+            RuntimeStateStore.markServiceRunning()
+            Log.i(LOG_TAG, "Foreground service started")
+            START_STICKY
+        } catch (error: Exception) {
+            RuntimeStateStore.recordServiceBootstrapFailure(
+                stage = "service_onStartCommand",
+                preconditions = "sdk=${Build.VERSION.SDK_INT} startId=$startId",
+                error = error
             )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+            Log.e(LOG_TAG, "Foreground service failed to enter running state", error)
+            stopSelf()
+            START_NOT_STICKY
         }
-        RuntimeStateStore.refreshHomeDiagnostics(this)
-        RuntimeStateStore.refreshAccessibilityStatus(this)
-        RuntimeStateStore.markServiceRunning()
-        Log.i(LOG_TAG, "Foreground service started")
-        return START_STICKY
     }
 
     override fun onDestroy() {

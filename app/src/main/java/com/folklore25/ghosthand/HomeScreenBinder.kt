@@ -7,10 +7,12 @@
 package com.folklore25.ghosthand
 
 import android.content.Context
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 internal class HomeScreenBinder(
     private val context: Context,
@@ -124,11 +126,25 @@ internal class HomeScreenActions(
         }
         views.startRuntimeButton.setOnClickListener {
             runtimeViewModel.requestForegroundServiceStart()
-            androidx.core.content.ContextCompat.startForegroundService(
-                activity,
-                android.content.Intent(activity, GhosthandForegroundService::class.java)
-            )
-            android.widget.Toast.makeText(activity, R.string.service_requested, android.widget.Toast.LENGTH_SHORT).show()
+            try {
+                ContextCompat.startForegroundService(
+                    activity,
+                    android.content.Intent(activity, GhosthandForegroundService::class.java)
+                )
+                android.widget.Toast.makeText(activity, R.string.service_requested, android.widget.Toast.LENGTH_SHORT).show()
+            } catch (error: Exception) {
+                val state = RuntimeStateStore.snapshot()
+                RuntimeStateStore.recordRuntimeStartFailure(
+                    preconditions = "serviceRunning=${state.foregroundServiceRunning} source=home_button",
+                    error = error
+                )
+                Log.e(
+                    LOG_TAG,
+                    "event=start_runtime_failed source=home_button serviceRunning=${state.foregroundServiceRunning} failureClass=${error.javaClass.simpleName} fallback=runtime_remains_stopped",
+                    error
+                )
+                android.widget.Toast.makeText(activity, R.string.runtime_start_failed_toast, android.widget.Toast.LENGTH_LONG).show()
+            }
         }
         views.updateButton.setOnClickListener {
             UpdateDialogFragment.show(activity.supportFragmentManager)
@@ -139,6 +155,10 @@ internal class HomeScreenActions(
         views.openDiagnosticsButton.setOnClickListener {
             activity.startActivity(android.content.Intent(activity, DiagnosticsActivity::class.java))
         }
+    }
+
+    private companion object {
+        const val LOG_TAG = "GhostBootstrap"
     }
 }
 internal data class HomeCapabilityRowViews(

@@ -88,7 +88,7 @@ internal object HomeScreenUiStateFactory {
         return HomeScreenUiState(
             updateSummary = updateSummary(updateUiState, textLookup),
             runtimeSummary = RuntimeSummaryUiState(
-                statusText = runtimeState.statusText,
+                statusText = runtimeState.recoverableFailureStatus ?: runtimeState.statusText,
                 apiStatusText = UiStatusSupport.booleanText(
                     textLookup,
                     runtimeState.localApiServerRunning
@@ -139,10 +139,10 @@ internal object HomeScreenUiStateFactory {
             ),
             diagnosticsSummary = DiagnosticsSummaryUiState(
                 buildText = localizedValue(runtimeState.buildVersion, textLookup),
-                lastActionText = if (runtimeState.lastServiceAction.isBlank()) {
+                lastActionText = if ((runtimeState.recoverableFailureAction ?: runtimeState.lastServiceAction).isBlank()) {
                     textLookup.getString(R.string.last_service_action_default)
                 } else {
-                    runtimeState.lastServiceAction
+                    runtimeState.recoverableFailureAction ?: runtimeState.lastServiceAction
                 }
             )
         )
