@@ -2139,15 +2139,35 @@ internal fun buildPostActionState(
     val packageName = actionEffect?.finalPackageName ?: fallbackSnapshot?.packageName
     val activity = actionEffect?.finalActivity ?: fallbackSnapshot?.activity
     val snapshotToken = actionEffect?.afterSnapshotToken ?: fallbackSnapshot?.snapshotToken
+    val focusedEditablePresent = fallbackSnapshot?.nodes?.any { it.focused && it.editable }
+    val derivedScreenPayload = fallbackSnapshot?.let {
+        GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = it,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+    }
 
-    if (packageName == null && activity == null && snapshotToken == null) {
+    if (
+        packageName == null &&
+        activity == null &&
+        snapshotToken == null &&
+        focusedEditablePresent == null &&
+        derivedScreenPayload == null
+    ) {
         return null
     }
 
     return PostActionState(
         packageName = packageName,
         activity = activity,
-        snapshotToken = snapshotToken
+        snapshotToken = snapshotToken,
+        focusedEditablePresent = focusedEditablePresent,
+        renderMode = derivedScreenPayload?.renderMode(),
+        surfaceReadability = derivedScreenPayload?.surfaceReadability(),
+        visualAvailable = derivedScreenPayload?.visualAvailable
     )
 }
 

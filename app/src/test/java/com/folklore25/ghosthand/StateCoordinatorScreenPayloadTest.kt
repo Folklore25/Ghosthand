@@ -53,11 +53,15 @@ class StateCoordinatorScreenPayloadTest {
                 accessibilityElementCount = 1,
                 ocrElementCount = 1,
                 usedOcrFallback = true,
+                visualAvailable = true,
                 retryHint = null
             )
         )
 
         assertEquals(ScreenReadMode.HYBRID.wireValue, payload["source"])
+        assertEquals("hybrid", payload["renderMode"])
+        assertEquals("limited", payload["surfaceReadability"])
+        assertEquals(true, payload["visualAvailable"])
         assertEquals(1, payload["accessibilityElementCount"])
         assertEquals(1, payload["ocrElementCount"])
         assertEquals(true, payload["usedOcrFallback"])
@@ -104,6 +108,7 @@ class StateCoordinatorScreenPayloadTest {
                 accessibilityElementCount = 1,
                 ocrElementCount = 0,
                 usedOcrFallback = false,
+                visualAvailable = true,
                 retryHint = ScreenReadRetryHint(
                     source = ScreenReadMode.HYBRID.wireValue,
                     reason = "accessibility_operationally_insufficient"
@@ -112,6 +117,8 @@ class StateCoordinatorScreenPayloadTest {
         )
 
         val retryHint = payload["retryHint"] as Map<*, *>
+        assertEquals("limited_accessibility", payload["renderMode"])
+        assertEquals("limited", payload["surfaceReadability"])
         assertEquals(ScreenReadMode.HYBRID.wireValue, retryHint["source"])
         assertEquals("accessibility_operationally_insufficient", retryHint["reason"])
     }

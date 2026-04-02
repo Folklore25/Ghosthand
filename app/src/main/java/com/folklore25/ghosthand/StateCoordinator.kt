@@ -225,6 +225,8 @@ class StateCoordinator(
             scrollableOnly = scrollableOnly,
             packageFilter = packageFilter,
             clickableOnly = clickableOnly
+        ).copy(
+            visualAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow
         )
     }
 
@@ -254,7 +256,8 @@ class StateCoordinator(
             source = ScreenReadMode.OCR.wireValue,
             accessibilityElementCount = 0,
             ocrElementCount = ocrResult.elements.size,
-            usedOcrFallback = false
+            usedOcrFallback = false,
+            visualAvailable = true
         )
     }
 
@@ -268,6 +271,8 @@ class StateCoordinator(
             scrollableOnly = false,
             packageFilter = packageFilter,
             clickableOnly = false
+        ).copy(
+            visualAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow
         )
         if (!accessibilityPayload.accessibilityTreeIsOperationallyInsufficient()) {
             return accessibilityPayload
@@ -286,7 +291,8 @@ class StateCoordinator(
             elements = accessibilityPayload.elements + ocrPayload.elements,
             source = ScreenReadMode.HYBRID.wireValue,
             ocrElementCount = ocrPayload.ocrElementCount,
-            usedOcrFallback = true
+            usedOcrFallback = true,
+            visualAvailable = ocrPayload.visualAvailable ?: accessibilityPayload.visualAvailable
         )
     }
 

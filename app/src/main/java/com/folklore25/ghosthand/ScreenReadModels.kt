@@ -54,6 +54,7 @@ data class ScreenReadPayload(
     val accessibilityElementCount: Int,
     val ocrElementCount: Int,
     val usedOcrFallback: Boolean,
+    val visualAvailable: Boolean? = null,
     val retryHint: ScreenReadRetryHint? = null
 ) {
     fun accessibilityTreeIsOperationallyInsufficient(): Boolean {
@@ -72,6 +73,23 @@ data class ScreenReadPayload(
             omittedNodeCount.toDouble() / candidateNodeCount.toDouble()
         }
         return candidateNodeCount >= 20 && omittedNodeCount >= 20 && omittedRatio >= 0.40
+    }
+
+    fun renderMode(): String {
+        return when {
+            source == ScreenReadMode.HYBRID.wireValue -> "hybrid"
+            source == ScreenReadMode.OCR.wireValue -> "ocr"
+            retryHint != null -> "limited_accessibility"
+            else -> "accessibility"
+        }
+    }
+
+    fun surfaceReadability(): String {
+        return when {
+            retryHint?.source == ScreenReadMode.OCR.wireValue -> "poor"
+            retryHint != null || partialOutput -> "limited"
+            else -> "good"
+        }
     }
 }
 

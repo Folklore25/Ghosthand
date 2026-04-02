@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.22", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.23", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -208,6 +208,9 @@ class GhosthandCommandCatalogTest {
         assertTrue(screenRoute.params.any { it.name == "summaryOnly" })
         assertTrue(screenRoute.responseFields.contains("elements"))
         assertTrue(screenRoute.responseFields.contains("source"))
+        assertTrue(screenRoute.responseFields.contains("renderMode"))
+        assertTrue(screenRoute.responseFields.contains("surfaceReadability"))
+        assertTrue(screenRoute.responseFields.contains("visualAvailable"))
         assertTrue(screenRoute.responseFields.contains("accessibilityElementCount"))
         assertTrue(screenRoute.responseFields.contains("ocrElementCount"))
         assertTrue(screenRoute.responseFields.contains("usedOcrFallback"))
@@ -238,6 +241,8 @@ class GhosthandCommandCatalogTest {
         assertTrue(screenRoute.description.contains("source=accessibility"))
         assertTrue(screenRoute.description.contains("summaryOnly=true"))
         assertTrue(screenRoute.description.contains("hybrid"))
+        assertTrue(screenRoute.description.contains("render mode"))
+        assertTrue(screenRoute.description.contains("surface readability"))
         assertTrue(screenRoute.description.contains("retry hint"))
         assertTrue(screenRoute.description.contains("modal transitions"))
 

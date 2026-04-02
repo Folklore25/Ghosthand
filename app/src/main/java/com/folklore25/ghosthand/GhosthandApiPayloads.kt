@@ -53,7 +53,11 @@ data class GhosthandDisclosure(
 data class PostActionState(
     val packageName: String? = null,
     val activity: String? = null,
-    val snapshotToken: String? = null
+    val snapshotToken: String? = null,
+    val focusedEditablePresent: Boolean? = null,
+    val renderMode: String? = null,
+    val surfaceReadability: String? = null,
+    val visualAvailable: Boolean? = null
 )
 
 object GhosthandApiPayloads {
@@ -289,6 +293,9 @@ object GhosthandApiPayloads {
             "invalidBoundsPresent" to payload.invalidBoundsPresent,
             "lowSignalPresent" to payload.lowSignalPresent,
             "source" to payload.source,
+            "renderMode" to payload.renderMode(),
+            "surfaceReadability" to payload.surfaceReadability(),
+            "visualAvailable" to payload.visualAvailable,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback,
@@ -332,6 +339,9 @@ object GhosthandApiPayloads {
             "warnings" to payload.warnings,
             "omittedSummary" to payload.omittedSummary,
             "source" to payload.source,
+            "renderMode" to payload.renderMode(),
+            "surfaceReadability" to payload.surfaceReadability(),
+            "visualAvailable" to payload.visualAvailable,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback,
@@ -454,6 +464,10 @@ object GhosthandApiPayloads {
             state.packageName?.let { put("packageName", it) }
             state.activity?.let { put("activity", it) }
             state.snapshotToken?.let { put("snapshotToken", it) }
+            state.focusedEditablePresent?.let { put("focusedEditablePresent", it) }
+            state.renderMode?.let { put("renderMode", it) }
+            state.surfaceReadability?.let { put("surfaceReadability", it) }
+            state.visualAvailable?.let { put("visualAvailable", it) }
         }
     }
 

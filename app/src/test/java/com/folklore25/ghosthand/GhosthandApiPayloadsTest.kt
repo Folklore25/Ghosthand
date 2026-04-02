@@ -142,13 +142,19 @@ class GhosthandApiPayloadsTest {
             PostActionState(
                 packageName = "com.example.target",
                 activity = "TargetActivity",
-                snapshotToken = "snap-after"
+                snapshotToken = "snap-after",
+                renderMode = "accessibility",
+                surfaceReadability = "good",
+                visualAvailable = true
             )
         )
 
         assertEquals("com.example.target", fields["packageName"])
         assertEquals("TargetActivity", fields["activity"])
         assertEquals("snap-after", fields["snapshotToken"])
+        assertEquals("accessibility", fields["renderMode"])
+        assertEquals("good", fields["surfaceReadability"])
+        assertEquals(true, fields["visualAvailable"])
     }
 
     @Test
@@ -312,7 +318,34 @@ class GhosthandApiPayloadsTest {
         assertEquals(3, summary["candidateNodeCount"])
         assertEquals(2, summary["returnedElementCount"])
         assertEquals(true, summary["focusedEditablePresent"])
+        assertEquals("accessibility", summary["renderMode"])
+        assertEquals("limited", summary["surfaceReadability"])
+        assertEquals(null, summary["visualAvailable"])
         assertFalse(summary.containsKey("elements"))
+    }
+
+    @Test
+    fun screenPayloadIncludesRenderModeReadabilityAndVisualAvailability() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", text = "Visible", clickable = true, centerX = 10, centerY = 20)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenReadFields(
+            GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = false,
+                scrollableOnly = false,
+                packageFilter = null,
+                clickableOnly = false
+            ).copy(visualAvailable = true)
+        )
+
+        assertEquals("limited_accessibility", payload["renderMode"])
+        assertEquals("limited", payload["surfaceReadability"])
+        assertEquals(true, payload["visualAvailable"])
     }
 
     @Test
