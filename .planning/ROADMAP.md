@@ -176,7 +176,7 @@ Plans:
 - [x] 17-02: Planning/state truth update and narrow next-direction definition
 
 ### Phase 18: Launch Handoff Audit 01
-**Goal**: Determine truthfully whether Ghosthand currently has a clean app launch/open primitive, whether it exists only partially or weakly exposed, or whether it is genuinely absent.
+**Goal**: Determine truthfully whether Ghosthand currently has a clean app launch/open primitive, whether it exists only partially or weakly exposed, or whether it is genuinely absent. Current repo truth: non-root `/launch` is intentionally removed from the 1.x product surface and future launch work is deferred to a root-backed 2.0 line.
 **Depends on**: Phase 17
 **Success Criteria** (what must be TRUE):
   1. [LHA-01] The live runtime/API/catalog/docs are audited for launch/open-related capability rather than relying on historical assumptions.

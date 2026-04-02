@@ -453,6 +453,39 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun findPayloadForNonZeroIndexKeepsSelectedMatchGeometry() {
+        val secondMatch = node(
+            nodeId = "p0.1@tsnap",
+            text = "Row",
+            centerX = 25,
+            centerY = 35,
+            bounds = NodeBounds(10, 20, 40, 50)
+        )
+        val payload = GhosthandApiPayloads.findFields(
+            FindNodeResult(
+                found = true,
+                node = secondMatch,
+                matches = listOf(
+                    node(
+                        nodeId = "p0.0@tsnap",
+                        text = "Row",
+                        centerX = 0,
+                        centerY = 0,
+                        bounds = NodeBounds(0, 0, 0, 0)
+                    ),
+                    secondMatch
+                ),
+                selectedIndex = 1
+            )
+        )
+
+        assertEquals(1, payload["index"])
+        assertEquals("[10,20][40,50]", payload["bounds"])
+        assertEquals(25, payload["centerX"])
+        assertEquals(35, payload["centerY"])
+    }
+
+    @Test
     fun findPayloadUsesNullNodeWhenNoMatchExists() {
         val payload = GhosthandApiPayloads.findFields(
             FindNodeResult(

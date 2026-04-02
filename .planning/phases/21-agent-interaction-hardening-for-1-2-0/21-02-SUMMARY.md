@@ -28,7 +28,7 @@ patterns-established:
   - "Action routes can expose dispatch-plus-observation truth through ActionEffectObservation."
   - "Selector-driven misses should preserve compact machine-readable evidence alongside disclosure prose."
 requirements-completed: [AIH-02, AIH-03, AIH-07, AIH-08]
-duration: 9min
+duration: 14min
 completed: 2026-04-02
 ---
 
@@ -38,9 +38,9 @@ completed: 2026-04-02
 
 ## Performance
 
-- **Duration:** 9 min
+- **Duration:** 14 min
 - **Started:** 2026-04-02T01:39:40Z
-- **Completed:** 2026-04-02T01:48:47Z
+- **Completed:** 2026-04-02T01:53:21Z
 - **Tasks:** 2
 - **Files modified:** 12
 
@@ -55,6 +55,7 @@ Each task was committed atomically:
 
 1. **Task 1: Add bounded effect feedback to `/back`, `/home`, and `/click`** - `b2237e0` (feat)
 2. **Task 2: Harden normal selector-failure reasons without adding a debug mode** - `31eb80c` (feat)
+3. **Follow-up contract alignment** - `f781d48` (fix)
 
 ## Files Created/Modified
 - `app/src/main/java/com/folklore25/ghosthand/GhostAccessibilityExecutionCore.kt` - Added shared `ActionEffectObservation` to carry bounded observed-effect truth.
@@ -76,7 +77,18 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] Aligned published action-feedback metadata with the implemented contract**
+- **Found during:** Closeout verification
+- **Issue:** The command catalog and API docs still under-described the new `/back` and `/home` effect fields, and click failure detail construction was duplicated inline instead of reusing the bounded helper.
+- **Fix:** Added shared click failure field shaping, updated `/back` and `/home` published response fields/docs, and covered the published contract in unit tests.
+- **Files modified:** `app/src/main/java/com/folklore25/ghosthand/GhosthandApiPayloads.kt`, `app/src/main/java/com/folklore25/ghosthand/GhosthandCommandCatalog.kt`, `app/src/main/java/com/folklore25/ghosthand/LocalApiServer.kt`, `app/src/test/java/com/folklore25/ghosthand/GhosthandApiPayloadsTest.kt`, `app/src/test/java/com/folklore25/ghosthand/GhosthandCommandCatalogTest.kt`, `docs/API.md`
+- **Verification:** `./gradlew :app:testDebugUnitTest --tests com.folklore25.ghosthand.GhosthandApiPayloadsTest --tests com.folklore25.ghosthand.LocalApiServerDisclosureTest --tests com.folklore25.ghosthand.GhosthandCommandCatalogTest --tests com.folklore25.ghosthand.AccessibilityNodeFinderTest :app:assembleDebug`
+- **Committed in:** `f781d48`
+
+**Total deviations:** 1 auto-fixed (1 bug)
+**Impact on plan:** The follow-up fix kept the published contract honest with the shipped runtime behavior. No scope creep.
 
 ## Issues Encountered
 

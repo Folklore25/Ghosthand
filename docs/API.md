@@ -166,7 +166,6 @@ Workflow-level implications:
 * `DEVICE_STATE_UNAVAILABLE`
 * `SCREENSHOT_UNAVAILABLE`
 * `SCREENSHOT_FAILED`
-* `APP_LAUNCH_FAILED`
 * `APP_STOP_FAILED`
 * `NODE_NOT_FOUND`
 * `NODE_NOT_EDITABLE`
@@ -326,7 +325,6 @@ Ghosthand should expose this evidence truthfully without broad debug-mode expans
 
 ### Gestures / System
 
-* `POST /launch`
 * `POST /scroll`
 * `POST /longpress`
 * `POST /gesture`
@@ -1793,60 +1791,6 @@ Dispatch an arbitrary multi-stroke gesture.
 
 ---
 
-## 7.25 `POST /launch`
-
-### Purpose
-
-Launch an installed app by package name through the standard Android package launch intent path.
-
-### Request Body
-
-```json
-{
-  "packageName": "com.android.settings"
-}
-```
-
-### Success Response
-
-```json
-{
-  "ok": true,
-  "data": {
-    "launched": true,
-    "packageName": "com.android.settings",
-    "label": "Settings",
-    "strategy": "package_launch_intent",
-    "reason": "launched"
-  }
-}
-```
-
-### Failure Cases
-
-- HTTP `404` + `PACKAGE_NOT_FOUND`
-  - the package is not installed
-- HTTP `422` + `NO_LAUNCH_INTENT`
-  - the package is installed but does not expose a standard launch intent
-- HTTP `503` + `LAUNCH_FAILED`
-  - Ghosthand found a launch intent but the launch attempt failed
-
-Failure responses include `error.details` with:
-
-- `launched`
-- `packageName`
-- `label`
-- `strategy`
-- `reason`
-- `error` when a launch attempt throws
-
-### Notes
-
-- This route is intentionally narrow: package-name launch only.
-- Ghosthand first tries the standard package launch intent path and may fall back to a bounded launcher-activity query when OEM or package-manager behavior makes the primary helper unreliable.
-- It does not accept component names, deep links, extras, or a generic intent DSL.
-- It does not fake success when a package is missing or has no launcher intent.
-
 ## 7.26 `POST /back`
 
 Perform `GLOBAL_ACTION_BACK`. No request body required.
@@ -1859,6 +1803,11 @@ Successful responses also expose bounded observed-effect fields:
 * `afterSnapshotToken`
 * `finalPackageName`
 * `finalActivity`
+
+## Launch De-scope Note
+
+Non-root `/launch` is intentionally removed from the supported Ghosthand 1.x runtime surface because it is not reliable enough to remain a truthful capability.
+Future app launch work is deferred to a root-backed 2.0 feature line rather than kept as a misleading best-effort primitive in 1.x.
 
 ## 7.27 `POST /home`
 

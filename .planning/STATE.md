@@ -17,7 +17,7 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 21 planning for Ghosthand 1.2.0** — the next bounded delivery hardens agent interaction through input/action/result/launch usability fixes rather than a platform rewrite.
+Current focus: **1.x product-truth cleanup** — non-root `/launch` is intentionally removed from the supported 1.x capability surface and deferred to a future root-backed 2.0 line.
 
 ## Current Position
 
@@ -26,7 +26,7 @@ Plan: 2 of 5
 
 - **Phase:** 21
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
-- **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`, `/launch`
+- **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
 - **Status:** Ready to execute
 
 ## Progress
@@ -51,7 +51,7 @@ Plan: 2 of 5
 - Phase 18: **PLANNED** — launch/open handoff will be audited against the live runtime/catalog/docs before any new primitive is proposed
 - Phase 19: **DONE IN CODE** — home-surface copy and affordance polish refined the accepted 1.0 UI without reopening architecture or permission logic
 - Phase 20: **PLANNED FOR V1.1.0** — close the visible-but-unreachable gap through multi-surface selector reachability, explicit OCR fallback, and explicit `/wait` outcome separation
-- Phase 21: **PLANNED FOR V1.2.0** — harden interaction semantics and route-level truth for input, action feedback, selector failures, partial-output interpretation, and launch reliability
+- Phase 21: **PLANNED FOR V1.2.0** — harden interaction semantics and route-level truth for input, action feedback, selector failures, and partial-output interpretation without preserving non-root launch as a 1.x primitive
 - Phase 22: **DONE IN CODE** — `/find` miss responses now expose searched selector surface, exact-vs-contains semantics, and bounded next-step hints for zero-context exact misses
 
 Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-quality 1.0 surface with `/find` discoverability now tightened further through bounded exact-miss hinting.
@@ -73,6 +73,7 @@ Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical 
 | Device-shell orchestration is the trustworthy acceptance method | Host-side timing introduced false negatives during route verification |
 | Phase 09 is frozen unless a real regression appears | Phase 10 should harden scenarios and agent usability, not reopen accepted runtime work |
 | Start Phase 10 scenarios on low-variance system surfaces | Settings and launcher flows are repeatable and reduce false negatives during scenario hardening |
+| Non-root `/launch` is removed from the 1.x runtime surface | It is not reliable enough to remain a truthful supported primitive; future app launch work is deferred to a root-backed 2.0 line, likely around libsu |
 | OpenClaw validation is manual and user-driven | Codex should prepare the build, contract, and prompt, but not try to discover or invoke OpenClaw itself |
 | OpenClaw screenshot confirmation outranks the earlier Stage 3 runner mismatch for Scenario 02 | The operator path confirmed Ghosthand screenshots were genuinely different across Settings and Home |
 | Scenario 03 should be recorded as a core-chain acceptance, not a full launcher-to-Settings replay | The clipboard-input behavior was re-proved; the starting Settings surface was inherited from prior accepted validation |

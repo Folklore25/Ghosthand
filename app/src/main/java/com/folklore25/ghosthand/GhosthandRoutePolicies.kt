@@ -34,7 +34,6 @@ object GhosthandRoutePolicies {
         "/scroll" to RoutePolicy(setOf("POST"), "Only POST is supported for /scroll."),
         "/longpress" to RoutePolicy(setOf("POST"), "Only POST is supported for /longpress."),
         "/gesture" to RoutePolicy(setOf("POST"), "Only POST is supported for /gesture."),
-        "/launch" to RoutePolicy(setOf("POST"), "Only POST is supported for /launch."),
         "/back" to RoutePolicy(setOf("POST"), "Only POST is supported for /back."),
         "/home" to RoutePolicy(setOf("POST"), "Only POST is supported for /home."),
         "/recents" to RoutePolicy(setOf("POST"), "Only POST is supported for /recents."),

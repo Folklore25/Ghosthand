@@ -28,7 +28,6 @@ class StateCoordinator(
     private val accessibilityTyper = AccessibilityTyper()
     private val accessibilityScroller = AccessibilityScroller()
     private val capabilityPolicyStore = CapabilityPolicyStore.getInstance(appContext)
-    private val appLaunchProvider = AppLaunchProvider(appContext)
     private val clipboardProvider = ClipboardProvider(appContext)
     private val mediaProjectionProvider = MediaProjectionProvider(appContext)
     private val notificationDispatcher = NotificationDispatcher(appContext)
@@ -667,10 +666,6 @@ class StateCoordinator(
 
     fun postNotification(title: String, text: String): NotificationPostResult {
         return notificationDispatcher.postNotification(title, text)
-    }
-
-    internal fun launchApp(packageName: String): AppLaunchResult {
-        return appLaunchProvider.launch(packageName)
     }
 
     fun cancelNotification(notificationId: Int): NotificationCancelResult {
