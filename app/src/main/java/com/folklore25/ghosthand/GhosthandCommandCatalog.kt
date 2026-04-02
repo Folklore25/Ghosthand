@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.19"
+    const val schemaVersion = "1.20"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -94,8 +94,8 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/screen",
-            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "elements", "disclosure"),
+            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. When a default accessibility read is empty or operationally insufficient, Ghosthand may include a bounded retry hint toward explicit `ocr` or `hybrid` without switching sources automatically. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "suggestedFallback", "suggestedSource", "fallbackReason", "retryHint", "elements", "disclosure"),
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
             referenceStability = "snapshot_ephemeral",
@@ -172,7 +172,7 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/click",
-            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, returns bounded failure categories plus selector/actionability evidence on selector misses, and may include compact disclosure when selector/actionability assumptions are easy to misread",
+            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, returns bounded failure categories plus selector/actionability evidence on selector misses, and may classify a stale nodeId reference separately from an ordinary miss when the saved snapshot expired. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry or selector re-resolution is often more truthful than treating an immediate miss as terminal.",
             responseFields = listOf("performed", "stateChanged", "backendUsed", "attemptedPath", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "resolution", "failureCategory", "selectorMatchCount", "actionableMatchCount", "disclosure"),
             transportContract = "prompt_completion",
             operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector"),
@@ -432,7 +432,7 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "GET",
             path = "/wait",
-            description = "Wait for UI change; changed is kept for compatibility, while conditionMet, stateChanged, and timedOut separate wait outcome truth from the final observed settled state",
+            description = "Wait for UI change; changed is kept for compatibility, while conditionMet, stateChanged, and timedOut separate wait outcome truth from the final observed settled state. This is the preferred short retry-oriented settle path when modal transitions briefly reduce accessibility availability.",
             responseFields = listOf("changed", "conditionMet", "stateChanged", "timedOut", "elapsedMs", "snapshotToken", "packageName", "activity", "disclosure"),
             stateTruth = "final_settled_state",
             changeSignal = "transition_observed_during_window",
@@ -448,7 +448,7 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "POST",
             path = "/wait",
-            description = "Wait for a matching tree condition using the same selector aliases and strategies as `/find`; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change",
+            description = "Wait for a matching tree condition using the same selector aliases and strategies as `/find`; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change. During modal transitions, a short retry-oriented wait is often the right response when accessibility briefly drops before the surface settles.",
             responseFields = listOf("satisfied", "conditionMet", "stateChanged", "timedOut", "elapsedMs", "node", "reason", "disclosure"),
             params = listOf(
                 GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition; use text/desc/id aliases or explicit strategy+query"),

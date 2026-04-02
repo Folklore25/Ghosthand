@@ -282,6 +282,9 @@ object GhosthandApiPayloads {
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback,
+            "suggestedFallback" to payload.retryHint?.source,
+            "suggestedSource" to payload.retryHint?.source,
+            "fallbackReason" to payload.retryHint?.reason,
             "retryHint" to payload.retryHint?.let { hint ->
                 linkedMapOf(
                     "source" to hint.source,

@@ -57,7 +57,21 @@ data class ScreenReadPayload(
     val retryHint: ScreenReadRetryHint? = null
 ) {
     fun accessibilityTreeIsOperationallyInsufficient(): Boolean {
-        return returnedElementCount == 0 || (partialOutput && returnedElementCount <= 1)
+        if (returnedElementCount == 0) {
+            return true
+        }
+        if (!partialOutput) {
+            return false
+        }
+        if (returnedElementCount <= 1) {
+            return true
+        }
+        val omittedRatio = if (candidateNodeCount <= 0) {
+            0.0
+        } else {
+            omittedNodeCount.toDouble() / candidateNodeCount.toDouble()
+        }
+        return candidateNodeCount >= 20 && omittedNodeCount >= 20 && omittedRatio >= 0.40
     }
 }
 

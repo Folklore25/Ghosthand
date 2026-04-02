@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.19", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.20", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -95,6 +95,8 @@ class GhosthandCommandCatalogTest {
         assertTrue(clickRoute.description.contains("actionable clickable target by default"))
         assertTrue(clickRoute.description.contains("requested-vs-matched selector truth"))
         assertTrue(clickRoute.description.contains("failure categories"))
+        assertTrue(clickRoute.description.contains("stale nodeId reference"))
+        assertTrue(clickRoute.description.contains("modal transitions"))
         assertTrue(clickRoute.description.contains("contentDesc"))
         assertNotNull(clickRoute.exampleRequest)
         assertNotNull(clickRoute.exampleResponse)
@@ -140,6 +142,8 @@ class GhosthandCommandCatalogTest {
         assertTrue(waitConditionRoute.responseFields.contains("reason"))
         assertTrue(waitConditionRoute.responseFields.contains("disclosure"))
         assertTrue(waitConditionRoute.params.first { it.name == "condition" }.description.contains("text/desc/id aliases"))
+        assertTrue(waitConditionRoute.description.contains("modal transitions"))
+        assertTrue(waitConditionRoute.description.contains("retry-oriented wait"))
 
         val waitUiRoute = GhosthandCommandCatalog.commands.first { it.id == "wait_ui_change" }
         assertTrue(waitUiRoute.description.contains("conditionMet"))
@@ -151,6 +155,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(waitUiRoute.responseFields.contains("disclosure"))
         assertEquals("final_settled_state", waitUiRoute.stateTruth)
         assertEquals("transition_observed_during_window", waitUiRoute.changeSignal)
+        assertTrue(waitUiRoute.description.contains("retry-oriented settle path"))
 
         val backRoute = GhosthandCommandCatalog.commands.first { it.id == "back" }
         assertTrue(backRoute.responseFields.contains("stateChanged"))
@@ -179,6 +184,10 @@ class GhosthandCommandCatalogTest {
         assertTrue(screenRoute.responseFields.contains("accessibilityElementCount"))
         assertTrue(screenRoute.responseFields.contains("ocrElementCount"))
         assertTrue(screenRoute.responseFields.contains("usedOcrFallback"))
+        assertTrue(screenRoute.responseFields.contains("suggestedFallback"))
+        assertTrue(screenRoute.responseFields.contains("suggestedSource"))
+        assertTrue(screenRoute.responseFields.contains("fallbackReason"))
+        assertTrue(screenRoute.responseFields.contains("retryHint"))
         assertTrue(screenRoute.responseFields.contains("foregroundStableDuringCapture"))
         assertTrue(screenRoute.responseFields.contains("partialOutput"))
         assertTrue(screenRoute.responseFields.contains("candidateNodeCount"))
@@ -200,6 +209,8 @@ class GhosthandCommandCatalogTest {
         assertEquals("selector_reresolution", screenRoute.recommendedInteractionModel)
         assertTrue(screenRoute.description.contains("source=accessibility"))
         assertTrue(screenRoute.description.contains("hybrid"))
+        assertTrue(screenRoute.description.contains("retry hint"))
+        assertTrue(screenRoute.description.contains("modal transitions"))
 
         val foregroundRoute = GhosthandCommandCatalog.commands.first { it.id == "foreground" }
         assertEquals("observer_context", foregroundRoute.stateTruth)
