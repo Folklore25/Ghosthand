@@ -382,6 +382,79 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun screenPayloadOmitsRetryHintForOrdinaryPartialOutput() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap", text = "Root"),
+                node("p0.0@tsnap", text = "Visible label", clickable = true, centerX = 10, centerY = 20),
+                node("p0.1@tsnap", clickable = false, centerX = 30, centerY = 40)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenFields(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+
+        assertEquals(true, payload["partialOutput"])
+        assertEquals(2, payload["returnedElementCount"])
+        assertNull(payload["retryHint"])
+    }
+
+    @Test
+    fun screenPayloadAddsHybridRetryHintWhenAccessibilityIsOperationallyInsufficient() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", text = "Only visible node", clickable = true, centerX = 10, centerY = 20),
+                node("p0.1@tsnap", clickable = false, centerX = 30, centerY = 40),
+                node("p0.2@tsnap", clickable = false, centerX = 50, centerY = 60)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenFields(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+
+        val retryHint = payload["retryHint"] as Map<*, *>
+        assertEquals(true, payload["partialOutput"])
+        assertEquals(1, payload["returnedElementCount"])
+        assertEquals(ScreenReadMode.HYBRID.wireValue, retryHint["source"])
+        assertEquals("accessibility_operationally_insufficient", retryHint["reason"])
+    }
+
+    @Test
+    fun screenPayloadAddsOcrRetryHintWhenAccessibilityOutputIsEmpty() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", clickable = false, centerX = 30, centerY = 40)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenFields(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+
+        val retryHint = payload["retryHint"] as Map<*, *>
+        assertEquals(true, payload["partialOutput"])
+        assertEquals(0, payload["returnedElementCount"])
+        assertEquals(ScreenReadMode.OCR.wireValue, retryHint["source"])
+        assertEquals("accessibility_empty", retryHint["reason"])
+    }
+
+    @Test
     fun treePayloadFlagsLowSignalNodesWithoutPretendingTheyAreUseful() {
         val snapshot = snapshot(
             nodes = listOf(
