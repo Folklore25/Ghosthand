@@ -238,6 +238,16 @@ object GhosthandApiPayloads {
             omittedInvalidBoundsCount = omittedInvalidBoundsCount,
             omittedLowSignalCount = omittedLowSignalCount,
             omittedNodeCount = omittedNodeCount,
+            omittedCategories = buildOmittedCategories(
+                omittedInvalidBoundsCount = omittedInvalidBoundsCount,
+                omittedLowSignalCount = omittedLowSignalCount
+            ),
+            omittedSummary = buildOmittedSummary(
+                omittedInvalidBoundsCount = omittedInvalidBoundsCount,
+                omittedLowSignalCount = omittedLowSignalCount
+            ),
+            invalidBoundsPresent = omittedInvalidBoundsCount > 0,
+            lowSignalPresent = omittedLowSignalCount > 0,
             elements = elements,
             source = ScreenReadMode.ACCESSIBILITY.wireValue,
             accessibilityElementCount = elements.size,
@@ -260,6 +270,10 @@ object GhosthandApiPayloads {
             "omittedInvalidBoundsCount" to payload.omittedInvalidBoundsCount,
             "omittedLowSignalCount" to payload.omittedLowSignalCount,
             "omittedNodeCount" to payload.omittedNodeCount,
+            "omittedCategories" to payload.omittedCategories,
+            "omittedSummary" to payload.omittedSummary,
+            "invalidBoundsPresent" to payload.invalidBoundsPresent,
+            "lowSignalPresent" to payload.lowSignalPresent,
             "source" to payload.source,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
@@ -599,6 +613,27 @@ object GhosthandApiPayloads {
 
     private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
         return if (partialOutput) listOf("partial_output") else emptyList()
+    }
+
+    private fun buildOmittedCategories(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): List<String> {
+        return buildList {
+            if (omittedInvalidBoundsCount > 0) add("invalid_bounds")
+            if (omittedLowSignalCount > 0) add("low_signal")
+        }
+    }
+
+    private fun buildOmittedSummary(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): String? {
+        val parts = buildList {
+            if (omittedInvalidBoundsCount > 0) add("$omittedInvalidBoundsCount invalid-bounds")
+            if (omittedLowSignalCount > 0) add("$omittedLowSignalCount low-signal")
+        }
+        return if (parts.isEmpty()) null else "Omitted ${parts.joinToString(" and ")} nodes."
     }
 }
 

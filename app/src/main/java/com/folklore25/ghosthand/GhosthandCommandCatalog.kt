@@ -95,7 +95,7 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/screen",
             description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "elements", "disclosure"),
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "elements", "disclosure"),
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
             referenceStability = "snapshot_ephemeral",

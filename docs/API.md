@@ -1293,6 +1293,10 @@ Return the current visible-surface read with explicit source provenance. Accessi
     "omittedInvalidBoundsCount": 0,
     "omittedLowSignalCount": 0,
     "omittedNodeCount": 0,
+    "omittedCategories": [],
+    "omittedSummary": null,
+    "invalidBoundsPresent": false,
+    "lowSignalPresent": false,
     "source": "accessibility",
     "accessibilityElementCount": 1,
     "ocrElementCount": 0,
@@ -1352,6 +1356,7 @@ Return the current visible-surface read with explicit source provenance. Accessi
 - This keeps `/screen` readable on complex surfaces by foregrounding visible/actionable signal instead of deep container noise.
 - `partialOutput = true` means `/screen` is a reduced actionable subset, not an exhaustive structured surface dump.
 - `candidateNodeCount`, `returnedElementCount`, and `omittedNodeCount` make that reduction explicit so operators do not misread omission as absence.
+- `omittedCategories`, `omittedSummary`, `invalidBoundsPresent`, and `lowSignalPresent` provide a compact explanation of what class of information was omitted without dumping the omitted nodes themselves.
 - `source`, `accessibilityElementCount`, `ocrElementCount`, and `usedOcrFallback` make OCR provenance explicit instead of silently merging OCR and accessibility into one indistinguishable truth surface.
 - `editable`, `scrollable`, and `clickable` filters only apply to `source=accessibility`. OCR-derived output does not claim those accessibility semantics.
 
