@@ -1123,7 +1123,8 @@ class LocalApiServer(
         val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
 
         val nodeId = body.optString("nodeId").trim()
-        val initialClickResult = if (nodeId.isNotEmpty()) {
+        val nodeIdProvided = nodeId.isNotEmpty()
+        val initialClickResult = if (nodeIdProvided) {
             stateCoordinator.clickNode(nodeId)
         } else {
             val selector = parseSelector(body)
@@ -1158,8 +1159,8 @@ class LocalApiServer(
             "event=click_request nodeId=$nodeId clickPath=${clickResult.attemptedPath} success=${clickResult.performed} failure=${clickResult.failureReason?.name ?: "none"} resolutionKind=${clickResult.selectorResolution?.resolutionKind ?: "none"} requestedStrategy=${clickResult.selectorResolution?.requestedStrategy ?: "none"} effectiveStrategy=${clickResult.selectorResolution?.effectiveStrategy ?: "none"}"
         )
 
-        val selectorStrategy = if (nodeId.isEmpty()) parseSelector(body)?.strategy else null
-        val clickableOnly = if (nodeId.isEmpty()) clickSelectorRequiresClickableTarget(body) else false
+        val selectorStrategy = if (!nodeIdProvided) parseSelector(body)?.strategy else null
+        val clickableOnly = if (!nodeIdProvided) clickSelectorRequiresClickableTarget(body) else false
 
         return when {
             clickResult.performed -> buildJsonResponse(
@@ -1187,10 +1188,19 @@ class LocalApiServer(
             clickResult.failureReason == ClickFailureReason.NODE_NOT_FOUND -> buildJsonResponse(
                 statusCode = 422,
                 body = errorEnvelope(
-                    code = "NODE_NOT_FOUND",
-                    message = "Click target node was not found.",
+                    code = clickFailureErrorCode(
+                        result = clickResult,
+                        nodeIdProvided = nodeIdProvided
+                    ),
+                    message = clickFailureMessage(
+                        result = clickResult,
+                        nodeIdProvided = nodeIdProvided
+                    ),
                     details = buildClickFailureDetails(clickResult, clickableOnly),
-                    disclosure = buildClickDisclosure(
+                    disclosure = buildStaleNodeReferenceDisclosure(
+                        result = clickResult,
+                        nodeIdProvided = nodeIdProvided
+                    ) ?: buildClickDisclosure(
                         strategy = selectorStrategy,
                         clickableOnly = clickableOnly,
                         result = clickResult
@@ -2339,6 +2349,55 @@ internal fun buildClickFailureDetails(
         put("failureCategory", missHint.failureCategory ?: "no_selector_match")
         put("clickableOnly", clickableOnly)
     }
+}
+
+internal fun clickFailureErrorCode(
+    result: ClickAttemptResult,
+    nodeIdProvided: Boolean
+): String {
+    return if (isStaleNodeReferenceFailure(result, nodeIdProvided)) {
+        "STALE_NODE_REFERENCE"
+    } else {
+        "NODE_NOT_FOUND"
+    }
+}
+
+internal fun clickFailureMessage(
+    result: ClickAttemptResult,
+    nodeIdProvided: Boolean
+): String {
+    return if (isStaleNodeReferenceFailure(result, nodeIdProvided)) {
+        "Click target node reference expired because the UI snapshot changed."
+    } else {
+        "Click target node was not found."
+    }
+}
+
+internal fun buildStaleNodeReferenceDisclosure(
+    result: ClickAttemptResult,
+    nodeIdProvided: Boolean
+): GhosthandDisclosure? {
+    if (!isStaleNodeReferenceFailure(result, nodeIdProvided)) {
+        return null
+    }
+    return GhosthandDisclosure(
+        kind = "constraint",
+        summary = "nodeId references are only valid for the snapshot they came from; this saved reference expired after the UI changed.",
+        assumptionToCorrect = "A saved nodeId stays valid across later UI snapshots.",
+        nextBestActions = listOf(
+            "Refresh the surface with /tree or /screen, then retry /click with a fresh nodeId.",
+            "Use selector-based /click or /find if the surface may have changed."
+        )
+    )
+}
+
+internal fun isStaleNodeReferenceFailure(
+    result: ClickAttemptResult,
+    nodeIdProvided: Boolean
+): Boolean {
+    return nodeIdProvided &&
+        result.failureReason == ClickFailureReason.NODE_NOT_FOUND &&
+        result.attemptedPath == "stale_snapshot"
 }
 
 internal fun buildActionEffectDisclosure(

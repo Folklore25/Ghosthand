@@ -259,4 +259,73 @@ class LocalApiServerDisclosureTest {
             disclosure.assumptionToCorrect
         )
     }
+
+    @Test
+    fun clickFailureCodeUsesStaleNodeReferenceForExpiredNodeId() {
+        val result = ClickAttemptResult.failure(
+            reason = ClickFailureReason.NODE_NOT_FOUND,
+            attemptedPath = "stale_snapshot"
+        )
+
+        assertEquals(
+            "STALE_NODE_REFERENCE",
+            clickFailureErrorCode(
+                result = result,
+                nodeIdProvided = true
+            )
+        )
+        assertEquals(
+            "Click target node reference expired because the UI snapshot changed.",
+            clickFailureMessage(
+                result = result,
+                nodeIdProvided = true
+            )
+        )
+    }
+
+    @Test
+    fun clickFailureCodeKeepsNodeNotFoundForOrdinaryNodeIdMiss() {
+        val result = ClickAttemptResult.failure(
+            reason = ClickFailureReason.NODE_NOT_FOUND,
+            attemptedPath = "node_lookup"
+        )
+
+        assertEquals(
+            "NODE_NOT_FOUND",
+            clickFailureErrorCode(
+                result = result,
+                nodeIdProvided = true
+            )
+        )
+        assertEquals(
+            "Click target node was not found.",
+            clickFailureMessage(
+                result = result,
+                nodeIdProvided = true
+            )
+        )
+    }
+
+    @Test
+    fun clickFailureCodeKeepsNodeNotFoundForSelectorMiss() {
+        val result = ClickAttemptResult.failure(
+            reason = ClickFailureReason.NODE_NOT_FOUND,
+            attemptedPath = "selector_lookup"
+        )
+
+        assertEquals(
+            "NODE_NOT_FOUND",
+            clickFailureErrorCode(
+                result = result,
+                nodeIdProvided = false
+            )
+        )
+        assertEquals(
+            "Click target node was not found.",
+            clickFailureMessage(
+                result = result,
+                nodeIdProvided = false
+            )
+        )
+    }
 }
