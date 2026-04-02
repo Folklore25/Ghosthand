@@ -220,7 +220,7 @@ object GhosthandApiPayloads {
             }
             .toList()
 
-        return ScreenReadPayload(
+        val payload = ScreenReadPayload(
             packageName = snapshot.packageName,
             activity = snapshot.activity,
             snapshotToken = snapshot.snapshotToken,
@@ -254,6 +254,10 @@ object GhosthandApiPayloads {
             ocrElementCount = 0,
             usedOcrFallback = false
         )
+
+        return payload.copy(
+            retryHint = accessibilityRetryHint(payload)
+        )
     }
 
     fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
@@ -278,6 +282,12 @@ object GhosthandApiPayloads {
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback,
+            "retryHint" to payload.retryHint?.let { hint ->
+                linkedMapOf(
+                    "source" to hint.source,
+                    "reason" to hint.reason
+                )
+            },
             "elements" to payload.elements.map { element ->
                 linkedMapOf(
                     "nodeId" to element.nodeId,
@@ -613,6 +623,20 @@ object GhosthandApiPayloads {
 
     private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
         return if (partialOutput) listOf("partial_output") else emptyList()
+    }
+
+    private fun accessibilityRetryHint(payload: ScreenReadPayload): ScreenReadRetryHint? {
+        return when {
+            payload.returnedElementCount == 0 -> ScreenReadRetryHint(
+                source = ScreenReadMode.OCR.wireValue,
+                reason = "accessibility_empty"
+            )
+            payload.accessibilityTreeIsOperationallyInsufficient() -> ScreenReadRetryHint(
+                source = ScreenReadMode.HYBRID.wireValue,
+                reason = "accessibility_operationally_insufficient"
+            )
+            else -> null
+        }
     }
 
     private fun buildOmittedCategories(

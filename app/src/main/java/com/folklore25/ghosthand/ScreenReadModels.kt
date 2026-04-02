@@ -53,12 +53,18 @@ data class ScreenReadPayload(
     val source: String,
     val accessibilityElementCount: Int,
     val ocrElementCount: Int,
-    val usedOcrFallback: Boolean
+    val usedOcrFallback: Boolean,
+    val retryHint: ScreenReadRetryHint? = null
 ) {
     fun accessibilityTreeIsOperationallyInsufficient(): Boolean {
         return returnedElementCount == 0 || (partialOutput && returnedElementCount <= 1)
     }
 }
+
+data class ScreenReadRetryHint(
+    val source: String,
+    val reason: String
+)
 
 data class ScreenOcrResult(
     val elements: List<ScreenReadElement>,
