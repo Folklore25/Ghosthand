@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-02T01:50:21.043Z"
+last_updated: "2026-04-02T11:50:43.948Z"
 progress:
   total_phases: 16
-  completed_phases: 10
-  total_plans: 37
+  completed_phases: 9
+  total_plans: 39
   completed_plans: 26
 ---
 
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.x product-truth cleanup** — non-root `/launch` is intentionally removed from the supported 1.x capability surface and deferred to a future root-backed 2.0 line.
+Current focus: **1.2.1 patch stabilization** — improve OCR fallback discoverability, stale-node failure classification, and modal-transition accessibility guidance without reopening 1.2 feature work.
 
 ## Current Position
 
-Phase: 21 (agent-interaction-hardening-for-1-2-0) — EXECUTING
-Plan: 2 of 5
+Phase: 22 (patch-stabilization-for-1-2-1) — EXECUTING
+Plan: 1 of 3
 
-- **Phase:** 21
+- **Phase:** 22
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Ready to execute
+- **Status:** Executing Phase 22
 
 ## Progress
 
@@ -52,9 +52,9 @@ Plan: 2 of 5
 - Phase 19: **DONE IN CODE** — home-surface copy and affordance polish refined the accepted 1.0 UI without reopening architecture or permission logic
 - Phase 20: **PLANNED FOR V1.1.0** — close the visible-but-unreachable gap through multi-surface selector reachability, explicit OCR fallback, and explicit `/wait` outcome separation
 - Phase 21: **PLANNED FOR V1.2.0** — harden interaction semantics and route-level truth for input, action feedback, selector failures, and partial-output interpretation without preserving non-root launch as a 1.x primitive
-- Phase 22: **DONE IN CODE** — `/find` miss responses now expose searched selector surface, exact-vs-contains semantics, and bounded next-step hints for zero-context exact misses
+- Phase 22: **PLANNED FOR V1.2.1** — add narrow OCR fallback hinting, stale-node failure classification, and modal-transition accessibility guidance without expanding the runtime surface
 
-Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-quality 1.0 surface with `/find` discoverability now tightened further through bounded exact-miss hinting.
+Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical Phase 10 operator-validation framework, and a release-quality 1.x surface that now moves into a narrow 1.2.1 patch stabilization pass.
 
 ## Decisions
 
@@ -119,6 +119,8 @@ Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical 
 - [Phase 15]: Loopback malformed-request handling now fails early with bounded parsing and safe 400/408/413/431 responses before endpoint dispatch.
 - [Phase 21]: Reused existing before/after snapshot observation to report action effects without claiming user intent.
 - [Phase 21]: Kept selector-failure classification small and normal-path friendly: category, surface/match semantics, and selector/actionability counts.
+- [Phase 22]: Return STALE_NODE_REFERENCE only for nodeId /click failures whose attempted path is stale_snapshot.
+- [Phase 22]: Keep ordinary nodeId misses and selector misses on /click mapped to NODE_NOT_FOUND until Plan 22-03 aligns wider docs and catalogs.
 
 ## Performance Metrics
 
@@ -138,10 +140,11 @@ Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical 
 | Phase 15 P01 | 7min | 2 tasks | 4 files |
 | Phase 15 P02 | 3 min | 2 tasks | 5 files |
 | Phase 21 P02 | 9min | 2 tasks | 12 files |
+| Phase 22 P02 | 5 min | 1 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-04-02T01:50:21.041Z
+Last session: 2026-04-02T11:50:43.946Z
 Next action: return to the next bounded platform phase only after a new concrete operator-path defect is confirmed
 
 ## Accumulated Context

@@ -24,7 +24,7 @@ Ghosthand is moving from an accepted runtime and operator-validation baseline in
 - [x] **Phase 19: Home Surface Copy And Affordance Polish 01** - Polish the current 1.0 UI with a refined info-affordance system, calmer title/version/update presentation, dedicated update modal flow, permissions top-bar cleanup, and final product copy cleanup without reopening the accepted architecture. (completed 2026-03-30)
 - [ ] **Phase 20: Close The Visible-But-Unreachable Gap For 1.1.0** - Improve semantic reachability across text/contentDescription surfaces, add explicit OCR fallback for empty-tree content surfaces, and split `/wait` outcome semantics without broadening the platform.
 - [ ] **Phase 21: Agent Interaction Hardening For 1.2.0** - Reduce avoidable agent friction by hardening input semantics, action-effect feedback, selector failure reasons, `/screen` partial-output summaries, and `/launch` reliability without broadening the platform.
-- [ ] **Phase 22: Find Contextual Disclosure And Selector-Surface Hinting Hardening** - Improve `/find` miss disclosure and bounded selector-surface hinting so zero-context agents stop misreading exact selector misses as platform blindness.
+- [ ] **Phase 22: Patch Stabilization For 1.2.1** - Land the narrow 1.2.1 patch scope around OCR fallback discoverability, stale-node failure classification, and modal-transition accessibility guidance without reopening 1.2 feature work.
 
 ## Phase Details
 
@@ -264,19 +264,22 @@ Plans:
 - [ ] 21-04: `/launch` compatibility improvements
 - [ ] 21-05: Secondary contract cleanup for `/wait`, `/state`, and reference semantics if still cleanly within scope
 
-### Phase 22: Find Contextual Disclosure And Selector-Surface Hinting Hardening
-**Goal**: Reduce a specific zero-context `/find` failure mode by making exact miss semantics, selector surface choice, and next-step hinting more understandable at the moment of a miss without broadening `/find` into magical fuzzy search.
-**Depends on**: Phase 20
+### Phase 22: Patch Stabilization For 1.2.1
+**Goal**: Improve narrow 1.2.1 agent-facing reliability and discoverability by adding OCR fallback hinting in justified accessibility-empty cases, distinguishing stale node references from true misses, and clarifying transient modal-transition accessibility drops in the live contract.
+**Depends on**: Phase 21
 **Success Criteria** (what must be TRUE):
-  1. [FIND-01] `/find` miss responses correct the likely wrong mental model that a screen-visible text fragment must be discoverable through the exact selector the caller just used.
-  2. [FIND-02] `/find` disclosure makes searched selector surface and exact-vs-contains semantics clearer without payload bloat.
-  3. [FIND-03] Any new hinting stays bounded, inspectable, and truthful rather than silently broadening search behavior.
-  4. [FIND-04] `/commands` and local docs remain aligned with the actual `/find` contract.
-  5. [FIND-05] The project still compiles after the `/find` hardening pass.
+  1. [PATCH-01] Accessibility-first `/screen` responses expose a bounded OCR or hybrid retry hint only when accessibility output is empty or operationally insufficient.
+  2. [PATCH-02] OCR hinting does not trigger merely because `partialOutput=true`.
+  3. [PATCH-03] Stale node references are distinguishable from true selector or no-match failures through a truthful failure classification path.
+  4. [PATCH-04] Live contract surfaces document modal-transition accessibility drops as a transient retry-oriented operating condition instead of a terminal platform failure.
+  5. [PATCH-05] No OCR automation expansion, node identity redesign, `/launch` reopening, `/tree` rewrite, or UI/front-end work is pulled into the patch.
+  6. [PATCH-06] The Android project still compiles after the patch lands.
 **Plans**: TBD
 
 Plans:
-- [x] 22-01: `/find` miss disclosure, selector-surface hints, and contract/test alignment
+- [ ] 22-01: OCR fallback discoverability hinting on accessibility-empty or accessibility-insufficient `/screen`
+- [x] 22-02: Stale-node failure classification for expired snapshot references
+- [ ] 22-03: Modal-transition accessibility contract clarification and narrow doc/catalog alignment
 
 ## Progress
 
@@ -296,4 +299,4 @@ Plans:
 | 19. Home Surface Copy And Affordance Polish 01 | 3/3 | Complete | 2026-03-30 |
 | 20. Close The Visible-But-Unreachable Gap For 1.1.0 | 1/3 | In Progress|  |
 | 21. Agent Interaction Hardening For 1.2.0 | 1/5 | In Progress|  |
-| 22. Find Contextual Disclosure And Selector-Surface Hinting Hardening | 1/1 | Complete | 2026-03-30 |
+| 22. Patch Stabilization For 1.2.1 | 1/3 | In Progress|  |
