@@ -75,6 +75,38 @@ class AccessibilityTyper {
         }
     }
 
+    fun dispatchKey(key: InputKey): InputKeyAttemptResult {
+        val service = GhostAccessibilityExecutionCoreRegistry.currentInstance()
+            ?: return InputKeyAttemptResult.failure(
+                reason = InputKeyFailureReason.ACCESSIBILITY_UNAVAILABLE,
+                attemptedPath = "service_missing"
+            )
+
+        val dispatchResult = when (key) {
+            InputKey.ENTER -> service.performImeEnterAction()
+        }
+        return when {
+            dispatchResult.performed -> {
+                Log.i(LOG_TAG, "event=input_key key=${key.wireValue} path=${dispatchResult.attemptedPath} success=true")
+                InputKeyAttemptResult.success(attemptedPath = dispatchResult.attemptedPath)
+            }
+            !dispatchResult.targetFound -> {
+                Log.i(LOG_TAG, "event=input_key key=${key.wireValue} path=${dispatchResult.attemptedPath} success=false")
+                InputKeyAttemptResult.failure(
+                    reason = InputKeyFailureReason.NO_EDITABLE_TARGET,
+                    attemptedPath = dispatchResult.attemptedPath
+                )
+            }
+            else -> {
+                Log.i(LOG_TAG, "event=input_key key=${key.wireValue} path=${dispatchResult.attemptedPath} success=false")
+                InputKeyAttemptResult.failure(
+                    reason = InputKeyFailureReason.ACTION_FAILED,
+                    attemptedPath = dispatchResult.attemptedPath
+                )
+            }
+        }
+    }
+
     private companion object {
         const val LOG_TAG = "GhostType"
     }
@@ -138,5 +170,35 @@ enum class SetTextFailureReason {
     ACCESSIBILITY_UNAVAILABLE,
     NODE_NOT_FOUND,
     NODE_NOT_EDITABLE,
+    ACTION_FAILED
+}
+
+data class InputKeyAttemptResult(
+    val performed: Boolean,
+    val backendUsed: String?,
+    val failureReason: InputKeyFailureReason?,
+    val attemptedPath: String
+) {
+    companion object {
+        fun success(attemptedPath: String): InputKeyAttemptResult = InputKeyAttemptResult(
+            performed = true,
+            backendUsed = "accessibility",
+            failureReason = null,
+            attemptedPath = attemptedPath
+        )
+
+        fun failure(reason: InputKeyFailureReason, attemptedPath: String): InputKeyAttemptResult =
+            InputKeyAttemptResult(
+                performed = false,
+                backendUsed = null,
+                failureReason = reason,
+                attemptedPath = attemptedPath
+            )
+    }
+}
+
+enum class InputKeyFailureReason {
+    ACCESSIBILITY_UNAVAILABLE,
+    NO_EDITABLE_TARGET,
     ACTION_FAILED
 }

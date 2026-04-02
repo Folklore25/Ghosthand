@@ -1522,15 +1522,27 @@ The current accepted conclusion is that inspectable wrapper resolution is now go
 
 ### Purpose
 
-Set text in the currently focused editable field via `ACTION_SET_TEXT`. No keyboard simulation.
+Perform explicit focused-input operations without conflating text mutation and key dispatch.
 
 ### Request Body
 
 ```json
 {
-  "text": "hello world"
+  "textAction": "set",
+  "text": "hello world",
+  "key": "enter"
 }
 ```
+
+Supported text mutation modes:
+
+* `set`
+* `append`
+* `clear`
+
+Supported keys:
+
+* `enter`
 
 ### Success Response
 
@@ -1539,7 +1551,22 @@ Set text in the currently focused editable field via `ACTION_SET_TEXT`. No keybo
   "ok": true,
   "data": {
     "performed": true,
-    "backendUsed": "accessibility"
+    "textChanged": true,
+    "keyDispatched": true,
+    "textMutation": {
+      "requested": true,
+      "performed": true,
+      "action": "set",
+      "previousText": "",
+      "text": "hello world",
+      "backendUsed": "accessibility"
+    },
+    "keyDispatch": {
+      "requested": true,
+      "performed": true,
+      "key": "enter",
+      "backendUsed": "accessibility"
+    }
   },
   "meta": {
     "requestId": "req_input_1",
@@ -1550,12 +1577,15 @@ Set text in the currently focused editable field via `ACTION_SET_TEXT`. No keybo
 
 ### Error Codes
 
-* `400` / `INVALID_ARGUMENT` — `text` missing or not a string
-* `422` / `ACCESSIBILITY_ACTION_FAILED` — no focused editable target or action failed
+* `400` / `INVALID_ARGUMENT` — invalid or incomplete explicit input operation request
+* `422` / `ACCESSIBILITY_ACTION_FAILED` — no focused editable target or one of the requested operations failed
 
 ### Notes
 
-Differs from `POST /type` in that `/input` uses `ACTION_SET_TEXT` directly on the focused node (fast, no keyboard). `POST /type` is retained for character-by-character keyboard simulation use cases.
+`/input` now treats text mutation and key dispatch as separate explicit operations.
+Sending Enter must be expressed as `key: "enter"` and does not implicitly clear or replace text.
+If both text mutation and key dispatch are requested, Ghosthand performs them in sequence and reports each result separately.
+`POST /type` remains the keyboard-simulation route when character-by-character typing is specifically desired.
 
 ---
 

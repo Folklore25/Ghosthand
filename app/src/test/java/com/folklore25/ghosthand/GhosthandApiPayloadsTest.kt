@@ -8,11 +8,68 @@ package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GhosthandApiPayloadsTest {
+    @Test
+    fun parseInputRequestDefaultsPlainTextToSetAction() {
+        val parsed = GhosthandApiPayloads.parseInputRequest(mapOf("text" to "hello world"))
+
+        assertNull(parsed.errorMessage)
+        assertNotNull(parsed.request)
+        assertEquals(InputTextAction.SET, parsed.request!!.textAction)
+        assertEquals("hello world", parsed.request!!.text)
+        assertEquals(null, parsed.request!!.key)
+    }
+
+    @Test
+    fun parseInputRequestRejectsShortcutLikeKeys() {
+        val parsed = GhosthandApiPayloads.parseInputRequest(mapOf("key" to "ctrl+enter"))
+
+        assertEquals("key must be one of: enter.", parsed.errorMessage)
+        assertEquals(null, parsed.request)
+    }
+
+    @Test
+    fun inputResultFieldsExposeSeparateTextAndKeyTruth() {
+        val fields = GhosthandApiPayloads.inputResultFields(
+            InputOperationResult(
+                performed = false,
+                textMutation = InputTextMutationResult(
+                    requested = true,
+                    performed = true,
+                    action = "set",
+                    previousText = "old",
+                    finalText = "new",
+                    backendUsed = "accessibility",
+                    failureReason = null,
+                    attemptedPath = "focused_set_text"
+                ),
+                keyDispatch = InputKeyDispatchResult(
+                    requested = true,
+                    performed = false,
+                    key = "enter",
+                    backendUsed = null,
+                    failureReason = InputKeyFailureReason.ACTION_FAILED,
+                    attemptedPath = "focused_ime_enter"
+                )
+            )
+        )
+
+        assertEquals(false, fields["performed"])
+        assertEquals(true, fields["textChanged"])
+        assertEquals(false, fields["keyDispatched"])
+        val textMutation = fields["textMutation"] as Map<*, *>
+        val keyDispatch = fields["keyDispatch"] as Map<*, *>
+        assertEquals("set", textMutation["action"])
+        assertEquals("new", textMutation["text"])
+        assertEquals("enter", keyDispatch["key"])
+        assertEquals("ACTION_FAILED", keyDispatch["failureReason"])
+    }
+
     @Test
     fun disclosureJsonSerializesCompactDisclosureShape() {
         val disclosure = GhosthandDisclosure(

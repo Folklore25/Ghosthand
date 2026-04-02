@@ -97,8 +97,13 @@ class GhosthandCommandCatalogTest {
         val inputRoute = GhosthandCommandCatalog.commands.first { it.id == "input" }
         assertEquals("focused_editable", inputRoute.focusRequirement)
         assertEquals("stable", inputRoute.stability)
-        assertTrue(inputRoute.responseFields.contains("previousText"))
-        assertTrue(inputRoute.responseFields.contains("action"))
+        assertTrue(inputRoute.responseFields.contains("textChanged"))
+        assertTrue(inputRoute.responseFields.contains("keyDispatched"))
+        assertTrue(inputRoute.responseFields.contains("textMutation"))
+        assertTrue(inputRoute.responseFields.contains("keyDispatch"))
+        val inputParamNames = inputRoute.params.map { it.name }
+        assertTrue(inputParamNames.contains("textAction"))
+        assertTrue(inputParamNames.contains("key"))
         assertNotNull(inputRoute.exampleRequest)
         assertFalse(inputRoute.params.isEmpty())
 

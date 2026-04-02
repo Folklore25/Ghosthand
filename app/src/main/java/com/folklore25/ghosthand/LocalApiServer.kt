@@ -1196,69 +1196,44 @@ class LocalApiServer(
         val body = parseJsonBodyOrNull(requestBody, "/input")
             ?: return badJsonBodyResponse()
 
-        val clear = body.optBoolean("clear", false)
-        val append = body.optBoolean("append", false)
-        val text = if (body.has("text") && !body.isNull("text")) body.opt("text") as? String else null
-
-        if (!clear && text == null) {
+        val parsedRequest = GhosthandApiPayloads.parseInputRequest(body)
+        if (parsedRequest.errorMessage != null || parsedRequest.request == null) {
             return buildJsonResponse(
                 statusCode = 400,
                 body = errorEnvelope(
                     code = "INVALID_ARGUMENT",
-                    message = "text is required unless clear=true."
+                    message = parsedRequest.errorMessage ?: "Invalid /input request."
                 )
             )
         }
 
-        if (body.has("text") && !body.isNull("text") && text == null) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "INVALID_ARGUMENT",
-                    message = "text must be a string."
-                )
-            )
-        }
-
-        val typeResult = stateCoordinator.inputText(
-            text = text,
-            clear = clear,
-            append = append
-        )
+        val typeResult = stateCoordinator.performInput(parsedRequest.request)
+        val resultPayload = GhosthandApiPayloads.inputResultJson(typeResult)
 
         Log.i(
             INPUT_LOG_TAG,
-            "event=input_request textLength=${text?.length ?: 0} action=${typeResult.action} inputPath=${typeResult.attemptedPath} success=${typeResult.performed} failure=${typeResult.failureReason?.name ?: "none"}"
+            "event=input_request textAction=${parsedRequest.request.textAction?.wireValue ?: "none"} key=${parsedRequest.request.key?.wireValue ?: "none"} success=${typeResult.performed} textChanged=${typeResult.textMutation?.performed ?: false} keyDispatched=${typeResult.keyDispatch?.performed ?: false}"
         )
 
         return when {
             typeResult.performed -> buildJsonResponse(
                 statusCode = 200,
-                body = successEnvelope(
-                    JSONObject()
-                        .put("performed", true)
-                        .put("backendUsed", typeResult.backendUsed)
-                        .put("text", typeResult.finalText)
-                        .put("previousText", typeResult.previousText)
-                        .put("action", typeResult.action)
-                )
+                body = successEnvelope(resultPayload)
             )
-            typeResult.failureReason == TypeFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
+            hasInputAccessibilityUnavailable(typeResult) -> buildJsonResponse(
                 statusCode = 503,
                 body = errorEnvelope(
                     code = "ACCESSIBILITY_UNAVAILABLE",
-                    message = "Accessibility service is not available for text input."
+                    message = "Accessibility service is not available for one or more requested /input operations.",
+                    details = resultPayload
                 )
             )
             else -> buildJsonResponse(
                 statusCode = 422,
                 body = errorEnvelope(
                     code = "ACCESSIBILITY_ACTION_FAILED",
-                    message = if (typeResult.failureReason == TypeFailureReason.NO_EDITABLE_TARGET) {
-                        "No focused editable target is available for text input."
-                    } else {
-                        "Accessibility text input action failed."
-                    }
+                    message = buildInputFailureMessage(typeResult),
+                    details = resultPayload
                 )
             )
         }
@@ -1825,6 +1800,28 @@ class LocalApiServer(
             400,
             errorEnvelope("BAD_REQUEST", "Request body must be valid JSON.")
         )
+    }
+
+    private fun hasInputAccessibilityUnavailable(result: InputOperationResult): Boolean {
+        return result.textMutation?.failureReason == TypeFailureReason.ACCESSIBILITY_UNAVAILABLE ||
+            result.keyDispatch?.failureReason == InputKeyFailureReason.ACCESSIBILITY_UNAVAILABLE
+    }
+
+    private fun buildInputFailureMessage(result: InputOperationResult): String {
+        if (result.textMutation != null && result.keyDispatch != null) {
+            return "One or more explicit /input operations failed."
+        }
+
+        return when {
+            result.textMutation?.failureReason == TypeFailureReason.NO_EDITABLE_TARGET ->
+                "No focused editable target is available for text input."
+            result.textMutation != null ->
+                "Accessibility text input action failed."
+            result.keyDispatch?.failureReason == InputKeyFailureReason.NO_EDITABLE_TARGET ->
+                "No focused editable target is available for key dispatch."
+            else ->
+                "Accessibility key dispatch failed."
+        }
     }
 
     private fun createResources(): LocalApiServerResources {

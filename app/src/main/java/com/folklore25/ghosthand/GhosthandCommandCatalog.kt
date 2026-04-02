@@ -254,15 +254,17 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/input",
-            description = "Set, append, or clear text in the current focused field",
-            responseFields = listOf("performed", "backendUsed", "text", "previousText", "action"),
+            description = "Explicit focused-input interaction route: mutate text, dispatch Enter, or request both in sequence without implicitly clearing existing text",
+            responseFields = listOf("performed", "textChanged", "keyDispatched", "textMutation", "keyDispatch"),
             params = listOf(
-                GhosthandCommandParam("text", "string", "body", false, "Text payload"),
-                GhosthandCommandParam("append", "boolean", "body", false, "Append to existing field content"),
-                GhosthandCommandParam("clear", "boolean", "body", false, "Clear the field before applying text")
+                GhosthandCommandParam("text", "string", "body", false, "Text payload for explicit mutation"),
+                GhosthandCommandParam("textAction", "string", "body", false, "Text mutation mode", listOf("set", "append", "clear")),
+                GhosthandCommandParam("key", "string", "body", false, "Explicit key dispatch", listOf("enter")),
+                GhosthandCommandParam("append", "boolean", "body", false, "Legacy alias for textAction=append"),
+                GhosthandCommandParam("clear", "boolean", "body", false, "Legacy alias for textAction=clear")
             ),
             focusRequirement = "focused_editable",
-            exampleRequest = mapOf("text" to "wifi", "clear" to true)
+            exampleRequest = mapOf("textAction" to "set", "text" to "wifi", "key" to "enter")
         ),
         GhosthandCommandDescriptor(
             id = "set_text",

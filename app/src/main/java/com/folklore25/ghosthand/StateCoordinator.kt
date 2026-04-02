@@ -450,35 +450,47 @@ class StateCoordinator(
         return accessibilityTyper.typeText(text)
     }
 
-    fun inputText(
-        text: String?,
-        clear: Boolean,
-        append: Boolean
-    ): InputOperationResult {
-        val focused = getFocusedNodeResult()
-        val previousText = focused.node?.text ?: ""
-
-        val finalText = when {
-            clear && text.isNullOrEmpty() -> ""
-            append -> previousText + (text ?: "")
-            else -> text ?: ""
+    fun performInput(request: GhosthandInputRequest): InputOperationResult {
+        val textMutation = request.textAction?.let { action ->
+            val previousText = getFocusedNodeResult().node?.text ?: ""
+            val finalText = when (action) {
+                InputTextAction.SET -> request.text ?: ""
+                InputTextAction.APPEND -> previousText + (request.text ?: "")
+                InputTextAction.CLEAR -> ""
+            }
+            val result = accessibilityTyper.typeText(finalText)
+            InputTextMutationResult(
+                requested = true,
+                performed = result.performed,
+                action = action.wireValue,
+                previousText = previousText,
+                finalText = finalText,
+                backendUsed = result.backendUsed,
+                failureReason = result.failureReason,
+                attemptedPath = result.attemptedPath
+            )
         }
 
-        val action = when {
-            clear && text.isNullOrEmpty() -> "clear"
-            append -> "append"
-            else -> "set"
+        val keyDispatch = request.key?.let { key ->
+            val result = accessibilityTyper.dispatchKey(key)
+            InputKeyDispatchResult(
+                requested = true,
+                performed = result.performed,
+                key = key.wireValue,
+                backendUsed = result.backendUsed,
+                failureReason = result.failureReason,
+                attemptedPath = result.attemptedPath
+            )
         }
 
-        val result = accessibilityTyper.typeText(finalText)
         return InputOperationResult(
-            performed = result.performed,
-            backendUsed = result.backendUsed,
-            failureReason = result.failureReason,
-            attemptedPath = result.attemptedPath,
-            previousText = previousText,
-            finalText = finalText,
-            action = action
+            performed = listOfNotNull(
+                textMutation?.performed,
+                keyDispatch?.performed
+            ).let { requested -> requested.isNotEmpty() && requested.all { it } }
+        ).copy(
+            textMutation = textMutation,
+            keyDispatch = keyDispatch
         )
     }
 
@@ -885,12 +897,28 @@ internal object GovernedCapabilityPayloads {
 
 data class InputOperationResult(
     val performed: Boolean,
-    val backendUsed: String?,
-    val failureReason: TypeFailureReason?,
-    val attemptedPath: String,
+    val textMutation: InputTextMutationResult? = null,
+    val keyDispatch: InputKeyDispatchResult? = null
+)
+
+data class InputTextMutationResult(
+    val requested: Boolean,
+    val performed: Boolean,
+    val action: String,
     val previousText: String,
     val finalText: String,
-    val action: String
+    val backendUsed: String?,
+    val failureReason: TypeFailureReason?,
+    val attemptedPath: String
+)
+
+data class InputKeyDispatchResult(
+    val requested: Boolean,
+    val performed: Boolean,
+    val key: String,
+    val backendUsed: String?,
+    val failureReason: InputKeyFailureReason?,
+    val attemptedPath: String
 )
 
 data class ScrollBatchResult(
