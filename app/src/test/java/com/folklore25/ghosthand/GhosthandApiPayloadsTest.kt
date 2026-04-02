@@ -137,6 +137,72 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun postActionStateFieldsPreferCompactObservedSubset() {
+        val fields = GhosthandApiPayloads.postActionStateFields(
+            PostActionState(
+                packageName = "com.example.target",
+                activity = "TargetActivity",
+                snapshotToken = "snap-after"
+            )
+        )
+
+        assertEquals("com.example.target", fields["packageName"])
+        assertEquals("TargetActivity", fields["activity"])
+        assertEquals("snap-after", fields["snapshotToken"])
+    }
+
+    @Test
+    fun clickFieldsIncludeCompactPostActionState() {
+        val fields = GhosthandApiPayloads.clickFields(
+            ClickAttemptResult.success(
+                attemptedPath = "node_click",
+                effect = ActionEffectObservation(
+                    stateChanged = true,
+                    beforeSnapshotToken = "snap-before",
+                    afterSnapshotToken = "snap-after",
+                    finalPackageName = "com.example.target",
+                    finalActivity = "TargetActivity"
+                )
+            )
+        )
+
+        val postActionState = fields["postActionState"] as Map<*, *>
+        assertEquals("com.example.target", postActionState["packageName"])
+        assertEquals("TargetActivity", postActionState["activity"])
+        assertEquals("snap-after", postActionState["snapshotToken"])
+    }
+
+    @Test
+    fun inputResultFieldsIncludeCompactPostActionState() {
+        val fields = GhosthandApiPayloads.inputResultFields(
+            InputOperationResult(
+                performed = true,
+                textMutation = InputTextMutationResult(
+                    requested = true,
+                    performed = true,
+                    action = "set",
+                    previousText = "old",
+                    finalText = "new",
+                    backendUsed = "accessibility",
+                    failureReason = null,
+                    attemptedPath = "focused_set_text"
+                ),
+                keyDispatch = null,
+                postActionState = PostActionState(
+                    packageName = "com.example.target",
+                    activity = "EditorActivity",
+                    snapshotToken = "snap-after"
+                )
+            )
+        )
+
+        val postActionState = fields["postActionState"] as Map<*, *>
+        assertEquals("com.example.target", postActionState["packageName"])
+        assertEquals("EditorActivity", postActionState["activity"])
+        assertEquals("snap-after", postActionState["snapshotToken"])
+    }
+
+    @Test
     fun clickFailureFieldsExposeBoundedFailureEvidence() {
         val fields = GhosthandApiPayloads.clickFailureFields(
             FindMissHint(

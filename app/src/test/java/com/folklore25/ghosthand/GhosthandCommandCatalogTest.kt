@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.20", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.21", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -91,6 +91,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(clickRoute.responseFields.contains("failureCategory"))
         assertTrue(clickRoute.responseFields.contains("selectorMatchCount"))
         assertTrue(clickRoute.responseFields.contains("actionableMatchCount"))
+        assertTrue(clickRoute.responseFields.contains("postActionState"))
         assertTrue(clickRoute.responseFields.contains("disclosure"))
         assertTrue(clickRoute.description.contains("actionable clickable target by default"))
         assertTrue(clickRoute.description.contains("requested-vs-matched selector truth"))
@@ -98,6 +99,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(clickRoute.description.contains("stale nodeId reference"))
         assertTrue(clickRoute.description.contains("modal transitions"))
         assertTrue(clickRoute.description.contains("contentDesc"))
+        assertTrue(clickRoute.description.contains("compact post-action state summary"))
         assertNotNull(clickRoute.exampleRequest)
         assertNotNull(clickRoute.exampleResponse)
 
@@ -108,6 +110,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(inputRoute.responseFields.contains("keyDispatched"))
         assertTrue(inputRoute.responseFields.contains("textMutation"))
         assertTrue(inputRoute.responseFields.contains("keyDispatch"))
+        assertTrue(inputRoute.responseFields.contains("postActionState"))
         val inputParamNames = inputRoute.params.map { it.name }
         assertTrue(inputParamNames.contains("textAction"))
         assertTrue(inputParamNames.contains("key"))
@@ -121,6 +124,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(swipeRoute.responseFields.contains("contentChanged"))
         assertTrue(swipeRoute.responseFields.contains("beforeSnapshotToken"))
         assertTrue(swipeRoute.responseFields.contains("afterSnapshotToken"))
+        assertTrue(swipeRoute.responseFields.contains("postActionState"))
         assertTrue(swipeRoute.responseFields.contains("disclosure"))
         val swipeParamNames = swipeRoute.params.map { it.name }
         assertTrue(swipeParamNames.contains("from"))
@@ -163,6 +167,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(backRoute.responseFields.contains("afterSnapshotToken"))
         assertTrue(backRoute.responseFields.contains("finalPackageName"))
         assertTrue(backRoute.responseFields.contains("finalActivity"))
+        assertTrue(backRoute.responseFields.contains("postActionState"))
         assertTrue(backRoute.description.contains("observed effect"))
 
         val homeRoute = GhosthandCommandCatalog.commands.first { it.id == "home" }
@@ -171,7 +176,28 @@ class GhosthandCommandCatalogTest {
         assertTrue(homeRoute.responseFields.contains("afterSnapshotToken"))
         assertTrue(homeRoute.responseFields.contains("finalPackageName"))
         assertTrue(homeRoute.responseFields.contains("finalActivity"))
+        assertTrue(homeRoute.responseFields.contains("postActionState"))
         assertTrue(homeRoute.description.contains("observed effect"))
+
+        val setTextRoute = GhosthandCommandCatalog.commands.first { it.id == "setText" }
+        assertTrue(setTextRoute.responseFields.contains("postActionState"))
+        assertTrue(setTextRoute.description.contains("compact post-action state summary"))
+
+        val scrollRoute = GhosthandCommandCatalog.commands.first { it.id == "scroll" }
+        assertTrue(scrollRoute.responseFields.contains("postActionState"))
+        assertTrue(scrollRoute.description.contains("compact post-action state summary"))
+
+        val tapRoute = GhosthandCommandCatalog.commands.first { it.id == "tap" }
+        assertTrue(tapRoute.responseFields.contains("postActionState"))
+
+        val longpressRoute = GhosthandCommandCatalog.commands.first { it.id == "longpress" }
+        assertTrue(longpressRoute.responseFields.contains("postActionState"))
+
+        val gestureRoute = GhosthandCommandCatalog.commands.first { it.id == "gesture" }
+        assertTrue(gestureRoute.responseFields.contains("postActionState"))
+
+        val recentsRoute = GhosthandCommandCatalog.commands.first { it.id == "recents" }
+        assertTrue(recentsRoute.responseFields.contains("postActionState"))
     }
 
     @Test

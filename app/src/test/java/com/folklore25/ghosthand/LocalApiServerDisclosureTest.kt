@@ -234,6 +234,50 @@ class LocalApiServerDisclosureTest {
     }
 
     @Test
+    fun postActionStatePrefersObservedSnapshotWhenAvailable() {
+        val state = buildPostActionState(
+            actionEffect = ActionEffectObservation(
+                stateChanged = true,
+                beforeSnapshotToken = "before",
+                afterSnapshotToken = "after",
+                finalPackageName = "com.example.target",
+                finalActivity = "TargetActivity"
+            ),
+            fallbackSnapshot = AccessibilityTreeSnapshot(
+                packageName = "com.example.fallback",
+                activity = "FallbackActivity",
+                snapshotToken = "fallback",
+                capturedAt = "2026-04-02T00:00:00Z",
+                nodes = emptyList(),
+                foregroundStableDuringCapture = true
+            )
+        )
+
+        assertEquals("com.example.target", state?.packageName)
+        assertEquals("TargetActivity", state?.activity)
+        assertEquals("after", state?.snapshotToken)
+    }
+
+    @Test
+    fun postActionStateFallsBackToCurrentSnapshotSubset() {
+        val state = buildPostActionState(
+            actionEffect = null,
+            fallbackSnapshot = AccessibilityTreeSnapshot(
+                packageName = "com.example.target",
+                activity = "TargetActivity",
+                snapshotToken = "snap-after",
+                capturedAt = "2026-04-02T00:00:00Z",
+                nodes = emptyList(),
+                foregroundStableDuringCapture = true
+            )
+        )
+
+        assertEquals("com.example.target", state?.packageName)
+        assertEquals("TargetActivity", state?.activity)
+        assertEquals("snap-after", state?.snapshotToken)
+    }
+
+    @Test
     fun clickDisclosureExplainsActionabilityFailure() {
         val disclosure = buildClickDisclosure(
             strategy = "text",
