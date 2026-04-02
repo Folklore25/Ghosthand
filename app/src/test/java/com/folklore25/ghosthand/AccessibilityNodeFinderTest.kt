@@ -64,6 +64,58 @@ class AccessibilityNodeFinderTest {
     }
 
     @Test
+    fun nonZeroIndexPreservesSelectedMatchBoundsWhenLaterMatchIsValid() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-03-28T00:00:00Z",
+            nodes = listOf(
+                node("p0@tsnap"),
+                FlatAccessibilityNode(
+                    nodeId = "p0.0@tsnap",
+                    text = "Row",
+                    contentDesc = null,
+                    resourceId = null,
+                    className = "android.widget.TextView",
+                    clickable = false,
+                    editable = false,
+                    enabled = true,
+                    focused = false,
+                    scrollable = false,
+                    centerX = 0,
+                    centerY = 0,
+                    bounds = NodeBounds(0, 0, 0, 0)
+                ),
+                FlatAccessibilityNode(
+                    nodeId = "p0.1@tsnap",
+                    text = "Row",
+                    contentDesc = null,
+                    resourceId = null,
+                    className = "android.widget.TextView",
+                    clickable = false,
+                    editable = false,
+                    enabled = true,
+                    focused = false,
+                    scrollable = false,
+                    centerX = 25,
+                    centerY = 35,
+                    bounds = NodeBounds(10, 20, 40, 50)
+                )
+            )
+        )
+
+        val result = finder.findNodes(snapshot, "text", "Row", clickableOnly = false, index = 1)
+
+        assertTrue(result.found)
+        assertEquals("p0.1@tsnap", result.node?.nodeId)
+        assertEquals(25, result.node?.centerX)
+        assertEquals(35, result.node?.centerY)
+        assertEquals(10, result.node?.bounds?.left)
+        assertEquals(50, result.node?.bounds?.bottom)
+    }
+
+    @Test
     fun noClickableAncestorReturnsNotFoundForClickableOnly() {
         val snapshot = AccessibilityTreeSnapshot(
             packageName = "com.example",
@@ -80,6 +132,9 @@ class AccessibilityNodeFinderTest {
 
         assertFalse(result.found)
         assertTrue(result.matches.isEmpty())
+        assertEquals("actionable_target_not_found", result.missHint?.failureCategory)
+        assertEquals(1, result.missHint?.selectorMatchCount)
+        assertEquals(0, result.missHint?.actionableMatchCount)
     }
 
     @Test
@@ -290,6 +345,7 @@ class AccessibilityNodeFinderTest {
         )
 
         assertFalse(result.found)
+        assertEquals("same_surface_contains_match_available", result.missHint?.failureCategory)
         assertEquals("text", result.missHint?.searchedSurface)
         assertEquals("exact", result.missHint?.matchSemantics)
         assertEquals("visible_text_is_part_of_a_longer_text_block", result.missHint?.likelyMissReason)

@@ -27,6 +27,10 @@ class StateCoordinatorScreenPayloadTest {
                 omittedInvalidBoundsCount = 0,
                 omittedLowSignalCount = 0,
                 omittedNodeCount = 0,
+                omittedCategories = emptyList(),
+                omittedSummary = null,
+                invalidBoundsPresent = false,
+                lowSignalPresent = false,
                 elements = listOf(
                     ScreenReadElement(
                         nodeId = "p0.0@tsnap",
@@ -55,6 +59,8 @@ class StateCoordinatorScreenPayloadTest {
         assertEquals(1, payload["accessibilityElementCount"])
         assertEquals(1, payload["ocrElementCount"])
         assertEquals(true, payload["usedOcrFallback"])
+        assertEquals(emptyList<String>(), payload["omittedCategories"])
+        assertEquals(null, payload["omittedSummary"])
         val elements = payload["elements"] as List<*>
         assertEquals(ScreenReadMode.ACCESSIBILITY.wireValue, (elements[0] as Map<*, *>)["source"])
         assertEquals(ScreenReadMode.OCR.wireValue, (elements[1] as Map<*, *>)["source"])

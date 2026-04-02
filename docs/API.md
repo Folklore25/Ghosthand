@@ -166,7 +166,6 @@ Workflow-level implications:
 * `DEVICE_STATE_UNAVAILABLE`
 * `SCREENSHOT_UNAVAILABLE`
 * `SCREENSHOT_FAILED`
-* `APP_LAUNCH_FAILED`
 * `APP_STOP_FAILED`
 * `NODE_NOT_FOUND`
 * `NODE_NOT_EDITABLE`
@@ -258,6 +257,33 @@ This is separate from system capability unavailability. A capability can be gran
 
 The Ghosthand app may show release/update state in the operator surface by comparing the installed app version against GitHub latest-release metadata.
 
+### 5.7 Selector Failure Evidence
+
+Selector-driven interaction failures should remain compact but machine-readable in the normal response path.
+
+For selector misses, especially `POST /click`, Ghosthand may return bounded evidence such as:
+
+- `failureCategory`
+- `searchedSurface`
+- `matchSemantics`
+- `requestedSurface`
+- `requestedMatchSemantics`
+- `matchedSurface`
+- `matchedMatchSemantics`
+- `usedSurfaceFallback`
+- `usedContainsFallback`
+- `selectorMatchCount`
+- `actionableMatchCount`
+
+These fields distinguish:
+
+- no selector match
+- same-surface exact-vs-contains mismatch
+- alternate-surface match opportunity
+- label match found but no actionable target resolved
+
+Ghosthand should expose this evidence truthfully without broad debug-mode expansion or dishonest matcher broadening.
+
 - this is product UI state, not a localhost API installer path
 - Ghosthand does not claim silent or seamless in-app APK installation
 - when an update exists, the product hands the user off to the GitHub release page for a full APK update
@@ -299,7 +325,6 @@ The Ghosthand app may show release/update state in the operator surface by compa
 
 ### Gestures / System
 
-* `POST /launch`
 * `POST /scroll`
 * `POST /longpress`
 * `POST /gesture`
@@ -1266,6 +1291,10 @@ Return the current visible-surface read with explicit source provenance. Accessi
     "omittedInvalidBoundsCount": 0,
     "omittedLowSignalCount": 0,
     "omittedNodeCount": 0,
+    "omittedCategories": [],
+    "omittedSummary": null,
+    "invalidBoundsPresent": false,
+    "lowSignalPresent": false,
     "source": "accessibility",
     "accessibilityElementCount": 1,
     "ocrElementCount": 0,
@@ -1325,6 +1354,7 @@ Return the current visible-surface read with explicit source provenance. Accessi
 - This keeps `/screen` readable on complex surfaces by foregrounding visible/actionable signal instead of deep container noise.
 - `partialOutput = true` means `/screen` is a reduced actionable subset, not an exhaustive structured surface dump.
 - `candidateNodeCount`, `returnedElementCount`, and `omittedNodeCount` make that reduction explicit so operators do not misread omission as absence.
+- `omittedCategories`, `omittedSummary`, `invalidBoundsPresent`, and `lowSignalPresent` provide a compact explanation of what class of information was omitted without dumping the omitted nodes themselves.
 - `source`, `accessibilityElementCount`, `ocrElementCount`, and `usedOcrFallback` make OCR provenance explicit instead of silently merging OCR and accessibility into one indistinguishable truth surface.
 - `editable`, `scrollable`, and `clickable` filters only apply to `source=accessibility`. OCR-derived output does not claim those accessibility semantics.
 
@@ -1464,6 +1494,11 @@ Other normal selector forms:
     "performed": true,
     "backendUsed": "accessibility",
     "attemptedPath": "node_click",
+    "stateChanged": false,
+    "beforeSnapshotToken": "snap-before",
+    "afterSnapshotToken": "snap-after",
+    "finalPackageName": "com.example.target",
+    "finalActivity": "TargetActivity",
     "resolution": {
       "requestedStrategy": "contentDesc",
       "effectiveStrategy": "contentDesc",
@@ -1489,6 +1524,12 @@ Other normal selector forms:
 * `422` / `ACCESSIBILITY_ACTION_FAILED` — click dispatched but did not succeed
 * `503` / `ACCESSIBILITY_UNAVAILABLE` — accessibility service not connected
 
+Selector-driven click failures may also include bounded error details such as:
+
+* `failureCategory`
+* `selectorMatchCount`
+* `actionableMatchCount`
+
 ### Notes
 
 Differs from `POST /tap` with `type=node` in that `/click` is node-semantic only (no coordinate support) and uses `ACTION_CLICK` + clickable-parent fallback. Use `/tap` for coordinate-based tapping.
@@ -1497,6 +1538,7 @@ When the UI has already changed, prefer selector-based re-resolution over reusin
 Selector-based `/click` now defaults to actionable-target resolution. That means visible text on a child node can still activate a clickable wrapper or parent without requiring an explicit `clickable=true` hint.
 For `text` and `desc` selectors, `/click` also retries a bounded fallback chain across exact/contains and `text`/`contentDesc` surfaces before failing, which reduces brittleness on feed/card surfaces where the visible label is truncated, nested, or only exposed on another semantic surface.
 `attemptedPath` exposes the dispatch path that actually executed, such as `node_click` or `clickable_parent_click`.
+`stateChanged`, `beforeSnapshotToken`, `afterSnapshotToken`, `finalPackageName`, and `finalActivity` provide a bounded observed-effect summary. `performed=true` means dispatch succeeded; it does not prove the intended visible effect happened.
 `resolution` exposes the selector-resolution path before dispatch:
 
 - `requestedStrategy`: the selector strategy requested by the caller
@@ -1522,15 +1564,27 @@ The current accepted conclusion is that inspectable wrapper resolution is now go
 
 ### Purpose
 
-Set text in the currently focused editable field via `ACTION_SET_TEXT`. No keyboard simulation.
+Perform explicit focused-input operations without conflating text mutation and key dispatch.
 
 ### Request Body
 
 ```json
 {
-  "text": "hello world"
+  "textAction": "set",
+  "text": "hello world",
+  "key": "enter"
 }
 ```
+
+Supported text mutation modes:
+
+* `set`
+* `append`
+* `clear`
+
+Supported keys:
+
+* `enter`
 
 ### Success Response
 
@@ -1539,7 +1593,22 @@ Set text in the currently focused editable field via `ACTION_SET_TEXT`. No keybo
   "ok": true,
   "data": {
     "performed": true,
-    "backendUsed": "accessibility"
+    "textChanged": true,
+    "keyDispatched": true,
+    "textMutation": {
+      "requested": true,
+      "performed": true,
+      "action": "set",
+      "previousText": "",
+      "text": "hello world",
+      "backendUsed": "accessibility"
+    },
+    "keyDispatch": {
+      "requested": true,
+      "performed": true,
+      "key": "enter",
+      "backendUsed": "accessibility"
+    }
   },
   "meta": {
     "requestId": "req_input_1",
@@ -1550,12 +1619,15 @@ Set text in the currently focused editable field via `ACTION_SET_TEXT`. No keybo
 
 ### Error Codes
 
-* `400` / `INVALID_ARGUMENT` — `text` missing or not a string
-* `422` / `ACCESSIBILITY_ACTION_FAILED` — no focused editable target or action failed
+* `400` / `INVALID_ARGUMENT` — invalid or incomplete explicit input operation request
+* `422` / `ACCESSIBILITY_ACTION_FAILED` — no focused editable target or one of the requested operations failed
 
 ### Notes
 
-Differs from `POST /type` in that `/input` uses `ACTION_SET_TEXT` directly on the focused node (fast, no keyboard). `POST /type` is retained for character-by-character keyboard simulation use cases.
+`/input` now treats text mutation and key dispatch as separate explicit operations.
+Sending Enter must be expressed as `key: "enter"` and does not implicitly clear or replace text.
+If both text mutation and key dispatch are requested, Ghosthand performs them in sequence and reports each result separately.
+`POST /type` remains the keyboard-simulation route when character-by-character typing is specifically desired.
 
 ---
 
@@ -1719,66 +1791,36 @@ Dispatch an arbitrary multi-stroke gesture.
 
 ---
 
-## 7.25 `POST /launch`
-
-### Purpose
-
-Launch an installed app by package name through the standard Android package launch intent path.
-
-### Request Body
-
-```json
-{
-  "packageName": "com.android.settings"
-}
-```
-
-### Success Response
-
-```json
-{
-  "ok": true,
-  "data": {
-    "launched": true,
-    "packageName": "com.android.settings",
-    "label": "Settings",
-    "strategy": "package_launch_intent",
-    "reason": "launched"
-  }
-}
-```
-
-### Failure Cases
-
-- HTTP `404` + `PACKAGE_NOT_FOUND`
-  - the package is not installed
-- HTTP `422` + `NO_LAUNCH_INTENT`
-  - the package is installed but does not expose a standard launch intent
-- HTTP `503` + `LAUNCH_FAILED`
-  - Ghosthand found a launch intent but the launch attempt failed
-
-Failure responses include `error.details` with:
-
-- `launched`
-- `packageName`
-- `label`
-- `strategy`
-- `reason`
-- `error` when a launch attempt throws
-
-### Notes
-
-- This route is intentionally narrow: package-name launch only.
-- It does not accept component names, deep links, extras, or a generic intent DSL.
-- It does not fake success when a package is missing or has no launcher intent.
-
 ## 7.26 `POST /back`
 
 Perform `GLOBAL_ACTION_BACK`. No request body required.
 
+Successful responses also expose bounded observed-effect fields:
+
+* `attemptedPath`
+* `stateChanged`
+* `beforeSnapshotToken`
+* `afterSnapshotToken`
+* `finalPackageName`
+* `finalActivity`
+
+## Launch De-scope Note
+
+Non-root `/launch` is intentionally removed from the supported Ghosthand 1.x runtime surface because it is not reliable enough to remain a truthful capability.
+Future app launch work is deferred to a root-backed 2.0 feature line rather than kept as a misleading best-effort primitive in 1.x.
+
 ## 7.27 `POST /home`
 
 Perform `GLOBAL_ACTION_HOME`. No request body required.
+
+Successful responses also expose bounded observed-effect fields:
+
+* `attemptedPath`
+* `stateChanged`
+* `beforeSnapshotToken`
+* `afterSnapshotToken`
+* `finalPackageName`
+* `finalActivity`
 
 ## 7.28 `POST /recents`
 
@@ -1887,6 +1929,25 @@ Poll the current accessibility tree until a condition is satisfied or a timeout 
 ```
 
 Supported strategies match `/find`, including `focused`.
+
+The `condition` object accepts the same selector aliases as `/find` and `/click`. Both of these are valid:
+
+```json
+{
+  "condition": {
+    "text": "Settings"
+  }
+}
+```
+
+```json
+{
+  "condition": {
+    "strategy": "text",
+    "query": "Settings"
+  }
+}
+```
 
 ### Success Response
 

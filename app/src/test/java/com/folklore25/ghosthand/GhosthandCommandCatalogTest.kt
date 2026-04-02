@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.18", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.19", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -84,12 +84,17 @@ class GhosthandCommandCatalogTest {
         assertEquals("prompt_completion", clickRoute.transportContract)
         assertTrue(clickRoute.operatorUses.contains("content_desc_selector"))
         assertTrue(clickRoute.responseFields.contains("performed"))
+        assertTrue(clickRoute.responseFields.contains("stateChanged"))
         assertTrue(clickRoute.responseFields.contains("backendUsed"))
         assertTrue(clickRoute.responseFields.contains("attemptedPath"))
         assertTrue(clickRoute.responseFields.contains("resolution"))
+        assertTrue(clickRoute.responseFields.contains("failureCategory"))
+        assertTrue(clickRoute.responseFields.contains("selectorMatchCount"))
+        assertTrue(clickRoute.responseFields.contains("actionableMatchCount"))
         assertTrue(clickRoute.responseFields.contains("disclosure"))
         assertTrue(clickRoute.description.contains("actionable clickable target by default"))
         assertTrue(clickRoute.description.contains("requested-vs-matched selector truth"))
+        assertTrue(clickRoute.description.contains("failure categories"))
         assertTrue(clickRoute.description.contains("contentDesc"))
         assertNotNull(clickRoute.exampleRequest)
         assertNotNull(clickRoute.exampleResponse)
@@ -97,8 +102,13 @@ class GhosthandCommandCatalogTest {
         val inputRoute = GhosthandCommandCatalog.commands.first { it.id == "input" }
         assertEquals("focused_editable", inputRoute.focusRequirement)
         assertEquals("stable", inputRoute.stability)
-        assertTrue(inputRoute.responseFields.contains("previousText"))
-        assertTrue(inputRoute.responseFields.contains("action"))
+        assertTrue(inputRoute.responseFields.contains("textChanged"))
+        assertTrue(inputRoute.responseFields.contains("keyDispatched"))
+        assertTrue(inputRoute.responseFields.contains("textMutation"))
+        assertTrue(inputRoute.responseFields.contains("keyDispatch"))
+        val inputParamNames = inputRoute.params.map { it.name }
+        assertTrue(inputParamNames.contains("textAction"))
+        assertTrue(inputParamNames.contains("key"))
         assertNotNull(inputRoute.exampleRequest)
         assertFalse(inputRoute.params.isEmpty())
 
@@ -122,12 +132,14 @@ class GhosthandCommandCatalogTest {
         assertEquals("required", waitConditionRoute.delayedAcceptance)
         assertNotNull(waitConditionRoute.selectorSupport)
         assertTrue(waitConditionRoute.selectorSupport!!.strategies.contains("focused"))
+        assertTrue(waitConditionRoute.description.contains("same selector aliases"))
         assertTrue(waitConditionRoute.responseFields.contains("satisfied"))
         assertTrue(waitConditionRoute.responseFields.contains("conditionMet"))
         assertTrue(waitConditionRoute.responseFields.contains("stateChanged"))
         assertTrue(waitConditionRoute.responseFields.contains("timedOut"))
         assertTrue(waitConditionRoute.responseFields.contains("reason"))
         assertTrue(waitConditionRoute.responseFields.contains("disclosure"))
+        assertTrue(waitConditionRoute.params.first { it.name == "condition" }.description.contains("text/desc/id aliases"))
 
         val waitUiRoute = GhosthandCommandCatalog.commands.first { it.id == "wait_ui_change" }
         assertTrue(waitUiRoute.description.contains("conditionMet"))
@@ -139,6 +151,22 @@ class GhosthandCommandCatalogTest {
         assertTrue(waitUiRoute.responseFields.contains("disclosure"))
         assertEquals("final_settled_state", waitUiRoute.stateTruth)
         assertEquals("transition_observed_during_window", waitUiRoute.changeSignal)
+
+        val backRoute = GhosthandCommandCatalog.commands.first { it.id == "back" }
+        assertTrue(backRoute.responseFields.contains("stateChanged"))
+        assertTrue(backRoute.responseFields.contains("beforeSnapshotToken"))
+        assertTrue(backRoute.responseFields.contains("afterSnapshotToken"))
+        assertTrue(backRoute.responseFields.contains("finalPackageName"))
+        assertTrue(backRoute.responseFields.contains("finalActivity"))
+        assertTrue(backRoute.description.contains("observed effect"))
+
+        val homeRoute = GhosthandCommandCatalog.commands.first { it.id == "home" }
+        assertTrue(homeRoute.responseFields.contains("stateChanged"))
+        assertTrue(homeRoute.responseFields.contains("beforeSnapshotToken"))
+        assertTrue(homeRoute.responseFields.contains("afterSnapshotToken"))
+        assertTrue(homeRoute.responseFields.contains("finalPackageName"))
+        assertTrue(homeRoute.responseFields.contains("finalActivity"))
+        assertTrue(homeRoute.description.contains("observed effect"))
     }
 
     @Test
@@ -159,6 +187,10 @@ class GhosthandCommandCatalogTest {
         assertTrue(screenRoute.responseFields.contains("omittedInvalidBoundsCount"))
         assertTrue(screenRoute.responseFields.contains("omittedLowSignalCount"))
         assertTrue(screenRoute.responseFields.contains("omittedNodeCount"))
+        assertTrue(screenRoute.responseFields.contains("omittedCategories"))
+        assertTrue(screenRoute.responseFields.contains("omittedSummary"))
+        assertTrue(screenRoute.responseFields.contains("invalidBoundsPresent"))
+        assertTrue(screenRoute.responseFields.contains("lowSignalPresent"))
         assertTrue(screenRoute.responseFields.contains("disclosure"))
         assertEquals("structured_actionable_surface_snapshot", screenRoute.stateTruth)
         assertTrue(screenRoute.operatorUses.contains("structured_actionable_surface_snapshot"))
@@ -221,16 +253,6 @@ class GhosthandCommandCatalogTest {
 
         val homeRoute = GhosthandCommandCatalog.commands.first { it.id == "home" }
         assertEquals("prompt_completion", homeRoute.transportContract)
-
-        val launchRoute = GhosthandCommandCatalog.commands.first { it.id == "launch" }
-        assertEquals("prompt_completion", launchRoute.transportContract)
-        assertEquals("/launch", launchRoute.path)
-        assertEquals(
-            listOf("launched", "packageName", "label", "strategy", "reason"),
-            launchRoute.responseFields
-        )
-        assertEquals("packageName", launchRoute.params.single().name)
-        assertEquals("body", launchRoute.params.single().location)
 
         val infoRoute = GhosthandCommandCatalog.commands.first { it.id == "info" }
         assertEquals("mixed_state_summary", infoRoute.stateTruth)

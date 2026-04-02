@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.18"
+    const val schemaVersion = "1.19"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -95,7 +95,7 @@ object GhosthandCommandCatalog {
             method = "GET",
             path = "/screen",
             description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "elements", "disclosure"),
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "elements", "disclosure"),
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
             referenceStability = "snapshot_ephemeral",
@@ -172,8 +172,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/click",
-            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, and may include compact disclosure when selector/actionability assumptions are easy to misread",
-            responseFields = listOf("performed", "backendUsed", "attemptedPath", "resolution", "disclosure"),
+            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, returns bounded failure categories plus selector/actionability evidence on selector misses, and may include compact disclosure when selector/actionability assumptions are easy to misread",
+            responseFields = listOf("performed", "stateChanged", "backendUsed", "attemptedPath", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "resolution", "failureCategory", "selectorMatchCount", "actionableMatchCount", "disclosure"),
             transportContract = "prompt_completion",
             operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector"),
             referenceStability = "snapshot_ephemeral",
@@ -254,15 +254,17 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/input",
-            description = "Set, append, or clear text in the current focused field",
-            responseFields = listOf("performed", "backendUsed", "text", "previousText", "action"),
+            description = "Explicit focused-input interaction route: mutate text, dispatch Enter, or request both in sequence without implicitly clearing existing text",
+            responseFields = listOf("performed", "textChanged", "keyDispatched", "textMutation", "keyDispatch"),
             params = listOf(
-                GhosthandCommandParam("text", "string", "body", false, "Text payload"),
-                GhosthandCommandParam("append", "boolean", "body", false, "Append to existing field content"),
-                GhosthandCommandParam("clear", "boolean", "body", false, "Clear the field before applying text")
+                GhosthandCommandParam("text", "string", "body", false, "Text payload for explicit mutation"),
+                GhosthandCommandParam("textAction", "string", "body", false, "Text mutation mode", listOf("set", "append", "clear")),
+                GhosthandCommandParam("key", "string", "body", false, "Explicit key dispatch", listOf("enter")),
+                GhosthandCommandParam("append", "boolean", "body", false, "Legacy alias for textAction=append"),
+                GhosthandCommandParam("clear", "boolean", "body", false, "Legacy alias for textAction=clear")
             ),
             focusRequirement = "focused_editable",
-            exampleRequest = mapOf("text" to "wifi", "clear" to true)
+            exampleRequest = mapOf("textAction" to "set", "text" to "wifi", "key" to "enter")
         ),
         GhosthandCommandDescriptor(
             id = "set_text",
@@ -354,35 +356,12 @@ object GhosthandCommandCatalog {
             delayedAcceptance = "recommended"
         ),
         GhosthandCommandDescriptor(
-            id = "launch",
-            category = "interaction",
-            method = "POST",
-            path = "/launch",
-            description = "Launch an installed app by package name through the standard Android package launch intent path",
-            responseFields = listOf("launched", "packageName", "label", "strategy", "reason"),
-            transportContract = "prompt_completion",
-            params = listOf(
-                GhosthandCommandParam("packageName", "string", "body", true, "Installed Android package name to launch")
-            ),
-            exampleRequest = mapOf("packageName" to "com.android.settings"),
-            exampleResponse = mapOf(
-                "ok" to true,
-                "data" to mapOf(
-                    "launched" to true,
-                    "packageName" to "com.android.settings",
-                    "label" to "Settings",
-                    "strategy" to "package_launch_intent",
-                    "reason" to "launched"
-                )
-            )
-        ),
-        GhosthandCommandDescriptor(
             id = "back",
             category = "interaction",
             method = "POST",
             path = "/back",
-            description = "Perform system back",
-            responseFields = listOf("performed"),
+            description = "Perform system back and report bounded observed effect fields alongside dispatch truth",
+            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
             transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
@@ -390,8 +369,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/home",
-            description = "Go to launcher home",
-            responseFields = listOf("performed"),
+            description = "Go to launcher home and report bounded observed effect fields alongside dispatch truth",
+            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
             transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
@@ -469,10 +448,10 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "POST",
             path = "/wait",
-            description = "Wait for a matching tree condition; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change",
+            description = "Wait for a matching tree condition using the same selector aliases and strategies as `/find`; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change",
             responseFields = listOf("satisfied", "conditionMet", "stateChanged", "timedOut", "elapsedMs", "node", "reason", "disclosure"),
             params = listOf(
-                GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition"),
+                GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition; use text/desc/id aliases or explicit strategy+query"),
                 GhosthandCommandParam("timeoutMs", "long", "body", false, "Maximum wait duration in milliseconds"),
                 GhosthandCommandParam("intervalMs", "long", "body", false, "Polling interval in milliseconds")
             ),

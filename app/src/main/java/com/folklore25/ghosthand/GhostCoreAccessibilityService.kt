@@ -173,6 +173,25 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
         return result
     }
 
+    override fun performImeEnterAction(): KeyInputDispatchResult {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return performImeEnterActionInternal()
+        }
+
+        var result = KeyInputDispatchResult(
+            targetFound = false,
+            performed = false,
+            attemptedPath = "root_unavailable"
+        )
+        val latch = CountDownLatch(1)
+        mainHandler.post {
+            result = performImeEnterActionInternal()
+            latch.countDown()
+        }
+        latch.await(ACTION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        return result
+    }
+
     override fun performNodeClick(nodeId: String): NodeClickDispatchResult {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             return performNodeClickInternal(nodeId)
@@ -633,6 +652,24 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
             targetFound = true,
             performed = performed,
             attemptedPath = "focused_set_text"
+        )
+    }
+
+    private fun performImeEnterActionInternal(): KeyInputDispatchResult {
+        val targetNode = findEditableInputFocusNode()
+            ?: return KeyInputDispatchResult(
+                targetFound = false,
+                performed = false,
+                attemptedPath = "focused_editable_missing"
+            )
+
+        val performed = targetNode.performAction(
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id
+        )
+        return KeyInputDispatchResult(
+            targetFound = true,
+            performed = performed,
+            attemptedPath = "focused_ime_enter"
         )
     }
 

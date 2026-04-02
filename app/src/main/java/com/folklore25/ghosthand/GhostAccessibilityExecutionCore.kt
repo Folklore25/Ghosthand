@@ -18,6 +18,7 @@ interface GhostAccessibilityExecutionCore {
     fun currentConnectionIdForDispatch(): Int
     fun performNodeClick(nodeId: String): NodeClickDispatchResult
     fun performSetText(text: CharSequence): TextInputDispatchResult
+    fun performImeEnterAction(): KeyInputDispatchResult
     fun performTapGesture(x: Int, y: Int): Boolean
     fun performSwipeGesture(
         fromX: Int,
@@ -50,6 +51,12 @@ data class NodeClickDispatchResult(
 )
 
 data class TextInputDispatchResult(
+    val targetFound: Boolean,
+    val performed: Boolean,
+    val attemptedPath: String
+)
+
+data class KeyInputDispatchResult(
     val targetFound: Boolean,
     val performed: Boolean,
     val attemptedPath: String
@@ -93,7 +100,16 @@ data class GesturePoint(
 
 data class GlobalActionResult(
     val performed: Boolean,
-    val attemptedPath: String
+    val attemptedPath: String,
+    val effect: ActionEffectObservation? = null
+)
+
+data class ActionEffectObservation(
+    val stateChanged: Boolean,
+    val beforeSnapshotToken: String?,
+    val afterSnapshotToken: String?,
+    val finalPackageName: String?,
+    val finalActivity: String?
 )
 
 object GhostAccessibilityExecutionCoreRegistry {

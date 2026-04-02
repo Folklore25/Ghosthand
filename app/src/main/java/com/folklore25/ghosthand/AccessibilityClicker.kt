@@ -53,31 +53,39 @@ data class ClickAttemptResult(
     val backendUsed: String?,
     val failureReason: ClickFailureReason?,
     val attemptedPath: String,
-    val selectorResolution: ClickSelectorResolution? = null
+    val selectorResolution: ClickSelectorResolution? = null,
+    val selectorMissHint: FindMissHint? = null,
+    val effect: ActionEffectObservation? = null
 ) {
     companion object {
         fun success(
             attemptedPath: String,
-            selectorResolution: ClickSelectorResolution? = null
+            selectorResolution: ClickSelectorResolution? = null,
+            effect: ActionEffectObservation? = null
         ): ClickAttemptResult = ClickAttemptResult(
             performed = true,
             backendUsed = "accessibility",
             failureReason = null,
             attemptedPath = attemptedPath,
-            selectorResolution = selectorResolution
+            selectorResolution = selectorResolution,
+            effect = effect
         )
 
         fun failure(
             reason: ClickFailureReason,
             attemptedPath: String,
-            selectorResolution: ClickSelectorResolution? = null
+            selectorResolution: ClickSelectorResolution? = null,
+            selectorMissHint: FindMissHint? = null,
+            effect: ActionEffectObservation? = null
         ): ClickAttemptResult =
             ClickAttemptResult(
                 performed = false,
                 backendUsed = null,
                 failureReason = reason,
                 attemptedPath = attemptedPath,
-                selectorResolution = selectorResolution
+                selectorResolution = selectorResolution,
+                selectorMissHint = selectorMissHint,
+                effect = effect
             )
     }
 }

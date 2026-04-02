@@ -7,7 +7,41 @@
 package com.folklore25.ghosthand
 
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
+
+data class GhosthandInputRequest(
+    val textAction: InputTextAction? = null,
+    val text: String? = null,
+    val key: InputKey? = null
+)
+
+data class GhosthandInputRequestParseResult(
+    val request: GhosthandInputRequest? = null,
+    val errorMessage: String? = null
+)
+
+enum class InputTextAction(val wireValue: String) {
+    SET("set"),
+    APPEND("append"),
+    CLEAR("clear");
+
+    companion object {
+        fun fromWireValue(value: String?): InputTextAction? {
+            return entries.firstOrNull { it.wireValue == value }
+        }
+    }
+}
+
+enum class InputKey(val wireValue: String) {
+    ENTER("enter");
+
+    companion object {
+        fun fromWireValue(value: String?): InputKey? {
+            return entries.firstOrNull { it.wireValue == value }
+        }
+    }
+}
 
 data class GhosthandDisclosure(
     val kind: String,
@@ -56,15 +90,33 @@ object GhosthandApiPayloads {
     }
 
     fun clickPayload(result: ClickAttemptResult): JSONObject {
+        return fieldsToJson(clickFields(result))
+    }
+
+    fun clickFields(result: ClickAttemptResult): Map<String, Any?> {
         val payload = linkedMapOf<String, Any?>(
             "performed" to result.performed,
             "backendUsed" to result.backendUsed,
             "attemptedPath" to result.attemptedPath
         )
+        result.effect?.let { effect ->
+            payload.putAll(actionEffectFields(effect))
+        }
         result.selectorResolution?.let { resolution ->
             payload["resolution"] = clickResolutionFields(resolution)
         }
-        return fieldsToJson(payload)
+        return payload
+    }
+
+    fun globalActionFields(result: GlobalActionResult): Map<String, Any?> {
+        return linkedMapOf<String, Any?>(
+            "performed" to result.performed,
+            "attemptedPath" to result.attemptedPath
+        ).apply {
+            result.effect?.let { effect ->
+                putAll(actionEffectFields(effect))
+            }
+        }
     }
 
     fun treeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> {
@@ -186,6 +238,16 @@ object GhosthandApiPayloads {
             omittedInvalidBoundsCount = omittedInvalidBoundsCount,
             omittedLowSignalCount = omittedLowSignalCount,
             omittedNodeCount = omittedNodeCount,
+            omittedCategories = buildOmittedCategories(
+                omittedInvalidBoundsCount = omittedInvalidBoundsCount,
+                omittedLowSignalCount = omittedLowSignalCount
+            ),
+            omittedSummary = buildOmittedSummary(
+                omittedInvalidBoundsCount = omittedInvalidBoundsCount,
+                omittedLowSignalCount = omittedLowSignalCount
+            ),
+            invalidBoundsPresent = omittedInvalidBoundsCount > 0,
+            lowSignalPresent = omittedLowSignalCount > 0,
             elements = elements,
             source = ScreenReadMode.ACCESSIBILITY.wireValue,
             accessibilityElementCount = elements.size,
@@ -208,6 +270,10 @@ object GhosthandApiPayloads {
             "omittedInvalidBoundsCount" to payload.omittedInvalidBoundsCount,
             "omittedLowSignalCount" to payload.omittedLowSignalCount,
             "omittedNodeCount" to payload.omittedNodeCount,
+            "omittedCategories" to payload.omittedCategories,
+            "omittedSummary" to payload.omittedSummary,
+            "invalidBoundsPresent" to payload.invalidBoundsPresent,
+            "lowSignalPresent" to payload.lowSignalPresent,
             "source" to payload.source,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
@@ -319,6 +385,28 @@ object GhosthandApiPayloads {
         )
     }
 
+    fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {
+        return linkedMapOf(
+            "stateChanged" to effect.stateChanged,
+            "beforeSnapshotToken" to effect.beforeSnapshotToken,
+            "afterSnapshotToken" to effect.afterSnapshotToken,
+            "finalPackageName" to effect.finalPackageName,
+            "finalActivity" to effect.finalActivity
+        )
+    }
+
+    fun clickFailureFields(hint: FindMissHint): Map<String, Any?> {
+        return linkedMapOf(
+            "failureCategory" to hint.failureCategory,
+            "selectorMatchCount" to hint.selectorMatchCount,
+            "actionableMatchCount" to hint.actionableMatchCount,
+            "searchedSurface" to hint.searchedSurface,
+            "matchSemantics" to hint.matchSemantics,
+            "matchedSurface" to hint.matchedSurface,
+            "matchedMatchSemantics" to hint.matchedMatchSemantics
+        )
+    }
+
     fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> {
         return linkedMapOf(
             "kind" to disclosure.kind,
@@ -330,6 +418,117 @@ object GhosthandApiPayloads {
 
     fun disclosureJson(disclosure: GhosthandDisclosure): JSONObject {
         return fieldsToJson(disclosureFields(disclosure))
+    }
+
+    fun parseInputRequest(body: JSONObject): GhosthandInputRequestParseResult {
+        return parseInputRequest(
+            linkedMapOf<String, Any?>().apply {
+                body.keys().forEach { key ->
+                    put(key, if (body.isNull(key)) null else body.opt(key))
+                }
+            }
+        )
+    }
+
+    fun parseInputRequest(body: Map<String, Any?>): GhosthandInputRequestParseResult {
+        val text = when {
+            body.containsKey("text") && body["text"] != null -> body["text"] as? String
+                ?: return GhosthandInputRequestParseResult(errorMessage = "text must be a string.")
+            else -> null
+        }
+        val explicitTextAction = when {
+            body.containsKey("textAction") && body["textAction"] != null -> {
+                val raw = body["textAction"] as? String
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be a string.")
+                InputTextAction.fromWireValue(raw)
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be one of: set, append, clear.")
+            }
+            else -> null
+        }
+        val key = when {
+            body.containsKey("key") && body["key"] != null -> {
+                val raw = body["key"] as? String
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be a string.")
+                InputKey.fromWireValue(raw)
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be one of: enter.")
+            }
+            else -> null
+        }
+
+        val append = body["append"] as? Boolean ?: false
+        val clear = body["clear"] as? Boolean ?: false
+        if (explicitTextAction == null && append && clear) {
+            return GhosthandInputRequestParseResult(errorMessage = "append and clear cannot both be true.")
+        }
+
+        val textAction = explicitTextAction ?: when {
+            append -> InputTextAction.APPEND
+            text != null -> InputTextAction.SET
+            clear -> InputTextAction.CLEAR
+            else -> null
+        }
+
+        if (textAction == null && key == null) {
+            return GhosthandInputRequestParseResult(errorMessage = "At least one explicit /input operation is required.")
+        }
+        if (textAction == InputTextAction.CLEAR && text != null) {
+            return GhosthandInputRequestParseResult(errorMessage = "text must be omitted when textAction=clear.")
+        }
+        if (textAction != null && textAction != InputTextAction.CLEAR && text == null) {
+            return GhosthandInputRequestParseResult(
+                errorMessage = "text is required when textAction=${textAction.wireValue}."
+            )
+        }
+
+        return GhosthandInputRequestParseResult(
+            request = GhosthandInputRequest(
+                textAction = textAction,
+                text = text,
+                key = key
+            )
+        )
+    }
+
+    fun parseInputRequest(body: String): GhosthandInputRequestParseResult {
+        return try {
+            parseInputRequest(JSONObject(body))
+        } catch (_: JSONException) {
+            GhosthandInputRequestParseResult(errorMessage = "Request body must be valid JSON.")
+        }
+    }
+
+    fun inputResultFields(result: InputOperationResult): Map<String, Any?> {
+        return linkedMapOf(
+            "performed" to result.performed,
+            "textChanged" to (result.textMutation?.performed ?: false),
+            "keyDispatched" to (result.keyDispatch?.performed ?: false),
+            "textMutation" to result.textMutation?.let { mutation ->
+                linkedMapOf(
+                    "requested" to mutation.requested,
+                    "performed" to mutation.performed,
+                    "action" to mutation.action,
+                    "previousText" to mutation.previousText,
+                    "text" to mutation.finalText,
+                    "backendUsed" to mutation.backendUsed,
+                    "failureReason" to mutation.failureReason?.name,
+                    "attemptedPath" to mutation.attemptedPath
+                )
+            },
+            "keyDispatch" to result.keyDispatch?.let { dispatch ->
+                linkedMapOf(
+                    "requested" to dispatch.requested,
+                    "performed" to dispatch.performed,
+                    "key" to dispatch.key,
+                    "backendUsed" to dispatch.backendUsed,
+                    "failureReason" to dispatch.failureReason?.name,
+                    "attemptedPath" to dispatch.attemptedPath
+                )
+            }
+        )
+    }
+
+    fun inputResultJson(result: InputOperationResult): JSONObject {
+        return fieldsToJson(inputResultFields(result))
     }
 
     private fun buildRawTreeFields(
@@ -414,6 +613,27 @@ object GhosthandApiPayloads {
 
     private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
         return if (partialOutput) listOf("partial_output") else emptyList()
+    }
+
+    private fun buildOmittedCategories(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): List<String> {
+        return buildList {
+            if (omittedInvalidBoundsCount > 0) add("invalid_bounds")
+            if (omittedLowSignalCount > 0) add("low_signal")
+        }
+    }
+
+    private fun buildOmittedSummary(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): String? {
+        val parts = buildList {
+            if (omittedInvalidBoundsCount > 0) add("$omittedInvalidBoundsCount invalid-bounds")
+            if (omittedLowSignalCount > 0) add("$omittedLowSignalCount low-signal")
+        }
+        return if (parts.isEmpty()) null else "Omitted ${parts.joinToString(" and ")} nodes."
     }
 }
 

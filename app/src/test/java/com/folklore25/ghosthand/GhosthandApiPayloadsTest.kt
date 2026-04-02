@@ -8,11 +8,151 @@ package com.folklore25.ghosthand
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GhosthandApiPayloadsTest {
+    @Test
+    fun parseInputRequestDefaultsPlainTextToSetAction() {
+        val parsed = GhosthandApiPayloads.parseInputRequest(mapOf("text" to "hello world"))
+
+        assertNull(parsed.errorMessage)
+        assertNotNull(parsed.request)
+        assertEquals(InputTextAction.SET, parsed.request!!.textAction)
+        assertEquals("hello world", parsed.request!!.text)
+        assertEquals(null, parsed.request!!.key)
+    }
+
+    @Test
+    fun parseInputRequestRejectsShortcutLikeKeys() {
+        val parsed = GhosthandApiPayloads.parseInputRequest(mapOf("key" to "ctrl+enter"))
+
+        assertEquals("key must be one of: enter.", parsed.errorMessage)
+        assertEquals(null, parsed.request)
+    }
+
+    @Test
+    fun inputResultFieldsExposeSeparateTextAndKeyTruth() {
+        val fields = GhosthandApiPayloads.inputResultFields(
+            InputOperationResult(
+                performed = false,
+                textMutation = InputTextMutationResult(
+                    requested = true,
+                    performed = true,
+                    action = "set",
+                    previousText = "old",
+                    finalText = "new",
+                    backendUsed = "accessibility",
+                    failureReason = null,
+                    attemptedPath = "focused_set_text"
+                ),
+                keyDispatch = InputKeyDispatchResult(
+                    requested = true,
+                    performed = false,
+                    key = "enter",
+                    backendUsed = null,
+                    failureReason = InputKeyFailureReason.ACTION_FAILED,
+                    attemptedPath = "focused_ime_enter"
+                )
+            )
+        )
+
+        assertEquals(false, fields["performed"])
+        assertEquals(true, fields["textChanged"])
+        assertEquals(false, fields["keyDispatched"])
+        val textMutation = fields["textMutation"] as Map<*, *>
+        val keyDispatch = fields["keyDispatch"] as Map<*, *>
+        assertEquals("set", textMutation["action"])
+        assertEquals("new", textMutation["text"])
+        assertEquals("enter", keyDispatch["key"])
+        assertEquals("ACTION_FAILED", keyDispatch["failureReason"])
+    }
+
+    @Test
+    fun clickPayloadIncludesObservedEffectFields() {
+        val fields = GhosthandApiPayloads.actionEffectFields(
+            ActionEffectObservation(
+                stateChanged = false,
+                beforeSnapshotToken = "snap-before",
+                afterSnapshotToken = "snap-after",
+                finalPackageName = "com.example.target",
+                finalActivity = "TargetActivity"
+            )
+        )
+
+        assertEquals(false, fields["stateChanged"])
+        assertEquals("snap-before", fields["beforeSnapshotToken"])
+        assertEquals("snap-after", fields["afterSnapshotToken"])
+        assertEquals("com.example.target", fields["finalPackageName"])
+        assertEquals("TargetActivity", fields["finalActivity"])
+    }
+
+    @Test
+    fun clickFieldsIncludeObservedEffectFields() {
+        val fields = GhosthandApiPayloads.clickFields(
+            ClickAttemptResult.success(
+                attemptedPath = "node_click",
+                effect = ActionEffectObservation(
+                    stateChanged = false,
+                    beforeSnapshotToken = "snap-before",
+                    afterSnapshotToken = "snap-after",
+                    finalPackageName = "com.example.target",
+                    finalActivity = "TargetActivity"
+                )
+            )
+        )
+
+        assertEquals(true, fields["performed"])
+        assertEquals(false, fields["stateChanged"])
+        assertEquals("snap-before", fields["beforeSnapshotToken"])
+        assertEquals("snap-after", fields["afterSnapshotToken"])
+        assertEquals("com.example.target", fields["finalPackageName"])
+        assertEquals("TargetActivity", fields["finalActivity"])
+    }
+
+    @Test
+    fun globalActionFieldsExposeDispatchAndObservedStateSeparately() {
+        val fields = GhosthandApiPayloads.globalActionFields(
+            GlobalActionResult(
+                performed = true,
+                attemptedPath = "global_action",
+                effect = ActionEffectObservation(
+                    stateChanged = true,
+                    beforeSnapshotToken = "before",
+                    afterSnapshotToken = "after",
+                    finalPackageName = "com.android.launcher",
+                    finalActivity = "Launcher"
+                )
+            )
+        )
+
+        assertEquals(true, fields["performed"])
+        assertEquals(true, fields["stateChanged"])
+        assertEquals("before", fields["beforeSnapshotToken"])
+        assertEquals("after", fields["afterSnapshotToken"])
+        assertEquals("com.android.launcher", fields["finalPackageName"])
+        assertEquals("Launcher", fields["finalActivity"])
+    }
+
+    @Test
+    fun clickFailureFieldsExposeBoundedFailureEvidence() {
+        val fields = GhosthandApiPayloads.clickFailureFields(
+            FindMissHint(
+                searchedSurface = "text",
+                matchSemantics = "exact",
+                failureCategory = "actionable_target_not_found",
+                selectorMatchCount = 1,
+                actionableMatchCount = 0
+            )
+        )
+
+        assertEquals("actionable_target_not_found", fields["failureCategory"])
+        assertEquals(1, fields["selectorMatchCount"])
+        assertEquals(0, fields["actionableMatchCount"])
+    }
+
     @Test
     fun disclosureJsonSerializesCompactDisclosureShape() {
         val disclosure = GhosthandDisclosure(
@@ -131,6 +271,10 @@ class GhosthandApiPayloadsTest {
         assertTrue(warnings.contains("partial_output"))
         assertEquals(true, payload["foregroundStableDuringCapture"])
         assertEquals(true, payload["partialOutput"])
+        assertEquals(listOf("invalid_bounds", "low_signal"), payload["omittedCategories"])
+        assertEquals("Omitted 1 invalid-bounds and 1 low-signal nodes.", payload["omittedSummary"])
+        assertEquals(true, payload["invalidBoundsPresent"])
+        assertEquals(true, payload["lowSignalPresent"])
         assertEquals(3, payload["candidateNodeCount"])
         assertEquals(1, payload["returnedElementCount"])
         assertEquals(1, payload["omittedInvalidBoundsCount"])
@@ -188,6 +332,10 @@ class GhosthandApiPayloadsTest {
         assertTrue(warnings.contains("omitted_low_signal_nodes"))
         assertTrue(warnings.contains("partial_output"))
         assertEquals(true, payload["partialOutput"])
+        assertEquals(listOf("low_signal"), payload["omittedCategories"])
+        assertEquals("Omitted 1 low-signal nodes.", payload["omittedSummary"])
+        assertEquals(false, payload["invalidBoundsPresent"])
+        assertEquals(true, payload["lowSignalPresent"])
         assertEquals(3, payload["candidateNodeCount"])
         assertEquals(2, payload["returnedElementCount"])
         assertEquals(1, payload["omittedLowSignalCount"])
@@ -220,6 +368,10 @@ class GhosthandApiPayloadsTest {
         val elements = payload["elements"] as List<*>
         assertFalse(warnings.contains("omitted_low_signal_nodes"))
         assertEquals(false, payload["partialOutput"])
+        assertEquals(emptyList<String>(), payload["omittedCategories"])
+        assertEquals(null, payload["omittedSummary"])
+        assertEquals(false, payload["invalidBoundsPresent"])
+        assertEquals(false, payload["lowSignalPresent"])
         assertEquals(1, payload["candidateNodeCount"])
         assertEquals(1, payload["returnedElementCount"])
         assertEquals(0, payload["omittedLowSignalCount"])
@@ -298,6 +450,39 @@ class GhosthandApiPayloadsTest {
         assertEquals("com.example:id/target", payload["id"])
         assertEquals(77, payload["centerX"])
         assertEquals(88, payload["centerY"])
+    }
+
+    @Test
+    fun findPayloadForNonZeroIndexKeepsSelectedMatchGeometry() {
+        val secondMatch = node(
+            nodeId = "p0.1@tsnap",
+            text = "Row",
+            centerX = 25,
+            centerY = 35,
+            bounds = NodeBounds(10, 20, 40, 50)
+        )
+        val payload = GhosthandApiPayloads.findFields(
+            FindNodeResult(
+                found = true,
+                node = secondMatch,
+                matches = listOf(
+                    node(
+                        nodeId = "p0.0@tsnap",
+                        text = "Row",
+                        centerX = 0,
+                        centerY = 0,
+                        bounds = NodeBounds(0, 0, 0, 0)
+                    ),
+                    secondMatch
+                ),
+                selectedIndex = 1
+            )
+        )
+
+        assertEquals(1, payload["index"])
+        assertEquals("[10,20][40,50]", payload["bounds"])
+        assertEquals(25, payload["centerX"])
+        assertEquals(35, payload["centerY"])
     }
 
     @Test

@@ -21,6 +21,35 @@ import java.util.concurrent.TimeUnit
 
 class LocalApiServerRequestParsingTest {
     @Test
+    fun parseInputRequestRejectsClearActionWhenTextIsAlsoProvided() {
+        val parsed = GhosthandApiPayloads.parseInputRequest(
+            mapOf(
+                "textAction" to "clear",
+                "text" to "should-not-be-here"
+            )
+        )
+
+        assertEquals("text must be omitted when textAction=clear.", parsed.errorMessage)
+        assertEquals(null, parsed.request)
+    }
+
+    @Test
+    fun parseInputRequestAcceptsExplicitTextAndEnterSequence() {
+        val parsed = GhosthandApiPayloads.parseInputRequest(
+            mapOf(
+                "textAction" to "set",
+                "text" to "wifi",
+                "key" to "enter"
+            )
+        )
+
+        assertNull(parsed.errorMessage)
+        assertEquals(InputTextAction.SET, parsed.request?.textAction)
+        assertEquals("wifi", parsed.request?.text)
+        assertEquals(InputKey.ENTER, parsed.request?.key)
+    }
+
+    @Test
     fun parseSelectorSupportsTextAliasInsideWaitCondition() {
         val selector = GhosthandSelectors.normalize(
             text = "XYZdefinitelydoesnotexist999",

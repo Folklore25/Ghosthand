@@ -324,7 +324,6 @@ class LocalApiServer(
                     method == "POST" && path == "/scroll" -> buildScrollResponse(requestBody)
                     method == "POST" && path == "/longpress" -> buildLongpressResponse(requestBody)
                     method == "POST" && path == "/gesture" -> buildGestureResponse(requestBody)
-                    method == "POST" && path == "/launch" -> buildLaunchResponse(requestBody)
                     method == "POST" && path == "/back" -> buildGlobalActionResponse("back", AccessibilityService.GLOBAL_ACTION_BACK)
                     method == "POST" && path == "/home" -> buildGlobalActionResponse("home", AccessibilityService.GLOBAL_ACTION_HOME)
                     method == "POST" && path == "/recents" -> buildGlobalActionResponse("recents", AccessibilityService.GLOBAL_ACTION_RECENTS)
@@ -1121,9 +1120,10 @@ class LocalApiServer(
     private fun buildClickResponse(requestBody: String): String {
         val body = parseJsonBodyOrNull(requestBody, "/click")
             ?: return badJsonBodyResponse()
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
 
         val nodeId = body.optString("nodeId").trim()
-        val clickResult = if (nodeId.isNotEmpty()) {
+        val initialClickResult = if (nodeId.isNotEmpty()) {
             stateCoordinator.clickNode(nodeId)
         } else {
             val selector = parseSelector(body)
@@ -1141,6 +1141,16 @@ class LocalApiServer(
                 clickableOnly = clickSelectorRequiresClickableTarget(body),
                 index = body.optIntOrNull("index") ?: 0
             )
+        }
+        val clickResult = if (initialClickResult.performed) {
+            initialClickResult.copy(
+                effect = observeActionSurfaceChange(
+                    beforeSnapshot = beforeSnapshot,
+                    snapshotProvider = { stateCoordinator.getTreeSnapshotResult().snapshot }
+                ).toActionEffectObservation()
+            )
+        } else {
+            initialClickResult
         }
 
         Log.i(
@@ -1160,6 +1170,10 @@ class LocalApiServer(
                         strategy = selectorStrategy,
                         clickableOnly = clickableOnly,
                         result = clickResult
+                    ) ?: buildActionEffectDisclosure(
+                        route = "/click",
+                        performed = clickResult.performed,
+                        stateChanged = clickResult.effect?.stateChanged ?: false
                     )
                 )
             )
@@ -1175,6 +1189,7 @@ class LocalApiServer(
                 body = errorEnvelope(
                     code = "NODE_NOT_FOUND",
                     message = "Click target node was not found.",
+                    details = buildClickFailureDetails(clickResult, clickableOnly),
                     disclosure = buildClickDisclosure(
                         strategy = selectorStrategy,
                         clickableOnly = clickableOnly,
@@ -1196,69 +1211,44 @@ class LocalApiServer(
         val body = parseJsonBodyOrNull(requestBody, "/input")
             ?: return badJsonBodyResponse()
 
-        val clear = body.optBoolean("clear", false)
-        val append = body.optBoolean("append", false)
-        val text = if (body.has("text") && !body.isNull("text")) body.opt("text") as? String else null
-
-        if (!clear && text == null) {
+        val parsedRequest = GhosthandApiPayloads.parseInputRequest(body)
+        if (parsedRequest.errorMessage != null || parsedRequest.request == null) {
             return buildJsonResponse(
                 statusCode = 400,
                 body = errorEnvelope(
                     code = "INVALID_ARGUMENT",
-                    message = "text is required unless clear=true."
+                    message = parsedRequest.errorMessage ?: "Invalid /input request."
                 )
             )
         }
 
-        if (body.has("text") && !body.isNull("text") && text == null) {
-            return buildJsonResponse(
-                statusCode = 400,
-                body = errorEnvelope(
-                    code = "INVALID_ARGUMENT",
-                    message = "text must be a string."
-                )
-            )
-        }
-
-        val typeResult = stateCoordinator.inputText(
-            text = text,
-            clear = clear,
-            append = append
-        )
+        val typeResult = stateCoordinator.performInput(parsedRequest.request)
+        val resultPayload = GhosthandApiPayloads.inputResultJson(typeResult)
 
         Log.i(
             INPUT_LOG_TAG,
-            "event=input_request textLength=${text?.length ?: 0} action=${typeResult.action} inputPath=${typeResult.attemptedPath} success=${typeResult.performed} failure=${typeResult.failureReason?.name ?: "none"}"
+            "event=input_request textAction=${parsedRequest.request.textAction?.wireValue ?: "none"} key=${parsedRequest.request.key?.wireValue ?: "none"} success=${typeResult.performed} textChanged=${typeResult.textMutation?.performed ?: false} keyDispatched=${typeResult.keyDispatch?.performed ?: false}"
         )
 
         return when {
             typeResult.performed -> buildJsonResponse(
                 statusCode = 200,
-                body = successEnvelope(
-                    JSONObject()
-                        .put("performed", true)
-                        .put("backendUsed", typeResult.backendUsed)
-                        .put("text", typeResult.finalText)
-                        .put("previousText", typeResult.previousText)
-                        .put("action", typeResult.action)
-                )
+                body = successEnvelope(resultPayload)
             )
-            typeResult.failureReason == TypeFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
+            hasInputAccessibilityUnavailable(typeResult) -> buildJsonResponse(
                 statusCode = 503,
                 body = errorEnvelope(
                     code = "ACCESSIBILITY_UNAVAILABLE",
-                    message = "Accessibility service is not available for text input."
+                    message = "Accessibility service is not available for one or more requested /input operations.",
+                    details = resultPayload
                 )
             )
             else -> buildJsonResponse(
                 statusCode = 422,
                 body = errorEnvelope(
                     code = "ACCESSIBILITY_ACTION_FAILED",
-                    message = if (typeResult.failureReason == TypeFailureReason.NO_EDITABLE_TARGET) {
-                        "No focused editable target is available for text input."
-                    } else {
-                        "Accessibility text input action failed."
-                    }
+                    message = buildInputFailureMessage(typeResult),
+                    details = resultPayload
                 )
             )
         }
@@ -1500,56 +1490,32 @@ class LocalApiServer(
     }
 
     private fun buildGlobalActionResponse(actionName: String, actionCode: Int): String {
-        val result = stateCoordinator.performGlobalAction(actionCode)
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+        val initialResult = stateCoordinator.performGlobalAction(actionCode)
+        val result = if (initialResult.performed) {
+            initialResult.copy(
+                effect = observeActionSurfaceChange(
+                    beforeSnapshot = beforeSnapshot,
+                    snapshotProvider = { stateCoordinator.getTreeSnapshotResult().snapshot }
+                ).toActionEffectObservation()
+            )
+        } else {
+            initialResult
+        }
         return if (result.performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject(GhosthandApiPayloads.globalActionFields(result)),
+                    disclosure = buildActionEffectDisclosure(
+                        route = "/$actionName",
+                        performed = result.performed,
+                        stateChanged = result.effect?.stateChanged ?: false
+                    )
+                )
+            )
         } else {
             buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Global action '$actionName' failed. Accessibility service may not be connected."))
-        }
-    }
-
-    private fun buildLaunchResponse(requestBody: String): String {
-        val body = parseJsonBodyOrNull(requestBody, "/launch")
-            ?: return badJsonBodyResponse()
-        val packageName = body.optString("packageName").trim()
-        if (packageName.isEmpty()) {
-            return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "packageName is required."))
-        }
-
-        val result = stateCoordinator.launchApp(packageName)
-        val details = JSONObject()
-            .put("launched", result.launched)
-            .put("packageName", result.packageName)
-            .put("label", result.label ?: JSONObject.NULL)
-            .put("strategy", result.strategy)
-            .put("reason", result.reason)
-
-        return when (result.reason) {
-            "launched" -> buildJsonResponse(200, successEnvelope(details))
-            "package_not_installed" -> buildJsonResponse(
-                404,
-                errorEnvelope(
-                    "PACKAGE_NOT_FOUND",
-                    "Package is not installed: ${result.packageName}.",
-                    details
-                )
-            )
-            "launch_intent_unavailable" -> buildJsonResponse(
-                422,
-                errorEnvelope(
-                    "NO_LAUNCH_INTENT",
-                    "Package is installed but does not expose a standard launch intent: ${result.packageName}.",
-                    details
-                )
-            )
-            else -> buildJsonResponse(
-                503,
-                errorEnvelope(
-                    "LAUNCH_FAILED",
-                    "Launch attempt failed for package ${result.packageName}.",
-                    details.put("error", result.error ?: JSONObject.NULL)
-                )
-            )
         }
     }
 
@@ -1827,6 +1793,28 @@ class LocalApiServer(
         )
     }
 
+    private fun hasInputAccessibilityUnavailable(result: InputOperationResult): Boolean {
+        return result.textMutation?.failureReason == TypeFailureReason.ACCESSIBILITY_UNAVAILABLE ||
+            result.keyDispatch?.failureReason == InputKeyFailureReason.ACCESSIBILITY_UNAVAILABLE
+    }
+
+    private fun buildInputFailureMessage(result: InputOperationResult): String {
+        if (result.textMutation != null && result.keyDispatch != null) {
+            return "One or more explicit /input operations failed."
+        }
+
+        return when {
+            result.textMutation?.failureReason == TypeFailureReason.NO_EDITABLE_TARGET ->
+                "No focused editable target is available for text input."
+            result.textMutation != null ->
+                "Accessibility text input action failed."
+            result.keyDispatch?.failureReason == InputKeyFailureReason.NO_EDITABLE_TARGET ->
+                "No focused editable target is available for key dispatch."
+            else ->
+                "Accessibility key dispatch failed."
+        }
+    }
+
     private fun createResources(): LocalApiServerResources {
         return LocalApiServerResources(
             serverExecutor = Executors.newSingleThreadExecutor(serverThreadFactory("ghosthand-local-api")),
@@ -2057,6 +2045,16 @@ internal fun observeActionSurfaceChange(
     return observeScrollSurfaceChange(beforeSnapshot, afterSnapshot)
 }
 
+internal fun ScrollSurfaceObservation.toActionEffectObservation(): ActionEffectObservation {
+    return ActionEffectObservation(
+        stateChanged = surfaceChanged,
+        beforeSnapshotToken = beforeSnapshotToken,
+        afterSnapshotToken = afterSnapshotToken,
+        finalPackageName = finalPackageName,
+        finalActivity = finalActivity
+    )
+}
+
 internal fun buildWaitUiChangeDisclosure(
     result: StateCoordinator.WaitUiChangeResult
 ): GhosthandDisclosure? {
@@ -2246,6 +2244,18 @@ internal fun buildClickDisclosure(
     }
 
     if (!result.performed && result.failureReason == ClickFailureReason.NODE_NOT_FOUND && strategy != null) {
+        val missHint = result.selectorMissHint
+        if (clickableOnly && missHint?.failureCategory == "actionable_target_not_found") {
+            return GhosthandDisclosure(
+                kind = "discoverability",
+                summary = "Selector-based click found label matches on the requested surface, but none resolved to an actionable target.",
+                assumptionToCorrect = "A visible label match is always directly actionable.",
+                nextBestActions = listOf(
+                    "Use /find without clickable=true to inspect the matched node before escalating.",
+                    alternateSelectorAction(strategy)
+                )
+            )
+        }
         return GhosthandDisclosure(
             kind = "discoverability",
             summary = if (clickableOnly) {
@@ -2313,6 +2323,36 @@ internal fun buildMotionDisclosure(
         kind = "ambiguity",
         summary = "$route dispatched successfully, but Ghosthand did not observe visible-state change yet.",
         assumptionToCorrect = "`performed=true` proves the content advanced.",
+        nextBestActions = listOf(
+            "Use GET /wait to allow the surface to settle.",
+            "Use /screen to confirm whether visible content actually changed."
+        )
+    )
+}
+
+internal fun buildClickFailureDetails(
+    result: ClickAttemptResult,
+    clickableOnly: Boolean
+): JSONObject {
+    val missHint = result.selectorMissHint ?: return JSONObject()
+    return JSONObject(GhosthandApiPayloads.clickFailureFields(missHint)).apply {
+        put("failureCategory", missHint.failureCategory ?: "no_selector_match")
+        put("clickableOnly", clickableOnly)
+    }
+}
+
+internal fun buildActionEffectDisclosure(
+    route: String,
+    performed: Boolean,
+    stateChanged: Boolean
+): GhosthandDisclosure? {
+    if (!performed || stateChanged) {
+        return null
+    }
+    return GhosthandDisclosure(
+        kind = "ambiguity",
+        summary = "$route dispatched successfully, but Ghosthand did not observe visible-state change yet.",
+        assumptionToCorrect = "`performed=true` proves the UI changed.",
         nextBestActions = listOf(
             "Use GET /wait to allow the surface to settle.",
             "Use /screen to confirm whether visible content actually changed."
