@@ -50,6 +50,12 @@ data class GhosthandDisclosure(
     val nextBestActions: List<String> = emptyList()
 )
 
+data class PostActionState(
+    val packageName: String? = null,
+    val activity: String? = null,
+    val snapshotToken: String? = null
+)
+
 object GhosthandApiPayloads {
     fun treePayload(snapshot: AccessibilityTreeSnapshot): JSONObject {
         return fieldsToJson(treeFields(snapshot))
@@ -399,13 +405,29 @@ object GhosthandApiPayloads {
     }
 
     fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {
-        return linkedMapOf(
+        return linkedMapOf<String, Any?>(
             "stateChanged" to effect.stateChanged,
             "beforeSnapshotToken" to effect.beforeSnapshotToken,
             "afterSnapshotToken" to effect.afterSnapshotToken,
             "finalPackageName" to effect.finalPackageName,
             "finalActivity" to effect.finalActivity
-        )
+        ).apply {
+            postActionStateFields(
+                PostActionState(
+                    packageName = effect.finalPackageName,
+                    activity = effect.finalActivity,
+                    snapshotToken = effect.afterSnapshotToken
+                )
+            ).takeIf { it.isNotEmpty() }?.let { put("postActionState", it) }
+        }
+    }
+
+    fun postActionStateFields(state: PostActionState): Map<String, Any?> {
+        return linkedMapOf<String, Any?>().apply {
+            state.packageName?.let { put("packageName", it) }
+            state.activity?.let { put("activity", it) }
+            state.snapshotToken?.let { put("snapshotToken", it) }
+        }
     }
 
     fun clickFailureFields(hint: FindMissHint): Map<String, Any?> {
@@ -511,7 +533,7 @@ object GhosthandApiPayloads {
     }
 
     fun inputResultFields(result: InputOperationResult): Map<String, Any?> {
-        return linkedMapOf(
+        return linkedMapOf<String, Any?>(
             "performed" to result.performed,
             "textChanged" to (result.textMutation?.performed ?: false),
             "keyDispatched" to (result.keyDispatch?.performed ?: false),
@@ -537,7 +559,12 @@ object GhosthandApiPayloads {
                     "attemptedPath" to dispatch.attemptedPath
                 )
             }
-        )
+        ).apply {
+            result.postActionState
+                ?.let(::postActionStateFields)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { put("postActionState", it) }
+        }
     }
 
     fun inputResultJson(result: InputOperationResult): JSONObject {

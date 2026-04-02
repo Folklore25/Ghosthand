@@ -179,7 +179,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(homeRoute.responseFields.contains("postActionState"))
         assertTrue(homeRoute.description.contains("observed effect"))
 
-        val setTextRoute = GhosthandCommandCatalog.commands.first { it.id == "setText" }
+        val setTextRoute = GhosthandCommandCatalog.commands.first { it.id == "set_text" }
         assertTrue(setTextRoute.responseFields.contains("postActionState"))
         assertTrue(setTextRoute.description.contains("compact post-action state summary"))
 

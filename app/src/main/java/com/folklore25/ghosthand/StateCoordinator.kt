@@ -910,7 +910,8 @@ internal object GovernedCapabilityPayloads {
 data class InputOperationResult(
     val performed: Boolean,
     val textMutation: InputTextMutationResult? = null,
-    val keyDispatch: InputKeyDispatchResult? = null
+    val keyDispatch: InputKeyDispatchResult? = null,
+    val postActionState: PostActionState? = null
 )
 
 data class InputTextMutationResult(

@@ -785,6 +785,12 @@ class LocalApiServer(
                     JSONObject()
                         .put("performed", true)
                         .put("backendUsed", tapResult.backendUsed)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
                 )
             )
             tapResult.failureReason == TapFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
@@ -885,7 +891,13 @@ class LocalApiServer(
                         .put("beforeSnapshotToken", observation.beforeSnapshotToken)
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity),
+                        .put("finalActivity", observation.finalActivity)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = observation.toActionEffectObservation(),
+                                fallbackSnapshot = null
+                            )
+                        ),
                     disclosure = buildMotionDisclosure(
                         route = "/swipe",
                         performed = swipeResult.performed,
@@ -1233,7 +1245,13 @@ class LocalApiServer(
         }
 
         val typeResult = stateCoordinator.performInput(parsedRequest.request)
-        val resultPayload = GhosthandApiPayloads.inputResultJson(typeResult)
+        val payloadResult = typeResult.copy(
+            postActionState = buildPostActionState(
+                actionEffect = null,
+                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+            )
+        )
+        val resultPayload = GhosthandApiPayloads.inputResultJson(payloadResult)
 
         Log.i(
             INPUT_LOG_TAG,
@@ -1306,6 +1324,12 @@ class LocalApiServer(
                     JSONObject()
                         .put("performed", true)
                         .put("backendUsed", setTextResult.backendUsed)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
                 )
             )
             setTextResult.failureReason == SetTextFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
@@ -1391,7 +1415,13 @@ class LocalApiServer(
                         .put("beforeSnapshotToken", observation.beforeSnapshotToken)
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity),
+                        .put("finalActivity", observation.finalActivity)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = observation.toActionEffectObservation(),
+                                fallbackSnapshot = null
+                            )
+                        ),
                     disclosure = buildMotionDisclosure(
                         route = "/scroll",
                         performed = result.performed,
@@ -1427,7 +1457,19 @@ class LocalApiServer(
 
         val performed = stateCoordinator.performLongPressGesture(x, y, durationMs)
         return if (performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject()
+                        .put("performed", true)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
+                )
+            )
         } else {
             buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Long-press gesture failed."))
         }
@@ -1457,7 +1499,19 @@ class LocalApiServer(
             }
             val performed = stateCoordinator.performGesture(strokes)
             return if (performed) {
-                buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+                buildJsonResponse(
+                    200,
+                    successEnvelope(
+                        JSONObject()
+                            .put("performed", true)
+                            .putPostActionState(
+                                buildPostActionState(
+                                    actionEffect = null,
+                                    fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                                )
+                            )
+                    )
+                )
             } else {
                 buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Gesture dispatch failed."))
             }
@@ -1493,7 +1547,19 @@ class LocalApiServer(
 
         val performed = stateCoordinator.performGesture(strokes)
         return if (performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject()
+                        .put("performed", true)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
+                )
+            )
         } else {
             buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Gesture dispatch failed."))
         }
@@ -2063,6 +2129,33 @@ internal fun ScrollSurfaceObservation.toActionEffectObservation(): ActionEffectO
         finalPackageName = finalPackageName,
         finalActivity = finalActivity
     )
+}
+
+internal fun buildPostActionState(
+    actionEffect: ActionEffectObservation?,
+    fallbackSnapshot: AccessibilityTreeSnapshot?
+): PostActionState? {
+    val packageName = actionEffect?.finalPackageName ?: fallbackSnapshot?.packageName
+    val activity = actionEffect?.finalActivity ?: fallbackSnapshot?.activity
+    val snapshotToken = actionEffect?.afterSnapshotToken ?: fallbackSnapshot?.snapshotToken
+
+    if (packageName == null && activity == null && snapshotToken == null) {
+        return null
+    }
+
+    return PostActionState(
+        packageName = packageName,
+        activity = activity,
+        snapshotToken = snapshotToken
+    )
+}
+
+internal fun JSONObject.putPostActionState(state: PostActionState?): JSONObject {
+    state
+        ?.let(GhosthandApiPayloads::postActionStateFields)
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { put("postActionState", JSONObject(it)) }
+    return this
 }
 
 internal fun buildWaitUiChangeDisclosure(
