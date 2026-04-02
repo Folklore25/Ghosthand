@@ -10,6 +10,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.ResolveInfo
 import android.content.pm.PackageManager
 
 internal data class AppLaunchResult(
@@ -25,6 +26,7 @@ internal class AppLaunchProvider internal constructor(
     private val isInstalled: (String) -> Boolean,
     private val resolveLabel: (String) -> String?,
     private val resolveLaunchIntent: (String) -> Intent?,
+    private val resolveLauncherActivityIntent: (String) -> Intent?,
     private val startActivity: (Intent) -> Unit
 ) {
     constructor(context: Context) : this(
@@ -47,6 +49,9 @@ internal class AppLaunchProvider internal constructor(
         resolveLaunchIntent = { packageName ->
             context.packageManager.getLaunchIntentForPackage(packageName)
         },
+        resolveLauncherActivityIntent = { packageName ->
+            context.packageManager.queryLauncherActivityIntent(packageName)
+        },
         startActivity = { intent ->
             context.startActivity(
                 Intent(intent).apply {
@@ -67,12 +72,23 @@ internal class AppLaunchProvider internal constructor(
         }
 
         val label = resolveLabel(packageName)
-        val launchIntent = resolveLaunchIntent(packageName) ?: return AppLaunchResult(
+        val primaryLaunchIntent = resolveLaunchIntent(packageName)
+        val fallbackLaunchIntent = if (primaryLaunchIntent == null) {
+            resolveLauncherActivityIntent(packageName)
+        } else {
+            null
+        }
+        val launchIntent = primaryLaunchIntent ?: fallbackLaunchIntent ?: return AppLaunchResult(
             launched = false,
             packageName = packageName,
             label = label,
             reason = "launch_intent_unavailable"
         )
+        val strategy = if (primaryLaunchIntent != null) {
+            "package_launch_intent"
+        } else {
+            "launcher_activity_query"
+        }
 
         return try {
             startActivity(launchIntent)
@@ -80,6 +96,7 @@ internal class AppLaunchProvider internal constructor(
                 launched = true,
                 packageName = packageName,
                 label = label,
+                strategy = strategy,
                 reason = "launched"
             )
         } catch (error: ActivityNotFoundException) {
@@ -87,6 +104,7 @@ internal class AppLaunchProvider internal constructor(
                 launched = false,
                 packageName = packageName,
                 label = label,
+                strategy = strategy,
                 reason = "launch_attempt_failed",
                 error = error.javaClass.simpleName
             )
@@ -95,10 +113,32 @@ internal class AppLaunchProvider internal constructor(
                 launched = false,
                 packageName = packageName,
                 label = label,
+                strategy = strategy,
                 reason = "launch_attempt_failed",
                 error = error.javaClass.simpleName
             )
         }
+    }
+}
+
+@Suppress("DEPRECATION")
+private fun PackageManager.queryLauncherActivityIntent(packageName: String): Intent? {
+    val queryIntent = Intent(Intent.ACTION_MAIN).apply {
+        addCategory(Intent.CATEGORY_LAUNCHER)
+        setPackage(packageName)
+    }
+    val resolved = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        queryIntentActivities(queryIntent, PackageManager.ResolveInfoFlags.of(0))
+    } else {
+        queryIntentActivities(queryIntent, 0)
+    }.firstOrNull() ?: return null
+
+    return Intent(Intent.ACTION_MAIN).apply {
+        addCategory(Intent.CATEGORY_LAUNCHER)
+        setClassName(
+            resolved.activityInfo.packageName,
+            resolved.activityInfo.name
+        )
     }
 }
 

@@ -1843,6 +1843,7 @@ Failure responses include `error.details` with:
 ### Notes
 
 - This route is intentionally narrow: package-name launch only.
+- Ghosthand first tries the standard package launch intent path and may fall back to a bounded launcher-activity query when OEM or package-manager behavior makes the primary helper unreliable.
 - It does not accept component names, deep links, extras, or a generic intent DSL.
 - It does not fake success when a package is missing or has no launcher intent.
 

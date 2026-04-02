@@ -19,6 +19,7 @@ class AppLaunchProviderTest {
             isInstalled = { false },
             resolveLabel = { null },
             resolveLaunchIntent = { null },
+            resolveLauncherActivityIntent = { null },
             startActivity = { error("should not launch") }
         )
 
@@ -35,6 +36,7 @@ class AppLaunchProviderTest {
             isInstalled = { true },
             resolveLabel = { "Example" },
             resolveLaunchIntent = { null },
+            resolveLauncherActivityIntent = { null },
             startActivity = { error("should not launch") }
         )
 
@@ -51,6 +53,7 @@ class AppLaunchProviderTest {
             isInstalled = { true },
             resolveLabel = { "Settings" },
             resolveLaunchIntent = { Intent(Intent.ACTION_MAIN) },
+            resolveLauncherActivityIntent = { null },
             startActivity = { }
         )
 
@@ -60,5 +63,23 @@ class AppLaunchProviderTest {
         assertEquals("package_launch_intent", result.strategy)
         assertEquals("launched", result.reason)
         assertEquals("Settings", result.label)
+    }
+
+    @Test
+    fun fallsBackToLauncherActivityQueryWhenPrimaryLaunchIntentIsMissing() {
+        val fallbackIntent = Intent()
+        val provider = AppLaunchProvider(
+            isInstalled = { true },
+            resolveLabel = { "Example" },
+            resolveLaunchIntent = { null },
+            resolveLauncherActivityIntent = { fallbackIntent },
+            startActivity = { }
+        )
+
+        val result = provider.launch("com.example")
+
+        assertTrue(result.launched)
+        assertEquals("launcher_activity_query", result.strategy)
+        assertEquals("launched", result.reason)
     }
 }
