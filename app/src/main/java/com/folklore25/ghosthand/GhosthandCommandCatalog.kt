@@ -471,10 +471,10 @@ object GhosthandCommandCatalog {
             category = "sensing",
             method = "POST",
             path = "/wait",
-            description = "Wait for a matching tree condition; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change",
+            description = "Wait for a matching tree condition using the same selector aliases and strategies as `/find`; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change",
             responseFields = listOf("satisfied", "conditionMet", "stateChanged", "timedOut", "elapsedMs", "node", "reason", "disclosure"),
             params = listOf(
-                GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition"),
+                GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition; use text/desc/id aliases or explicit strategy+query"),
                 GhosthandCommandParam("timeoutMs", "long", "body", false, "Maximum wait duration in milliseconds"),
                 GhosthandCommandParam("intervalMs", "long", "body", false, "Polling interval in milliseconds")
             ),

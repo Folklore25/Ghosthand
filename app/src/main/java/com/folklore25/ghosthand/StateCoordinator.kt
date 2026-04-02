@@ -124,6 +124,18 @@ class StateCoordinator(
             .put("permissions", JSONObject()
                 .put("implemented", true)
                 .put("accessibility", accessibilitySnapshot.enabled)
+                .put("capabilitySummary", JSONObject()
+                    .put("accessibility", JSONObject()
+                        .put("allowed", capabilityAccess.accessibility.policy.allowed)
+                        .put("usableNow", capabilityAccess.accessibility.effective.usableNow)
+                        .put("reason", capabilityAccess.accessibility.effective.reason)
+                    )
+                    .put("screenshot", JSONObject()
+                        .put("allowed", capabilityAccess.screenshot.policy.allowed)
+                        .put("usableNow", capabilityAccess.screenshot.effective.usableNow)
+                        .put("reason", capabilityAccess.screenshot.effective.reason)
+                    )
+                )
                 .put("capabilities", JSONObject()
                     .put(
                         "accessibility",

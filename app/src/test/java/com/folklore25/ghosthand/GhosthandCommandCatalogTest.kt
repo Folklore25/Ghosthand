@@ -132,12 +132,14 @@ class GhosthandCommandCatalogTest {
         assertEquals("required", waitConditionRoute.delayedAcceptance)
         assertNotNull(waitConditionRoute.selectorSupport)
         assertTrue(waitConditionRoute.selectorSupport!!.strategies.contains("focused"))
+        assertTrue(waitConditionRoute.description.contains("same selector aliases"))
         assertTrue(waitConditionRoute.responseFields.contains("satisfied"))
         assertTrue(waitConditionRoute.responseFields.contains("conditionMet"))
         assertTrue(waitConditionRoute.responseFields.contains("stateChanged"))
         assertTrue(waitConditionRoute.responseFields.contains("timedOut"))
         assertTrue(waitConditionRoute.responseFields.contains("reason"))
         assertTrue(waitConditionRoute.responseFields.contains("disclosure"))
+        assertTrue(waitConditionRoute.params.first { it.name == "condition" }.description.contains("text/desc/id aliases"))
 
         val waitUiRoute = GhosthandCommandCatalog.commands.first { it.id == "wait_ui_change" }
         assertTrue(waitUiRoute.description.contains("conditionMet"))

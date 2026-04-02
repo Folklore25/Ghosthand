@@ -71,6 +71,7 @@ class StateCoordinatorStatePayloadTest {
         )
 
         assertTrue(coordinator.contains(".put(\"permissions\", JSONObject()"))
+        assertTrue(coordinator.contains(".put(\"capabilitySummary\", JSONObject()"))
         assertTrue(coordinator.contains(".put(\"capabilities\", JSONObject()"))
         assertFalse(coordinator.contains(".put(\"permissions\", JSONObject()\n                .put(\"implemented\", true)\n                .put(\"usageAccess\""))
         assertTrue(coordinator.contains(".put(\"systemPermissions\", JSONObject()"))

@@ -1981,6 +1981,25 @@ Poll the current accessibility tree until a condition is satisfied or a timeout 
 
 Supported strategies match `/find`, including `focused`.
 
+The `condition` object accepts the same selector aliases as `/find` and `/click`. Both of these are valid:
+
+```json
+{
+  "condition": {
+    "text": "Settings"
+  }
+}
+```
+
+```json
+{
+  "condition": {
+    "strategy": "text",
+    "query": "Settings"
+  }
+}
+```
+
 ### Success Response
 
 ```json
