@@ -277,7 +277,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 22-01: OCR fallback discoverability hinting on accessibility-empty or accessibility-insufficient `/screen`
+- [x] 22-01: OCR fallback discoverability hinting on accessibility-empty or accessibility-insufficient `/screen`
 - [x] 22-02: Stale-node failure classification for expired snapshot references
 - [ ] 22-03: Modal-transition accessibility contract clarification and narrow doc/catalog alignment
 
@@ -299,4 +299,4 @@ Plans:
 | 19. Home Surface Copy And Affordance Polish 01 | 3/3 | Complete | 2026-03-30 |
 | 20. Close The Visible-But-Unreachable Gap For 1.1.0 | 1/3 | In Progress|  |
 | 21. Agent Interaction Hardening For 1.2.0 | 1/5 | In Progress|  |
-| 22. Patch Stabilization For 1.2.1 | 1/3 | In Progress|  |
+| 22. Patch Stabilization For 1.2.1 | 2/3 | In Progress|  |

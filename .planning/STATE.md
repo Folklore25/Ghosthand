@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-02T11:50:43.948Z"
+last_updated: "2026-04-02T11:51:36.048Z"
 progress:
   total_phases: 16
   completed_phases: 9
   total_plans: 39
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,12 +22,12 @@ Current focus: **1.2.1 patch stabilization** — improve OCR fallback discoverab
 ## Current Position
 
 Phase: 22 (patch-stabilization-for-1-2-1) — EXECUTING
-Plan: 1 of 3
+Plan: 2 of 3
 
 - **Phase:** 22
 - **Implementation baseline:** committed — Android app and Gradle project now tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Executing Phase 22
+- **Status:** Ready to execute
 
 ## Progress
 
@@ -121,6 +121,7 @@ Overall: Ghosthand is operating from an accepted Phase 09 baseline, a canonical 
 - [Phase 21]: Kept selector-failure classification small and normal-path friendly: category, surface/match semantics, and selector/actionability counts.
 - [Phase 22]: Return STALE_NODE_REFERENCE only for nodeId /click failures whose attempted path is stale_snapshot.
 - [Phase 22]: Keep ordinary nodeId misses and selector misses on /click mapped to NODE_NOT_FOUND until Plan 22-03 aligns wider docs and catalogs.
+- [Phase 22]: Accessibility /screen retry guidance remains metadata-only and reuses the existing insufficiency judgment; empty reads point to ocr, degraded reads point to hybrid.
 
 ## Performance Metrics
 
