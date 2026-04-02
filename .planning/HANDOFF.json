@@ -1,0 +1,72 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-04-02T15:11:59.741Z",
+  "phase": "23",
+  "phase_name": "state-legibility-mainline-for-1-3-0",
+  "phase_dir": ".planning/phases/23-state-legibility-mainline-for-1-3-0",
+  "plan": 4,
+  "task": 4,
+  "total_tasks": 4,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Post-action state summary",
+      "status": "done",
+      "commit": "d394191"
+    },
+    {
+      "id": 2,
+      "name": "/screen summary mode",
+      "status": "done",
+      "commit": "b720cbc"
+    },
+    {
+      "id": 3,
+      "name": "Render-mode and readability signals",
+      "status": "done",
+      "commit": "6c0f813"
+    },
+    {
+      "id": 4,
+      "name": "Lightweight visual preview access",
+      "status": "done",
+      "commit": "9dd735d"
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 1,
+      "name": "Push merged main to origin if remote sync is desired",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    {
+      "action": "Push `main` to origin if you want the 1.3.0 work synced remotely",
+      "context": "Local `main` now includes the 1.3.0 merge and version bump, but it has not been pushed in this session.",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Phase 23 remained a state-legibility release rather than a workflow planner.",
+      "rationale": "Post-action summaries, `/screen` summary mode, readability signals, and preview access stay descriptive and additive without task steering.",
+      "phase": "23"
+    },
+    {
+      "decision": "Lightweight preview access is metadata-first with explicit `includePreview=thumb` opt-in.",
+      "rationale": "This reduces screenshot cost without embedding image payloads into normal `/screen` responses.",
+      "phase": "23"
+    },
+    {
+      "decision": "Local planning and docs artifacts remain intentionally untracked by git.",
+      "rationale": "The repo now keeps `.planning/` and `docs/` as local-only workspace truth rather than tracked release history.",
+      "phase": "23"
+    }
+  ],
+  "uncommitted_files": [],
+  "next_action": "Start with `git push origin main` if you want the completed 1.3.0 line synced remotely; otherwise resume from Phase 23 only if a concrete 1.3.0 closeout issue appears.",
+  "context_notes": "Repo is on `main` with a clean worktree. Phase 23 is complete in code and merged into main via `7edd7c4`, and the release version was corrected to `1.3.0 (5)` and installed on the OnePlus device. Remaining work is optional release logistics, not more implementation."
+}
