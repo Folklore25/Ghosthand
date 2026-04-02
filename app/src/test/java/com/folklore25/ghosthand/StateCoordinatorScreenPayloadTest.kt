@@ -115,4 +115,47 @@ class StateCoordinatorScreenPayloadTest {
         assertEquals(ScreenReadMode.HYBRID.wireValue, retryHint["source"])
         assertEquals("accessibility_operationally_insufficient", retryHint["reason"])
     }
+
+    @Test
+    fun screenSummaryFieldsExposeFocusedEditableWithoutElements() {
+        val payload = GhosthandApiPayloads.screenSummaryFields(
+            ScreenReadPayload(
+                packageName = "com.example",
+                activity = "EditorActivity",
+                snapshotToken = "snap",
+                capturedAt = "2026-04-01T00:00:00Z",
+                foregroundStableDuringCapture = true,
+                partialOutput = false,
+                candidateNodeCount = 2,
+                returnedElementCount = 2,
+                warnings = emptyList(),
+                omittedInvalidBoundsCount = 0,
+                omittedLowSignalCount = 0,
+                omittedNodeCount = 0,
+                omittedCategories = emptyList(),
+                omittedSummary = null,
+                invalidBoundsPresent = false,
+                lowSignalPresent = false,
+                elements = listOf(
+                    ScreenReadElement(
+                        nodeId = "p0.0@tsnap",
+                        text = "Editor",
+                        editable = true,
+                        bounds = "[0,0][20,20]",
+                        centerX = 10,
+                        centerY = 10,
+                        source = ScreenReadMode.ACCESSIBILITY.wireValue
+                    )
+                ),
+                source = ScreenReadMode.ACCESSIBILITY.wireValue,
+                accessibilityElementCount = 1,
+                ocrElementCount = 0,
+                usedOcrFallback = false,
+                retryHint = null
+            )
+        )
+
+        assertEquals(true, payload["focusedEditablePresent"])
+        assertNull(payload["elements"])
+    }
 }
