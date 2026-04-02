@@ -14,6 +14,10 @@ class StateCoordinator(
     context: Context,
     private val runtimeStateProvider: () -> RuntimeState
 ) {
+    companion object {
+        const val SCREEN_PREVIEW_WIDTH = 240
+        const val SCREEN_PREVIEW_HEIGHT = 240
+    }
     private val appContext = context.applicationContext
     private val homeDiagnosticsProvider = HomeDiagnosticsProvider(appContext)
     private val deviceSnapshotProvider = DeviceSnapshotProvider(appContext)
@@ -226,7 +230,11 @@ class StateCoordinator(
             packageFilter = packageFilter,
             clickableOnly = clickableOnly
         ).copy(
-            visualAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow
+            visualAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow,
+            previewAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow,
+            previewToken = snapshot.snapshotToken?.let { "preview:$it" },
+            previewWidth = SCREEN_PREVIEW_WIDTH,
+            previewHeight = SCREEN_PREVIEW_HEIGHT
         )
     }
 
@@ -257,7 +265,11 @@ class StateCoordinator(
             accessibilityElementCount = 0,
             ocrElementCount = ocrResult.elements.size,
             usedOcrFallback = false,
-            visualAvailable = true
+            visualAvailable = true,
+            previewAvailable = true,
+            previewToken = foregroundSnapshot.packageName?.let { "preview:$it:${foregroundSnapshot.activity ?: "unknown"}" },
+            previewWidth = SCREEN_PREVIEW_WIDTH,
+            previewHeight = SCREEN_PREVIEW_HEIGHT
         )
     }
 
@@ -292,7 +304,11 @@ class StateCoordinator(
             source = ScreenReadMode.HYBRID.wireValue,
             ocrElementCount = ocrPayload.ocrElementCount,
             usedOcrFallback = true,
-            visualAvailable = ocrPayload.visualAvailable ?: accessibilityPayload.visualAvailable
+            visualAvailable = ocrPayload.visualAvailable ?: accessibilityPayload.visualAvailable,
+            previewAvailable = ocrPayload.previewAvailable ?: accessibilityPayload.previewAvailable,
+            previewToken = accessibilityPayload.previewToken ?: ocrPayload.previewToken,
+            previewWidth = accessibilityPayload.previewWidth ?: ocrPayload.previewWidth,
+            previewHeight = accessibilityPayload.previewHeight ?: ocrPayload.previewHeight
         )
     }
 

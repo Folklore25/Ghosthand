@@ -296,6 +296,10 @@ object GhosthandApiPayloads {
             "renderMode" to payload.renderMode(),
             "surfaceReadability" to payload.surfaceReadability(),
             "visualAvailable" to payload.visualAvailable,
+            "previewAvailable" to payload.previewAvailable,
+            "previewToken" to payload.previewToken,
+            "previewWidth" to payload.previewWidth,
+            "previewHeight" to payload.previewHeight,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback,
@@ -308,6 +312,7 @@ object GhosthandApiPayloads {
                     "reason" to hint.reason
                 )
             },
+            "previewImage" to payload.previewImage,
             "elements" to payload.elements.map { element ->
                 linkedMapOf(
                     "nodeId" to element.nodeId,
@@ -342,6 +347,10 @@ object GhosthandApiPayloads {
             "renderMode" to payload.renderMode(),
             "surfaceReadability" to payload.surfaceReadability(),
             "visualAvailable" to payload.visualAvailable,
+            "previewAvailable" to payload.previewAvailable,
+            "previewToken" to payload.previewToken,
+            "previewWidth" to payload.previewWidth,
+            "previewHeight" to payload.previewHeight,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback,

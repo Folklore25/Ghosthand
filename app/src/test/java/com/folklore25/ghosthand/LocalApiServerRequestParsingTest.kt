@@ -71,6 +71,13 @@ class LocalApiServerRequestParsingTest {
     }
 
     @Test
+    fun screenPreviewThumbRequestedDetectsExplicitOptIn() {
+        assertTrue(screenPreviewThumbRequested(mapOf("includePreview" to "thumb")))
+        assertFalse(screenPreviewThumbRequested(mapOf("includePreview" to "full")))
+        assertFalse(screenPreviewThumbRequested(emptyMap()))
+    }
+
+    @Test
     fun selectorNormalizationLeavesNonFocusedStrategyQueryNullWhenAliasMissing() {
         val selector = GhosthandSelectors.normalize(
             text = null,

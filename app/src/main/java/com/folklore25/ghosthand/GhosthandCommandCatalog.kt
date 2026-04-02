@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.23"
+    const val schemaVersion = "1.24"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -94,8 +94,8 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/screen",
-            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. `summaryOnly=true` returns a compact orientation summary instead of the full element payload. Responses publish explicit render mode, surface readability, visual availability, and bounded retry hint / fallback signals without auto-switching observation modes. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "renderMode", "surfaceReadability", "visualAvailable", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "focusedEditablePresent", "suggestedFallback", "suggestedSource", "fallbackReason", "retryHint", "elements", "disclosure"),
+            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. `summaryOnly=true` returns a compact orientation summary instead of the full element payload. `includePreview=thumb` adds an explicit lightweight preview thumbnail. Responses publish explicit render mode, surface readability, visual availability, preview availability, and bounded retry hint / fallback signals without auto-switching observation modes. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "renderMode", "surfaceReadability", "visualAvailable", "previewAvailable", "previewToken", "previewWidth", "previewHeight", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "focusedEditablePresent", "suggestedFallback", "suggestedSource", "fallbackReason", "retryHint", "previewImage", "elements", "disclosure"),
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
             referenceStability = "snapshot_ephemeral",
@@ -104,6 +104,7 @@ object GhosthandCommandCatalog {
             params = listOf(
                 GhosthandCommandParam("source", "string", "query", false, "Read source mode", listOf("accessibility", "ocr", "hybrid")),
                 GhosthandCommandParam("summaryOnly", "boolean", "query", false, "Return compact orientation summary instead of full elements"),
+                GhosthandCommandParam("includePreview", "string", "query", false, "Opt-in lightweight preview mode", listOf("thumb")),
                 GhosthandCommandParam("editable", "boolean", "query", false, "Filter to editable elements only"),
                 GhosthandCommandParam("scrollable", "boolean", "query", false, "Filter to scrollable elements only"),
                 GhosthandCommandParam("clickable", "boolean", "query", false, "Filter to clickable elements only"),

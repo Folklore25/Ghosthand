@@ -325,6 +325,37 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun screenSummaryFieldsExposePreviewMetadataWithoutImageBytes() {
+        val summary = GhosthandApiPayloads.screenSummaryFields(
+            GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot(
+                    nodes = listOf(
+                        node("p0@tsnap"),
+                        node("p0.0@tsnap", text = "Preview", clickable = true, centerX = 10, centerY = 20)
+                    )
+                ),
+                editableOnly = false,
+                scrollableOnly = false,
+                packageFilter = null,
+                clickableOnly = false
+            ).copy(
+                visualAvailable = true,
+                previewAvailable = true,
+                previewToken = "preview:snap",
+                previewWidth = 240,
+                previewHeight = 240,
+                previewImage = "data:image/png;base64,thumb"
+            )
+        )
+
+        assertEquals(true, summary["previewAvailable"])
+        assertEquals("preview:snap", summary["previewToken"])
+        assertEquals(240, summary["previewWidth"])
+        assertEquals(240, summary["previewHeight"])
+        assertFalse(summary.containsKey("previewImage"))
+    }
+
+    @Test
     fun screenPayloadIncludesRenderModeReadabilityAndVisualAvailability() {
         val snapshot = snapshot(
             nodes = listOf(

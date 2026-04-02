@@ -55,6 +55,11 @@ data class ScreenReadPayload(
     val ocrElementCount: Int,
     val usedOcrFallback: Boolean,
     val visualAvailable: Boolean? = null,
+    val previewAvailable: Boolean? = null,
+    val previewToken: String? = null,
+    val previewWidth: Int? = null,
+    val previewHeight: Int? = null,
+    val previewImage: String? = null,
     val retryHint: ScreenReadRetryHint? = null
 ) {
     fun accessibilityTreeIsOperationallyInsufficient(): Boolean {

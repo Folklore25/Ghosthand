@@ -1001,6 +1001,7 @@ class LocalApiServer(
     private fun buildScreenResponse(queryParameters: Map<String, String>): String {
         val mode = ScreenReadMode.fromWireValue(queryParameters["source"]) ?: ScreenReadMode.ACCESSIBILITY
         val summaryOnly = screenSummaryOnlyRequested(queryParameters)
+        val includePreviewThumb = screenPreviewThumbRequested(queryParameters)
         val editableOnly = queryParameters["editable"] == "true"
         val scrollableOnly = queryParameters["scrollable"] == "true"
         val clickableOnly = queryParameters["clickable"] == "true"
@@ -1045,17 +1046,35 @@ class LocalApiServer(
             }
         }
 
-        val bodyPayload = if (summaryOnly) {
-            GhosthandApiPayloads.screenSummaryPayload(payload)
+        val payloadWithPreview = if (includePreviewThumb && payload.previewAvailable == true) {
+            val preview = stateCoordinator.captureBestScreenshot(
+                StateCoordinator.SCREEN_PREVIEW_WIDTH,
+                StateCoordinator.SCREEN_PREVIEW_HEIGHT
+            )
+            if (preview.available && !preview.base64.isNullOrBlank()) {
+                payload.copy(
+                    previewWidth = preview.width,
+                    previewHeight = preview.height,
+                    previewImage = "data:image/png;base64,${preview.base64}"
+                )
+            } else {
+                payload
+            }
         } else {
-            GhosthandApiPayloads.screenReadPayload(payload)
+            payload
+        }
+
+        val bodyPayload = if (summaryOnly) {
+            GhosthandApiPayloads.screenSummaryPayload(payloadWithPreview)
+        } else {
+            GhosthandApiPayloads.screenReadPayload(payloadWithPreview)
         }
 
         return buildJsonResponse(
             statusCode = 200,
             body = successEnvelope(
                 data = bodyPayload,
-                disclosure = buildScreenDisclosure(payload)
+                disclosure = buildScreenDisclosure(payloadWithPreview)
             )
         )
     }
@@ -2181,6 +2200,10 @@ internal fun JSONObject.putPostActionState(state: PostActionState?): JSONObject 
 
 internal fun screenSummaryOnlyRequested(queryParameters: Map<String, String>): Boolean {
     return queryParameters["summaryOnly"] == "true"
+}
+
+internal fun screenPreviewThumbRequested(queryParameters: Map<String, String>): Boolean {
+    return queryParameters["includePreview"] == "thumb"
 }
 
 internal fun buildWaitUiChangeDisclosure(

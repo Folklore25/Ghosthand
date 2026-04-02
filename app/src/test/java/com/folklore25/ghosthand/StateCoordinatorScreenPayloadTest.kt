@@ -62,6 +62,7 @@ class StateCoordinatorScreenPayloadTest {
         assertEquals("hybrid", payload["renderMode"])
         assertEquals("limited", payload["surfaceReadability"])
         assertEquals(true, payload["visualAvailable"])
+        assertEquals(null, payload["previewImage"])
         assertEquals(1, payload["accessibilityElementCount"])
         assertEquals(1, payload["ocrElementCount"])
         assertEquals(true, payload["usedOcrFallback"])
@@ -164,5 +165,56 @@ class StateCoordinatorScreenPayloadTest {
 
         assertEquals(true, payload["focusedEditablePresent"])
         assertNull(payload["elements"])
+    }
+
+    @Test
+    fun screenReadFieldsExposePreviewMetadataWhenAvailable() {
+        val payload = GhosthandApiPayloads.screenReadFields(
+            ScreenReadPayload(
+                packageName = "com.example",
+                activity = "PreviewActivity",
+                snapshotToken = "snap",
+                capturedAt = "2026-04-01T00:00:00Z",
+                foregroundStableDuringCapture = true,
+                partialOutput = false,
+                candidateNodeCount = 1,
+                returnedElementCount = 1,
+                warnings = emptyList(),
+                omittedInvalidBoundsCount = 0,
+                omittedLowSignalCount = 0,
+                omittedNodeCount = 0,
+                omittedCategories = emptyList(),
+                omittedSummary = null,
+                invalidBoundsPresent = false,
+                lowSignalPresent = false,
+                elements = listOf(
+                    ScreenReadElement(
+                        nodeId = "p0.0@tsnap",
+                        text = "Preview",
+                        bounds = "[0,0][20,20]",
+                        centerX = 10,
+                        centerY = 10,
+                        source = ScreenReadMode.ACCESSIBILITY.wireValue
+                    )
+                ),
+                source = ScreenReadMode.ACCESSIBILITY.wireValue,
+                accessibilityElementCount = 1,
+                ocrElementCount = 0,
+                usedOcrFallback = false,
+                visualAvailable = true,
+                previewAvailable = true,
+                previewToken = "preview:snap",
+                previewWidth = 240,
+                previewHeight = 240,
+                previewImage = "data:image/png;base64,thumb",
+                retryHint = null
+            )
+        )
+
+        assertEquals(true, payload["previewAvailable"])
+        assertEquals("preview:snap", payload["previewToken"])
+        assertEquals(240, payload["previewWidth"])
+        assertEquals(240, payload["previewHeight"])
+        assertEquals("data:image/png;base64,thumb", payload["previewImage"])
     }
 }
