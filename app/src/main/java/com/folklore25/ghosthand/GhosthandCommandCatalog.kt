@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.18"
+    const val schemaVersion = "1.19"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -172,8 +172,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/click",
-            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, and may include compact disclosure when selector/actionability assumptions are easy to misread",
-            responseFields = listOf("performed", "backendUsed", "attemptedPath", "resolution", "disclosure"),
+            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, returns bounded failure categories plus selector/actionability evidence on selector misses, and may include compact disclosure when selector/actionability assumptions are easy to misread",
+            responseFields = listOf("performed", "stateChanged", "backendUsed", "attemptedPath", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "resolution", "failureCategory", "selectorMatchCount", "actionableMatchCount", "disclosure"),
             transportContract = "prompt_completion",
             operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector"),
             referenceStability = "snapshot_ephemeral",

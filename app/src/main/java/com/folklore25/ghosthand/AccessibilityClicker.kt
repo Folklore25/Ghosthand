@@ -54,6 +54,7 @@ data class ClickAttemptResult(
     val failureReason: ClickFailureReason?,
     val attemptedPath: String,
     val selectorResolution: ClickSelectorResolution? = null,
+    val selectorMissHint: FindMissHint? = null,
     val effect: ActionEffectObservation? = null
 ) {
     companion object {
@@ -74,6 +75,7 @@ data class ClickAttemptResult(
             reason: ClickFailureReason,
             attemptedPath: String,
             selectorResolution: ClickSelectorResolution? = null,
+            selectorMissHint: FindMissHint? = null,
             effect: ActionEffectObservation? = null
         ): ClickAttemptResult =
             ClickAttemptResult(
@@ -82,6 +84,7 @@ data class ClickAttemptResult(
                 failureReason = reason,
                 attemptedPath = attemptedPath,
                 selectorResolution = selectorResolution,
+                selectorMissHint = selectorMissHint,
                 effect = effect
             )
     }

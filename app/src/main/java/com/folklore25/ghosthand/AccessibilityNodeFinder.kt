@@ -64,7 +64,10 @@ class AccessibilityNodeFinder {
                 buildFindMissHint(
                     snapshot = snapshot,
                     strategy = normalizedStrategy,
-                    query = normalizedQuery
+                    query = normalizedQuery,
+                    clickableOnly = clickableOnly,
+                    selectorMatchCount = matches.size,
+                    actionableMatchCount = effectiveMatches.size
                 )
             } else {
                 null
@@ -160,7 +163,10 @@ class AccessibilityNodeFinder {
                     buildFindMissHint(
                         snapshot = snapshot,
                         strategy = normalizedStrategy,
-                        query = normalizedQuery
+                        query = normalizedQuery,
+                        clickableOnly = false,
+                        selectorMatchCount = matches.size,
+                        actionableMatchCount = matches.size
                     )
                 } else {
                     null
@@ -207,7 +213,10 @@ class AccessibilityNodeFinder {
                 buildFindMissHint(
                     snapshot = snapshot,
                     strategy = normalizedStrategy,
-                    query = normalizedQuery
+                    query = normalizedQuery,
+                    clickableOnly = clickableOnly,
+                    selectorMatchCount = matches.size,
+                    actionableMatchCount = resolvedMatches.size
                 )
             } else {
                 null
@@ -218,7 +227,10 @@ class AccessibilityNodeFinder {
     private fun buildFindMissHint(
         snapshot: AccessibilityTreeSnapshot,
         strategy: String,
-        query: String?
+        query: String?,
+        clickableOnly: Boolean,
+        selectorMatchCount: Int,
+        actionableMatchCount: Int
     ): FindMissHint? {
         if (query.isNullOrBlank()) {
             return null
@@ -366,7 +378,45 @@ class AccessibilityNodeFinder {
             else -> null
         }
 
-        return hint
+        return hint?.copy(
+            failureCategory = failureCategoryFor(
+                clickableOnly = clickableOnly,
+                selectorMatchCount = selectorMatchCount,
+                actionableMatchCount = actionableMatchCount,
+                usedSurfaceFallback = hint.usedSurfaceFallback,
+                usedContainsFallback = hint.usedContainsFallback,
+                likelyMissReason = hint.likelyMissReason
+            ),
+            selectorMatchCount = selectorMatchCount,
+            actionableMatchCount = actionableMatchCount
+        )
+    }
+
+    private fun failureCategoryFor(
+        clickableOnly: Boolean,
+        selectorMatchCount: Int,
+        actionableMatchCount: Int,
+        usedSurfaceFallback: Boolean,
+        usedContainsFallback: Boolean,
+        likelyMissReason: String?
+    ): String {
+        if (clickableOnly && selectorMatchCount > 0 && actionableMatchCount == 0) {
+            return "actionable_target_not_found"
+        }
+        if (usedSurfaceFallback && usedContainsFallback) {
+            return "alternate_surface_contains_match_available"
+        }
+        if (usedSurfaceFallback) {
+            return "alternate_surface_match_available"
+        }
+        if (usedContainsFallback) {
+            return "same_surface_contains_match_available"
+        }
+        return when (likelyMissReason) {
+            "visible_label_is_not_the_same_as_a_resource_id",
+            "resource_id_may_be_easier_to_target_than_visible_text" -> "resource_id_selector_mismatch"
+            else -> "no_selector_match"
+        }
     }
 
     private fun boundedFallbackChainFor(strategy: String): List<String> {
@@ -463,6 +513,9 @@ data class FindMissHint(
     val usedSurfaceFallback: Boolean = false,
     val usedContainsFallback: Boolean = false,
     val likelyMissReason: String? = null,
+    val failureCategory: String? = null,
+    val selectorMatchCount: Int = 0,
+    val actionableMatchCount: Int = 0,
     val suggestedAlternateSurfaces: List<String> = emptyList(),
     val suggestedAlternateStrategies: List<String> = emptyList()
 )

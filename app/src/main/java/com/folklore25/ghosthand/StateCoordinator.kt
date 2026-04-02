@@ -395,7 +395,8 @@ class StateCoordinator(
             ?: return ClickAttemptResult.failure(
                 reason = ClickFailureReason.NODE_NOT_FOUND,
                 attemptedPath = "selector_lookup",
-                selectorResolution = found.clickResolution
+                selectorResolution = found.clickResolution,
+                selectorMissHint = found.missHint
             )
 
         val clickResult = clickNode(nodeId)

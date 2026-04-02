@@ -80,6 +80,9 @@ class AccessibilityNodeFinderTest {
 
         assertFalse(result.found)
         assertTrue(result.matches.isEmpty())
+        assertEquals("actionable_target_not_found", result.missHint?.failureCategory)
+        assertEquals(1, result.missHint?.selectorMatchCount)
+        assertEquals(0, result.missHint?.actionableMatchCount)
     }
 
     @Test
@@ -290,6 +293,7 @@ class AccessibilityNodeFinderTest {
         )
 
         assertFalse(result.found)
+        assertEquals("same_surface_contains_match_available", result.missHint?.failureCategory)
         assertEquals("text", result.missHint?.searchedSurface)
         assertEquals("exact", result.missHint?.matchSemantics)
         assertEquals("visible_text_is_part_of_a_longer_text_block", result.missHint?.likelyMissReason)

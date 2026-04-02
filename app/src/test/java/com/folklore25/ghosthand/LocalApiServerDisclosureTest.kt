@@ -232,4 +232,31 @@ class LocalApiServerDisclosureTest {
         assertTrue(disclosure.summary.contains("/click"))
         assertEquals("`performed=true` proves the UI changed.", disclosure.assumptionToCorrect)
     }
+
+    @Test
+    fun clickDisclosureExplainsActionabilityFailure() {
+        val disclosure = buildClickDisclosure(
+            strategy = "text",
+            clickableOnly = true,
+            result = ClickAttemptResult.failure(
+                reason = ClickFailureReason.NODE_NOT_FOUND,
+                attemptedPath = "selector_lookup",
+                selectorMissHint = FindMissHint(
+                    searchedSurface = "text",
+                    matchSemantics = "exact",
+                    failureCategory = "actionable_target_not_found",
+                    selectorMatchCount = 1,
+                    actionableMatchCount = 0
+                )
+            )
+        )
+
+        assertNotNull(disclosure)
+        assertEquals("discoverability", disclosure!!.kind)
+        assertTrue(disclosure.summary.contains("found label matches"))
+        assertEquals(
+            "A visible label match is always directly actionable.",
+            disclosure.assumptionToCorrect
+        )
+    }
 }

@@ -1190,6 +1190,7 @@ class LocalApiServer(
                 body = errorEnvelope(
                     code = "NODE_NOT_FOUND",
                     message = "Click target node was not found.",
+                    details = buildClickFailureDetails(clickResult, clickableOnly),
                     disclosure = buildClickDisclosure(
                         strategy = selectorStrategy,
                         clickableOnly = clickableOnly,
@@ -2289,6 +2290,18 @@ internal fun buildClickDisclosure(
     }
 
     if (!result.performed && result.failureReason == ClickFailureReason.NODE_NOT_FOUND && strategy != null) {
+        val missHint = result.selectorMissHint
+        if (clickableOnly && missHint?.failureCategory == "actionable_target_not_found") {
+            return GhosthandDisclosure(
+                kind = "discoverability",
+                summary = "Selector-based click found label matches on the requested surface, but none resolved to an actionable target.",
+                assumptionToCorrect = "A visible label match is always directly actionable.",
+                nextBestActions = listOf(
+                    "Use /find without clickable=true to inspect the matched node before escalating.",
+                    alternateSelectorAction(strategy)
+                )
+            )
+        }
         return GhosthandDisclosure(
             kind = "discoverability",
             summary = if (clickableOnly) {
@@ -2312,6 +2325,26 @@ internal fun buildClickDisclosure(
         )
     }
     return null
+}
+
+internal fun buildClickFailureDetails(
+    result: ClickAttemptResult,
+    clickableOnly: Boolean
+): JSONObject {
+    val missHint = result.selectorMissHint ?: return JSONObject()
+    return JSONObject()
+        .put("failureCategory", missHint.failureCategory ?: "no_selector_match")
+        .put("searchedSurface", missHint.searchedSurface)
+        .put("matchSemantics", missHint.matchSemantics)
+        .put("requestedSurface", missHint.requestedSurface)
+        .put("requestedMatchSemantics", missHint.requestedMatchSemantics)
+        .put("matchedSurface", missHint.matchedSurface ?: JSONObject.NULL)
+        .put("matchedMatchSemantics", missHint.matchedMatchSemantics ?: JSONObject.NULL)
+        .put("usedSurfaceFallback", missHint.usedSurfaceFallback)
+        .put("usedContainsFallback", missHint.usedContainsFallback)
+        .put("selectorMatchCount", missHint.selectorMatchCount)
+        .put("actionableMatchCount", missHint.actionableMatchCount)
+        .put("clickableOnly", clickableOnly)
 }
 
 internal fun buildScreenDisclosure(payload: JSONObject): GhosthandDisclosure? {

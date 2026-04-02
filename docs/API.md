@@ -258,6 +258,33 @@ This is separate from system capability unavailability. A capability can be gran
 
 The Ghosthand app may show release/update state in the operator surface by comparing the installed app version against GitHub latest-release metadata.
 
+### 5.7 Selector Failure Evidence
+
+Selector-driven interaction failures should remain compact but machine-readable in the normal response path.
+
+For selector misses, especially `POST /click`, Ghosthand may return bounded evidence such as:
+
+- `failureCategory`
+- `searchedSurface`
+- `matchSemantics`
+- `requestedSurface`
+- `requestedMatchSemantics`
+- `matchedSurface`
+- `matchedMatchSemantics`
+- `usedSurfaceFallback`
+- `usedContainsFallback`
+- `selectorMatchCount`
+- `actionableMatchCount`
+
+These fields distinguish:
+
+- no selector match
+- same-surface exact-vs-contains mismatch
+- alternate-surface match opportunity
+- label match found but no actionable target resolved
+
+Ghosthand should expose this evidence truthfully without broad debug-mode expansion or dishonest matcher broadening.
+
 - this is product UI state, not a localhost API installer path
 - Ghosthand does not claim silent or seamless in-app APK installation
 - when an update exists, the product hands the user off to the GitHub release page for a full APK update
