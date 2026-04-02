@@ -100,7 +100,16 @@ data class GesturePoint(
 
 data class GlobalActionResult(
     val performed: Boolean,
-    val attemptedPath: String
+    val attemptedPath: String,
+    val effect: ActionEffectObservation? = null
+)
+
+data class ActionEffectObservation(
+    val stateChanged: Boolean,
+    val beforeSnapshotToken: String?,
+    val afterSnapshotToken: String?,
+    val finalPackageName: String?,
+    val finalActivity: String?
 )
 
 object GhostAccessibilityExecutionCoreRegistry {

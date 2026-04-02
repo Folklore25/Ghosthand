@@ -71,6 +71,72 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun clickPayloadIncludesObservedEffectFields() {
+        val fields = GhosthandApiPayloads.actionEffectFields(
+            ActionEffectObservation(
+                stateChanged = false,
+                beforeSnapshotToken = "snap-before",
+                afterSnapshotToken = "snap-after",
+                finalPackageName = "com.example.target",
+                finalActivity = "TargetActivity"
+            )
+        )
+
+        assertEquals(false, fields["stateChanged"])
+        assertEquals("snap-before", fields["beforeSnapshotToken"])
+        assertEquals("snap-after", fields["afterSnapshotToken"])
+        assertEquals("com.example.target", fields["finalPackageName"])
+        assertEquals("TargetActivity", fields["finalActivity"])
+    }
+
+    @Test
+    fun clickFieldsIncludeObservedEffectFields() {
+        val fields = GhosthandApiPayloads.clickFields(
+            ClickAttemptResult.success(
+                attemptedPath = "node_click",
+                effect = ActionEffectObservation(
+                    stateChanged = false,
+                    beforeSnapshotToken = "snap-before",
+                    afterSnapshotToken = "snap-after",
+                    finalPackageName = "com.example.target",
+                    finalActivity = "TargetActivity"
+                )
+            )
+        )
+
+        assertEquals(true, fields["performed"])
+        assertEquals(false, fields["stateChanged"])
+        assertEquals("snap-before", fields["beforeSnapshotToken"])
+        assertEquals("snap-after", fields["afterSnapshotToken"])
+        assertEquals("com.example.target", fields["finalPackageName"])
+        assertEquals("TargetActivity", fields["finalActivity"])
+    }
+
+    @Test
+    fun globalActionFieldsExposeDispatchAndObservedStateSeparately() {
+        val fields = GhosthandApiPayloads.globalActionFields(
+            GlobalActionResult(
+                performed = true,
+                attemptedPath = "global_action",
+                effect = ActionEffectObservation(
+                    stateChanged = true,
+                    beforeSnapshotToken = "before",
+                    afterSnapshotToken = "after",
+                    finalPackageName = "com.android.launcher",
+                    finalActivity = "Launcher"
+                )
+            )
+        )
+
+        assertEquals(true, fields["performed"])
+        assertEquals(true, fields["stateChanged"])
+        assertEquals("before", fields["beforeSnapshotToken"])
+        assertEquals("after", fields["afterSnapshotToken"])
+        assertEquals("com.android.launcher", fields["finalPackageName"])
+        assertEquals("Launcher", fields["finalActivity"])
+    }
+
+    @Test
     fun disclosureJsonSerializesCompactDisclosureShape() {
         val disclosure = GhosthandDisclosure(
             kind = "discoverability",

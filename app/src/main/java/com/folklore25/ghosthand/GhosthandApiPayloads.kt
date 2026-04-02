@@ -90,15 +90,33 @@ object GhosthandApiPayloads {
     }
 
     fun clickPayload(result: ClickAttemptResult): JSONObject {
+        return fieldsToJson(clickFields(result))
+    }
+
+    fun clickFields(result: ClickAttemptResult): Map<String, Any?> {
         val payload = linkedMapOf<String, Any?>(
             "performed" to result.performed,
             "backendUsed" to result.backendUsed,
             "attemptedPath" to result.attemptedPath
         )
+        result.effect?.let { effect ->
+            payload.putAll(actionEffectFields(effect))
+        }
         result.selectorResolution?.let { resolution ->
             payload["resolution"] = clickResolutionFields(resolution)
         }
-        return fieldsToJson(payload)
+        return payload
+    }
+
+    fun globalActionFields(result: GlobalActionResult): Map<String, Any?> {
+        return linkedMapOf<String, Any?>(
+            "performed" to result.performed,
+            "attemptedPath" to result.attemptedPath
+        ).apply {
+            result.effect?.let { effect ->
+                putAll(actionEffectFields(effect))
+            }
+        }
     }
 
     fun treeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> {
@@ -350,6 +368,16 @@ object GhosthandApiPayloads {
             "resolvedNodeId" to resolution.resolvedNodeId,
             "resolutionKind" to resolution.resolutionKind,
             "ancestorDepth" to resolution.ancestorDepth
+        )
+    }
+
+    fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {
+        return linkedMapOf(
+            "stateChanged" to effect.stateChanged,
+            "beforeSnapshotToken" to effect.beforeSnapshotToken,
+            "afterSnapshotToken" to effect.afterSnapshotToken,
+            "finalPackageName" to effect.finalPackageName,
+            "finalActivity" to effect.finalActivity
         )
     }
 

@@ -218,4 +218,18 @@ class LocalApiServerDisclosureTest {
             )
         )
     }
+
+    @Test
+    fun actionEffectDisclosureClarifiesDispatchWithoutObservedStateChange() {
+        val disclosure = buildActionEffectDisclosure(
+            route = "/click",
+            performed = true,
+            stateChanged = false
+        )
+
+        assertNotNull(disclosure)
+        assertEquals("ambiguity", disclosure!!.kind)
+        assertTrue(disclosure.summary.contains("/click"))
+        assertEquals("`performed=true` proves the UI changed.", disclosure.assumptionToCorrect)
+    }
 }

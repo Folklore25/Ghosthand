@@ -1121,9 +1121,10 @@ class LocalApiServer(
     private fun buildClickResponse(requestBody: String): String {
         val body = parseJsonBodyOrNull(requestBody, "/click")
             ?: return badJsonBodyResponse()
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
 
         val nodeId = body.optString("nodeId").trim()
-        val clickResult = if (nodeId.isNotEmpty()) {
+        val initialClickResult = if (nodeId.isNotEmpty()) {
             stateCoordinator.clickNode(nodeId)
         } else {
             val selector = parseSelector(body)
@@ -1141,6 +1142,16 @@ class LocalApiServer(
                 clickableOnly = clickSelectorRequiresClickableTarget(body),
                 index = body.optIntOrNull("index") ?: 0
             )
+        }
+        val clickResult = if (initialClickResult.performed) {
+            initialClickResult.copy(
+                effect = observeActionSurfaceChange(
+                    beforeSnapshot = beforeSnapshot,
+                    snapshotProvider = { stateCoordinator.getTreeSnapshotResult().snapshot }
+                ).toActionEffectObservation()
+            )
+        } else {
+            initialClickResult
         }
 
         Log.i(
@@ -1160,6 +1171,10 @@ class LocalApiServer(
                         strategy = selectorStrategy,
                         clickableOnly = clickableOnly,
                         result = clickResult
+                    ) ?: buildActionEffectDisclosure(
+                        route = "/click",
+                        performed = clickResult.performed,
+                        stateChanged = clickResult.effect?.stateChanged ?: false
                     )
                 )
             )
@@ -1475,9 +1490,30 @@ class LocalApiServer(
     }
 
     private fun buildGlobalActionResponse(actionName: String, actionCode: Int): String {
-        val result = stateCoordinator.performGlobalAction(actionCode)
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+        val initialResult = stateCoordinator.performGlobalAction(actionCode)
+        val result = if (initialResult.performed) {
+            initialResult.copy(
+                effect = observeActionSurfaceChange(
+                    beforeSnapshot = beforeSnapshot,
+                    snapshotProvider = { stateCoordinator.getTreeSnapshotResult().snapshot }
+                ).toActionEffectObservation()
+            )
+        } else {
+            initialResult
+        }
         return if (result.performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject(GhosthandApiPayloads.globalActionFields(result)),
+                    disclosure = buildActionEffectDisclosure(
+                        route = "/$actionName",
+                        performed = result.performed,
+                        stateChanged = result.effect?.stateChanged ?: false
+                    )
+                )
+            )
         } else {
             buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Global action '$actionName' failed. Accessibility service may not be connected."))
         }
@@ -2054,6 +2090,16 @@ internal fun observeActionSurfaceChange(
     return observeScrollSurfaceChange(beforeSnapshot, afterSnapshot)
 }
 
+internal fun ScrollSurfaceObservation.toActionEffectObservation(): ActionEffectObservation {
+    return ActionEffectObservation(
+        stateChanged = surfaceChanged,
+        beforeSnapshotToken = beforeSnapshotToken,
+        afterSnapshotToken = afterSnapshotToken,
+        finalPackageName = finalPackageName,
+        finalActivity = finalActivity
+    )
+}
+
 internal fun buildWaitUiChangeDisclosure(
     result: StateCoordinator.WaitUiChangeResult
 ): GhosthandDisclosure? {
@@ -2310,6 +2356,25 @@ internal fun buildMotionDisclosure(
         kind = "ambiguity",
         summary = "$route dispatched successfully, but Ghosthand did not observe visible-state change yet.",
         assumptionToCorrect = "`performed=true` proves the content advanced.",
+        nextBestActions = listOf(
+            "Use GET /wait to allow the surface to settle.",
+            "Use /screen to confirm whether visible content actually changed."
+        )
+    )
+}
+
+internal fun buildActionEffectDisclosure(
+    route: String,
+    performed: Boolean,
+    stateChanged: Boolean
+): GhosthandDisclosure? {
+    if (!performed || stateChanged) {
+        return null
+    }
+    return GhosthandDisclosure(
+        kind = "ambiguity",
+        summary = "$route dispatched successfully, but Ghosthand did not observe visible-state change yet.",
+        assumptionToCorrect = "`performed=true` proves the UI changed.",
         nextBestActions = listOf(
             "Use GET /wait to allow the surface to settle.",
             "Use /screen to confirm whether visible content actually changed."
