@@ -785,6 +785,12 @@ class LocalApiServer(
                     JSONObject()
                         .put("performed", true)
                         .put("backendUsed", tapResult.backendUsed)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
                 )
             )
             tapResult.failureReason == TapFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
@@ -885,7 +891,13 @@ class LocalApiServer(
                         .put("beforeSnapshotToken", observation.beforeSnapshotToken)
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity),
+                        .put("finalActivity", observation.finalActivity)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = observation.toActionEffectObservation(),
+                                fallbackSnapshot = null
+                            )
+                        ),
                     disclosure = buildMotionDisclosure(
                         route = "/swipe",
                         performed = swipeResult.performed,
@@ -988,6 +1000,8 @@ class LocalApiServer(
 
     private fun buildScreenResponse(queryParameters: Map<String, String>): String {
         val mode = ScreenReadMode.fromWireValue(queryParameters["source"]) ?: ScreenReadMode.ACCESSIBILITY
+        val summaryOnly = screenSummaryOnlyRequested(queryParameters)
+        val includePreviewThumb = screenPreviewThumbRequested(queryParameters)
         val editableOnly = queryParameters["editable"] == "true"
         val scrollableOnly = queryParameters["scrollable"] == "true"
         val clickableOnly = queryParameters["clickable"] == "true"
@@ -1011,7 +1025,7 @@ class LocalApiServer(
             ScreenReadMode.ACCESSIBILITY -> {
                 val requiredSnapshot = snapshot
                     ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT)
-                stateCoordinator.createScreenPayload(
+                stateCoordinator.createScreenReadPayload(
                     snapshot = requiredSnapshot,
                     editableOnly = editableOnly,
                     scrollableOnly = scrollableOnly,
@@ -1019,30 +1033,48 @@ class LocalApiServer(
                     clickableOnly = clickableOnly
                 )
             }
-            ScreenReadMode.OCR -> GhosthandApiPayloads.screenReadPayload(
-                stateCoordinator.createOcrScreenPayload()
-            )
+            ScreenReadMode.OCR -> stateCoordinator.createOcrScreenPayload()
             ScreenReadMode.HYBRID -> {
                 if (snapshot != null) {
-                    GhosthandApiPayloads.screenReadPayload(
-                        stateCoordinator.createHybridScreenPayload(
-                            snapshot = snapshot,
-                            packageFilter = queryParameters["package"]
-                        )
+                    stateCoordinator.createHybridScreenPayload(
+                        snapshot = snapshot,
+                        packageFilter = queryParameters["package"]
                     )
                 } else {
-                    GhosthandApiPayloads.screenReadPayload(
-                        stateCoordinator.createOcrScreenPayload()
-                    )
+                    stateCoordinator.createOcrScreenPayload()
                 }
             }
+        }
+
+        val payloadWithPreview = if (includePreviewThumb && payload.previewAvailable == true) {
+            val preview = stateCoordinator.captureBestScreenshot(
+                StateCoordinator.SCREEN_PREVIEW_WIDTH,
+                StateCoordinator.SCREEN_PREVIEW_HEIGHT
+            )
+            if (preview.available && !preview.base64.isNullOrBlank()) {
+                payload.copy(
+                    previewWidth = preview.width,
+                    previewHeight = preview.height,
+                    previewImage = "data:image/png;base64,${preview.base64}"
+                )
+            } else {
+                payload
+            }
+        } else {
+            payload
+        }
+
+        val bodyPayload = if (summaryOnly) {
+            GhosthandApiPayloads.screenSummaryPayload(payloadWithPreview)
+        } else {
+            GhosthandApiPayloads.screenReadPayload(payloadWithPreview)
         }
 
         return buildJsonResponse(
             statusCode = 200,
             body = successEnvelope(
-                data = payload,
-                disclosure = buildScreenDisclosure(payload)
+                data = bodyPayload,
+                disclosure = buildScreenDisclosure(payloadWithPreview)
             )
         )
     }
@@ -1233,7 +1265,13 @@ class LocalApiServer(
         }
 
         val typeResult = stateCoordinator.performInput(parsedRequest.request)
-        val resultPayload = GhosthandApiPayloads.inputResultJson(typeResult)
+        val payloadResult = typeResult.copy(
+            postActionState = buildPostActionState(
+                actionEffect = null,
+                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+            )
+        )
+        val resultPayload = GhosthandApiPayloads.inputResultJson(payloadResult)
 
         Log.i(
             INPUT_LOG_TAG,
@@ -1306,6 +1344,12 @@ class LocalApiServer(
                     JSONObject()
                         .put("performed", true)
                         .put("backendUsed", setTextResult.backendUsed)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
                 )
             )
             setTextResult.failureReason == SetTextFailureReason.ACCESSIBILITY_UNAVAILABLE -> buildJsonResponse(
@@ -1391,7 +1435,13 @@ class LocalApiServer(
                         .put("beforeSnapshotToken", observation.beforeSnapshotToken)
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity),
+                        .put("finalActivity", observation.finalActivity)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = observation.toActionEffectObservation(),
+                                fallbackSnapshot = null
+                            )
+                        ),
                     disclosure = buildMotionDisclosure(
                         route = "/scroll",
                         performed = result.performed,
@@ -1427,7 +1477,19 @@ class LocalApiServer(
 
         val performed = stateCoordinator.performLongPressGesture(x, y, durationMs)
         return if (performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject()
+                        .put("performed", true)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
+                )
+            )
         } else {
             buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Long-press gesture failed."))
         }
@@ -1457,7 +1519,19 @@ class LocalApiServer(
             }
             val performed = stateCoordinator.performGesture(strokes)
             return if (performed) {
-                buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+                buildJsonResponse(
+                    200,
+                    successEnvelope(
+                        JSONObject()
+                            .put("performed", true)
+                            .putPostActionState(
+                                buildPostActionState(
+                                    actionEffect = null,
+                                    fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                                )
+                            )
+                    )
+                )
             } else {
                 buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Gesture dispatch failed."))
             }
@@ -1493,7 +1567,19 @@ class LocalApiServer(
 
         val performed = stateCoordinator.performGesture(strokes)
         return if (performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true)))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject()
+                        .put("performed", true)
+                        .putPostActionState(
+                            buildPostActionState(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
+                )
+            )
         } else {
             buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Gesture dispatch failed."))
         }
@@ -2065,6 +2151,61 @@ internal fun ScrollSurfaceObservation.toActionEffectObservation(): ActionEffectO
     )
 }
 
+internal fun buildPostActionState(
+    actionEffect: ActionEffectObservation?,
+    fallbackSnapshot: AccessibilityTreeSnapshot?
+): PostActionState? {
+    val packageName = actionEffect?.finalPackageName ?: fallbackSnapshot?.packageName
+    val activity = actionEffect?.finalActivity ?: fallbackSnapshot?.activity
+    val snapshotToken = actionEffect?.afterSnapshotToken ?: fallbackSnapshot?.snapshotToken
+    val focusedEditablePresent = fallbackSnapshot?.nodes?.any { it.focused && it.editable }
+    val derivedScreenPayload = fallbackSnapshot?.let {
+        GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = it,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+    }
+
+    if (
+        packageName == null &&
+        activity == null &&
+        snapshotToken == null &&
+        focusedEditablePresent == null &&
+        derivedScreenPayload == null
+    ) {
+        return null
+    }
+
+    return PostActionState(
+        packageName = packageName,
+        activity = activity,
+        snapshotToken = snapshotToken,
+        focusedEditablePresent = focusedEditablePresent,
+        renderMode = derivedScreenPayload?.renderMode(),
+        surfaceReadability = derivedScreenPayload?.surfaceReadability(),
+        visualAvailable = derivedScreenPayload?.visualAvailable
+    )
+}
+
+internal fun JSONObject.putPostActionState(state: PostActionState?): JSONObject {
+    state
+        ?.let(GhosthandApiPayloads::postActionStateFields)
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { put("postActionState", JSONObject(it)) }
+    return this
+}
+
+internal fun screenSummaryOnlyRequested(queryParameters: Map<String, String>): Boolean {
+    return queryParameters["summaryOnly"] == "true"
+}
+
+internal fun screenPreviewThumbRequested(queryParameters: Map<String, String>): Boolean {
+    return queryParameters["includePreview"] == "thumb"
+}
+
 internal fun buildWaitUiChangeDisclosure(
     result: StateCoordinator.WaitUiChangeResult
 ): GhosthandDisclosure? {
@@ -2295,6 +2436,13 @@ internal fun buildScreenDisclosure(payload: JSONObject): GhosthandDisclosure? {
     return buildScreenDisclosure(
         partialOutput = payload.optBoolean("partialOutput", false),
         foregroundStableDuringCapture = payload.optBoolean("foregroundStableDuringCapture", true)
+    )
+}
+
+internal fun buildScreenDisclosure(payload: ScreenReadPayload): GhosthandDisclosure? {
+    return buildScreenDisclosure(
+        partialOutput = payload.partialOutput,
+        foregroundStableDuringCapture = payload.foregroundStableDuringCapture
     )
 }
 

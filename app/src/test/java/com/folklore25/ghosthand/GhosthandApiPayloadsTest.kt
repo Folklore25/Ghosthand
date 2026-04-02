@@ -137,6 +137,78 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun postActionStateFieldsPreferCompactObservedSubset() {
+        val fields = GhosthandApiPayloads.postActionStateFields(
+            PostActionState(
+                packageName = "com.example.target",
+                activity = "TargetActivity",
+                snapshotToken = "snap-after",
+                renderMode = "accessibility",
+                surfaceReadability = "good",
+                visualAvailable = true
+            )
+        )
+
+        assertEquals("com.example.target", fields["packageName"])
+        assertEquals("TargetActivity", fields["activity"])
+        assertEquals("snap-after", fields["snapshotToken"])
+        assertEquals("accessibility", fields["renderMode"])
+        assertEquals("good", fields["surfaceReadability"])
+        assertEquals(true, fields["visualAvailable"])
+    }
+
+    @Test
+    fun clickFieldsIncludeCompactPostActionState() {
+        val fields = GhosthandApiPayloads.clickFields(
+            ClickAttemptResult.success(
+                attemptedPath = "node_click",
+                effect = ActionEffectObservation(
+                    stateChanged = true,
+                    beforeSnapshotToken = "snap-before",
+                    afterSnapshotToken = "snap-after",
+                    finalPackageName = "com.example.target",
+                    finalActivity = "TargetActivity"
+                )
+            )
+        )
+
+        val postActionState = fields["postActionState"] as Map<*, *>
+        assertEquals("com.example.target", postActionState["packageName"])
+        assertEquals("TargetActivity", postActionState["activity"])
+        assertEquals("snap-after", postActionState["snapshotToken"])
+    }
+
+    @Test
+    fun inputResultFieldsIncludeCompactPostActionState() {
+        val fields = GhosthandApiPayloads.inputResultFields(
+            InputOperationResult(
+                performed = true,
+                textMutation = InputTextMutationResult(
+                    requested = true,
+                    performed = true,
+                    action = "set",
+                    previousText = "old",
+                    finalText = "new",
+                    backendUsed = "accessibility",
+                    failureReason = null,
+                    attemptedPath = "focused_set_text"
+                ),
+                keyDispatch = null,
+                postActionState = PostActionState(
+                    packageName = "com.example.target",
+                    activity = "EditorActivity",
+                    snapshotToken = "snap-after"
+                )
+            )
+        )
+
+        val postActionState = fields["postActionState"] as Map<*, *>
+        assertEquals("com.example.target", postActionState["packageName"])
+        assertEquals("EditorActivity", postActionState["activity"])
+        assertEquals("snap-after", postActionState["snapshotToken"])
+    }
+
+    @Test
     fun clickFailureFieldsExposeBoundedFailureEvidence() {
         val fields = GhosthandApiPayloads.clickFailureFields(
             FindMissHint(
@@ -219,6 +291,92 @@ class GhosthandApiPayloadsTest {
         assertEquals("[0,0][100,100]", button["bounds"])
         assertEquals("accessibility", button["source"])
         assertEquals(true, payload["foregroundStableDuringCapture"])
+    }
+
+    @Test
+    fun screenSummaryFieldsOmitElementsAndExposeCompactOrientationData() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", text = "Editor", editable = true, centerX = 30, centerY = 40),
+                node("p0.1@tsnap", text = "Submit", clickable = true, centerX = 50, centerY = 60)
+            )
+        )
+
+        val fullPayload = GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+        val summary = GhosthandApiPayloads.screenSummaryFields(fullPayload)
+
+        assertEquals("com.example", summary["packageName"])
+        assertEquals("ExampleActivity", summary["activity"])
+        assertEquals("snap", summary["snapshotToken"])
+        assertEquals(3, summary["candidateNodeCount"])
+        assertEquals(2, summary["returnedElementCount"])
+        assertEquals(true, summary["focusedEditablePresent"])
+        assertEquals("accessibility", summary["renderMode"])
+        assertEquals("limited", summary["surfaceReadability"])
+        assertEquals(null, summary["visualAvailable"])
+        assertFalse(summary.containsKey("elements"))
+    }
+
+    @Test
+    fun screenSummaryFieldsExposePreviewMetadataWithoutImageBytes() {
+        val summary = GhosthandApiPayloads.screenSummaryFields(
+            GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot(
+                    nodes = listOf(
+                        node("p0@tsnap"),
+                        node("p0.0@tsnap", text = "Preview", clickable = true, centerX = 10, centerY = 20)
+                    )
+                ),
+                editableOnly = false,
+                scrollableOnly = false,
+                packageFilter = null,
+                clickableOnly = false
+            ).copy(
+                visualAvailable = true,
+                previewAvailable = true,
+                previewToken = "preview:snap",
+                previewWidth = 240,
+                previewHeight = 240,
+                previewImage = "data:image/png;base64,thumb"
+            )
+        )
+
+        assertEquals(true, summary["previewAvailable"])
+        assertEquals("preview:snap", summary["previewToken"])
+        assertEquals(240, summary["previewWidth"])
+        assertEquals(240, summary["previewHeight"])
+        assertFalse(summary.containsKey("previewImage"))
+    }
+
+    @Test
+    fun screenPayloadIncludesRenderModeReadabilityAndVisualAvailability() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", text = "Visible", clickable = true, centerX = 10, centerY = 20)
+            )
+        )
+
+        val payload = GhosthandApiPayloads.screenReadFields(
+            GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = false,
+                scrollableOnly = false,
+                packageFilter = null,
+                clickableOnly = false
+            ).copy(visualAvailable = true)
+        )
+
+        assertEquals("limited_accessibility", payload["renderMode"])
+        assertEquals("limited", payload["surfaceReadability"])
+        assertEquals(true, payload["visualAvailable"])
     }
 
     @Test

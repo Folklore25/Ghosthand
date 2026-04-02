@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.20"
+    const val schemaVersion = "1.24"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -94,8 +94,8 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/screen",
-            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. When a default accessibility read is empty or operationally insufficient, Ghosthand may include a bounded retry hint toward explicit `ocr` or `hybrid` without switching sources automatically. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "suggestedFallback", "suggestedSource", "fallbackReason", "retryHint", "elements", "disclosure"),
+            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. `summaryOnly=true` returns a compact orientation summary instead of the full element payload. `includePreview=thumb` adds an explicit lightweight preview thumbnail. Responses publish explicit render mode, surface readability, visual availability, preview availability, and bounded retry hint / fallback signals without auto-switching observation modes. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "renderMode", "surfaceReadability", "visualAvailable", "previewAvailable", "previewToken", "previewWidth", "previewHeight", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "focusedEditablePresent", "suggestedFallback", "suggestedSource", "fallbackReason", "retryHint", "previewImage", "elements", "disclosure"),
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
             referenceStability = "snapshot_ephemeral",
@@ -103,6 +103,8 @@ object GhosthandCommandCatalog {
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
                 GhosthandCommandParam("source", "string", "query", false, "Read source mode", listOf("accessibility", "ocr", "hybrid")),
+                GhosthandCommandParam("summaryOnly", "boolean", "query", false, "Return compact orientation summary instead of full elements"),
+                GhosthandCommandParam("includePreview", "string", "query", false, "Opt-in lightweight preview mode", listOf("thumb")),
                 GhosthandCommandParam("editable", "boolean", "query", false, "Filter to editable elements only"),
                 GhosthandCommandParam("scrollable", "boolean", "query", false, "Filter to scrollable elements only"),
                 GhosthandCommandParam("clickable", "boolean", "query", false, "Filter to clickable elements only"),
@@ -158,8 +160,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/tap",
-            description = "Tap exact screen coordinates",
-            responseFields = listOf("performed", "backendUsed"),
+            description = "Tap exact screen coordinates and return a compact post-action state summary when Ghosthand can cheaply observe the resulting surface",
+            responseFields = listOf("performed", "backendUsed", "postActionState"),
             transportContract = "prompt_completion",
             params = listOf(
                 GhosthandCommandParam("x", "int", "body", true, "Screen X coordinate"),
@@ -172,8 +174,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/click",
-            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, returns bounded failure categories plus selector/actionability evidence on selector misses, and may classify a stale nodeId reference separately from an ordinary miss when the saved snapshot expired. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry or selector re-resolution is often more truthful than treating an immediate miss as terminal.",
-            responseFields = listOf("performed", "stateChanged", "backendUsed", "attemptedPath", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "resolution", "failureCategory", "selectorMatchCount", "actionableMatchCount", "disclosure"),
+            description = "Click by nodeId or first-class selector (text, contentDesc, resourceId); selector-based click resolves to an actionable clickable target by default, can cross between text and contentDesc through a bounded fallback chain, reports the requested-vs-matched selector truth on the dispatched target, returns bounded failure categories plus selector/actionability evidence on selector misses, and may classify a stale nodeId reference separately from an ordinary miss when the saved snapshot expired. Successful responses also include a compact post-action state summary as descriptive shorthand beside the primary observed effect fields. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry or selector re-resolution is often more truthful than treating an immediate miss as terminal.",
+            responseFields = listOf("performed", "stateChanged", "backendUsed", "attemptedPath", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "postActionState", "resolution", "failureCategory", "selectorMatchCount", "actionableMatchCount", "disclosure"),
             transportContract = "prompt_completion",
             operatorUses = listOf("text_selector", "content_desc_selector", "resource_id_selector"),
             referenceStability = "snapshot_ephemeral",
@@ -254,8 +256,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/input",
-            description = "Explicit focused-input interaction route: mutate text, dispatch Enter, or request both in sequence without implicitly clearing existing text",
-            responseFields = listOf("performed", "textChanged", "keyDispatched", "textMutation", "keyDispatch"),
+            description = "Explicit focused-input interaction route: mutate text, dispatch Enter, or request both in sequence without implicitly clearing existing text, with a compact post-action state summary when Ghosthand can cheaply observe the resulting surface",
+            responseFields = listOf("performed", "textChanged", "keyDispatched", "textMutation", "keyDispatch", "postActionState"),
             params = listOf(
                 GhosthandCommandParam("text", "string", "body", false, "Text payload for explicit mutation"),
                 GhosthandCommandParam("textAction", "string", "body", false, "Text mutation mode", listOf("set", "append", "clear")),
@@ -271,8 +273,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/setText",
-            description = "Set text on a specific editable node; nodeId is snapshot-ephemeral and should only be used within the same trusted snapshot context",
-            responseFields = listOf("performed", "backendUsed"),
+            description = "Set text on a specific editable node; nodeId is snapshot-ephemeral and should only be used within the same trusted snapshot context, and successful responses add a compact post-action state summary when cheap observation is available",
+            responseFields = listOf("performed", "backendUsed", "postActionState"),
             referenceStability = "snapshot_ephemeral",
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
@@ -287,8 +289,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/scroll",
-            description = "Scroll a target node or matching container; use contentChanged as the primary same-activity effect signal, with before/after snapshot tokens for supporting detail",
-            responseFields = listOf("performed", "count", "direction", "attemptedPath", "contentChanged", "surfaceChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
+            description = "Scroll a target node or matching container; use contentChanged as the primary same-activity effect signal, keep before/after snapshot tokens for supporting detail, and add a compact post-action state summary as descriptive shorthand",
+            responseFields = listOf("performed", "count", "direction", "attemptedPath", "contentChanged", "surfaceChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "postActionState", "disclosure"),
             referenceStability = "snapshot_ephemeral",
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
@@ -311,8 +313,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/swipe",
-            description = "Swipe between two coordinates; canonical request uses from/to point objects, x1/y1/x2/y2 aliases are accepted for discoverability, and contentChanged is the primary same-activity effect signal",
-            responseFields = listOf("performed", "backendUsed", "requestShape", "contentChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
+            description = "Swipe between two coordinates; canonical request uses from/to point objects, x1/y1/x2/y2 aliases are accepted for discoverability, contentChanged is the primary same-activity effect signal, and successful responses add a compact post-action state summary as descriptive shorthand",
+            responseFields = listOf("performed", "backendUsed", "requestShape", "contentChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "postActionState", "disclosure"),
             params = listOf(
                 GhosthandCommandParam("from", "point", "body", true, "Start coordinate object"),
                 GhosthandCommandParam("to", "point", "body", true, "End coordinate object"),
@@ -334,8 +336,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/longpress",
-            description = "Long press at coordinates",
-            responseFields = listOf("performed"),
+            description = "Long press at coordinates and return a compact post-action state summary when Ghosthand can cheaply observe the resulting surface",
+            responseFields = listOf("performed", "postActionState"),
             params = listOf(
                 GhosthandCommandParam("x", "int", "body", true, "Screen X coordinate"),
                 GhosthandCommandParam("y", "int", "body", true, "Screen Y coordinate"),
@@ -347,8 +349,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/gesture",
-            description = "Composite gesture or multi-stroke dispatch",
-            responseFields = listOf("performed"),
+            description = "Composite gesture or multi-stroke dispatch with a compact post-action state summary when Ghosthand can cheaply observe the resulting surface",
+            responseFields = listOf("performed", "postActionState"),
             params = listOf(
                 GhosthandCommandParam("type", "string", "body", false, "Named gesture type", listOf("pinch_in", "pinch_out")),
                 GhosthandCommandParam("strokes", "stroke_array", "body", false, "Custom stroke descriptors")
@@ -360,8 +362,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/back",
-            description = "Perform system back and report bounded observed effect fields alongside dispatch truth",
-            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
+            description = "Perform system back and report bounded observed effect fields alongside dispatch truth, with a compact post-action state summary as descriptive shorthand",
+            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "postActionState", "disclosure"),
             transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
@@ -369,8 +371,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/home",
-            description = "Go to launcher home and report bounded observed effect fields alongside dispatch truth",
-            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
+            description = "Go to launcher home and report bounded observed effect fields alongside dispatch truth, with a compact post-action state summary as descriptive shorthand",
+            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "postActionState", "disclosure"),
             transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
@@ -378,8 +380,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/recents",
-            description = "Open system recents",
-            responseFields = listOf("performed"),
+            description = "Open system recents and report a compact post-action state summary when Ghosthand can observe the resulting surface cheaply",
+            responseFields = listOf("performed", "postActionState"),
             transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(

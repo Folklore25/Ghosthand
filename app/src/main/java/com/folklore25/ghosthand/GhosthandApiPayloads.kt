@@ -50,6 +50,16 @@ data class GhosthandDisclosure(
     val nextBestActions: List<String> = emptyList()
 )
 
+data class PostActionState(
+    val packageName: String? = null,
+    val activity: String? = null,
+    val snapshotToken: String? = null,
+    val focusedEditablePresent: Boolean? = null,
+    val renderMode: String? = null,
+    val surfaceReadability: String? = null,
+    val visualAvailable: Boolean? = null
+)
+
 object GhosthandApiPayloads {
     fun treePayload(snapshot: AccessibilityTreeSnapshot): JSONObject {
         return fieldsToJson(treeFields(snapshot))
@@ -79,6 +89,10 @@ object GhosthandApiPayloads {
 
     fun screenReadPayload(payload: ScreenReadPayload): JSONObject {
         return fieldsToJson(screenReadFields(payload))
+    }
+
+    fun screenSummaryPayload(payload: ScreenReadPayload): JSONObject {
+        return fieldsToJson(screenSummaryFields(payload))
     }
 
     fun nodePayload(node: FlatAccessibilityNode): JSONObject {
@@ -279,6 +293,13 @@ object GhosthandApiPayloads {
             "invalidBoundsPresent" to payload.invalidBoundsPresent,
             "lowSignalPresent" to payload.lowSignalPresent,
             "source" to payload.source,
+            "renderMode" to payload.renderMode(),
+            "surfaceReadability" to payload.surfaceReadability(),
+            "visualAvailable" to payload.visualAvailable,
+            "previewAvailable" to payload.previewAvailable,
+            "previewToken" to payload.previewToken,
+            "previewWidth" to payload.previewWidth,
+            "previewHeight" to payload.previewHeight,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback,
@@ -291,6 +312,7 @@ object GhosthandApiPayloads {
                     "reason" to hint.reason
                 )
             },
+            "previewImage" to payload.previewImage,
             "elements" to payload.elements.map { element ->
                 linkedMapOf(
                     "nodeId" to element.nodeId,
@@ -306,6 +328,36 @@ object GhosthandApiPayloads {
                     "source" to element.source
                 )
             }
+        )
+    }
+
+    fun screenSummaryFields(payload: ScreenReadPayload): Map<String, Any?> {
+        return linkedMapOf(
+            "packageName" to payload.packageName,
+            "activity" to payload.activity,
+            "snapshotToken" to payload.snapshotToken,
+            "capturedAt" to payload.capturedAt,
+            "foregroundStableDuringCapture" to payload.foregroundStableDuringCapture,
+            "partialOutput" to payload.partialOutput,
+            "candidateNodeCount" to payload.candidateNodeCount,
+            "returnedElementCount" to payload.returnedElementCount,
+            "warnings" to payload.warnings,
+            "omittedSummary" to payload.omittedSummary,
+            "source" to payload.source,
+            "renderMode" to payload.renderMode(),
+            "surfaceReadability" to payload.surfaceReadability(),
+            "visualAvailable" to payload.visualAvailable,
+            "previewAvailable" to payload.previewAvailable,
+            "previewToken" to payload.previewToken,
+            "previewWidth" to payload.previewWidth,
+            "previewHeight" to payload.previewHeight,
+            "accessibilityElementCount" to payload.accessibilityElementCount,
+            "ocrElementCount" to payload.ocrElementCount,
+            "usedOcrFallback" to payload.usedOcrFallback,
+            "focusedEditablePresent" to payload.elements.any { it.editable },
+            "suggestedFallback" to payload.retryHint?.source,
+            "suggestedSource" to payload.retryHint?.source,
+            "fallbackReason" to payload.retryHint?.reason
         )
     }
 
@@ -399,13 +451,33 @@ object GhosthandApiPayloads {
     }
 
     fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {
-        return linkedMapOf(
+        return linkedMapOf<String, Any?>(
             "stateChanged" to effect.stateChanged,
             "beforeSnapshotToken" to effect.beforeSnapshotToken,
             "afterSnapshotToken" to effect.afterSnapshotToken,
             "finalPackageName" to effect.finalPackageName,
             "finalActivity" to effect.finalActivity
-        )
+        ).apply {
+            postActionStateFields(
+                PostActionState(
+                    packageName = effect.finalPackageName,
+                    activity = effect.finalActivity,
+                    snapshotToken = effect.afterSnapshotToken
+                )
+            ).takeIf { it.isNotEmpty() }?.let { put("postActionState", it) }
+        }
+    }
+
+    fun postActionStateFields(state: PostActionState): Map<String, Any?> {
+        return linkedMapOf<String, Any?>().apply {
+            state.packageName?.let { put("packageName", it) }
+            state.activity?.let { put("activity", it) }
+            state.snapshotToken?.let { put("snapshotToken", it) }
+            state.focusedEditablePresent?.let { put("focusedEditablePresent", it) }
+            state.renderMode?.let { put("renderMode", it) }
+            state.surfaceReadability?.let { put("surfaceReadability", it) }
+            state.visualAvailable?.let { put("visualAvailable", it) }
+        }
     }
 
     fun clickFailureFields(hint: FindMissHint): Map<String, Any?> {
@@ -511,7 +583,7 @@ object GhosthandApiPayloads {
     }
 
     fun inputResultFields(result: InputOperationResult): Map<String, Any?> {
-        return linkedMapOf(
+        return linkedMapOf<String, Any?>(
             "performed" to result.performed,
             "textChanged" to (result.textMutation?.performed ?: false),
             "keyDispatched" to (result.keyDispatch?.performed ?: false),
@@ -537,7 +609,12 @@ object GhosthandApiPayloads {
                     "attemptedPath" to dispatch.attemptedPath
                 )
             }
-        )
+        ).apply {
+            result.postActionState
+                ?.let(::postActionStateFields)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { put("postActionState", it) }
+        }
     }
 
     fun inputResultJson(result: InputOperationResult): JSONObject {
