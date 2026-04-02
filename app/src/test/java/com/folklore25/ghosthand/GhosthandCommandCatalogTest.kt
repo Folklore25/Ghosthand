@@ -149,6 +149,22 @@ class GhosthandCommandCatalogTest {
         assertTrue(waitUiRoute.responseFields.contains("disclosure"))
         assertEquals("final_settled_state", waitUiRoute.stateTruth)
         assertEquals("transition_observed_during_window", waitUiRoute.changeSignal)
+
+        val backRoute = GhosthandCommandCatalog.commands.first { it.id == "back" }
+        assertTrue(backRoute.responseFields.contains("stateChanged"))
+        assertTrue(backRoute.responseFields.contains("beforeSnapshotToken"))
+        assertTrue(backRoute.responseFields.contains("afterSnapshotToken"))
+        assertTrue(backRoute.responseFields.contains("finalPackageName"))
+        assertTrue(backRoute.responseFields.contains("finalActivity"))
+        assertTrue(backRoute.description.contains("observed effect"))
+
+        val homeRoute = GhosthandCommandCatalog.commands.first { it.id == "home" }
+        assertTrue(homeRoute.responseFields.contains("stateChanged"))
+        assertTrue(homeRoute.responseFields.contains("beforeSnapshotToken"))
+        assertTrue(homeRoute.responseFields.contains("afterSnapshotToken"))
+        assertTrue(homeRoute.responseFields.contains("finalPackageName"))
+        assertTrue(homeRoute.responseFields.contains("finalActivity"))
+        assertTrue(homeRoute.description.contains("observed effect"))
     }
 
     @Test

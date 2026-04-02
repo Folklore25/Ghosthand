@@ -137,6 +137,23 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun clickFailureFieldsExposeBoundedFailureEvidence() {
+        val fields = GhosthandApiPayloads.clickFailureFields(
+            FindMissHint(
+                searchedSurface = "text",
+                matchSemantics = "exact",
+                failureCategory = "actionable_target_not_found",
+                selectorMatchCount = 1,
+                actionableMatchCount = 0
+            )
+        )
+
+        assertEquals("actionable_target_not_found", fields["failureCategory"])
+        assertEquals(1, fields["selectorMatchCount"])
+        assertEquals(0, fields["actionableMatchCount"])
+    }
+
+    @Test
     fun disclosureJsonSerializesCompactDisclosureShape() {
         val disclosure = GhosthandDisclosure(
             kind = "discoverability",

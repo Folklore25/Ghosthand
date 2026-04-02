@@ -1491,6 +1491,11 @@ Other normal selector forms:
     "performed": true,
     "backendUsed": "accessibility",
     "attemptedPath": "node_click",
+    "stateChanged": false,
+    "beforeSnapshotToken": "snap-before",
+    "afterSnapshotToken": "snap-after",
+    "finalPackageName": "com.example.target",
+    "finalActivity": "TargetActivity",
     "resolution": {
       "requestedStrategy": "contentDesc",
       "effectiveStrategy": "contentDesc",
@@ -1516,6 +1521,12 @@ Other normal selector forms:
 * `422` / `ACCESSIBILITY_ACTION_FAILED` — click dispatched but did not succeed
 * `503` / `ACCESSIBILITY_UNAVAILABLE` — accessibility service not connected
 
+Selector-driven click failures may also include bounded error details such as:
+
+* `failureCategory`
+* `selectorMatchCount`
+* `actionableMatchCount`
+
 ### Notes
 
 Differs from `POST /tap` with `type=node` in that `/click` is node-semantic only (no coordinate support) and uses `ACTION_CLICK` + clickable-parent fallback. Use `/tap` for coordinate-based tapping.
@@ -1524,6 +1535,7 @@ When the UI has already changed, prefer selector-based re-resolution over reusin
 Selector-based `/click` now defaults to actionable-target resolution. That means visible text on a child node can still activate a clickable wrapper or parent without requiring an explicit `clickable=true` hint.
 For `text` and `desc` selectors, `/click` also retries a bounded fallback chain across exact/contains and `text`/`contentDesc` surfaces before failing, which reduces brittleness on feed/card surfaces where the visible label is truncated, nested, or only exposed on another semantic surface.
 `attemptedPath` exposes the dispatch path that actually executed, such as `node_click` or `clickable_parent_click`.
+`stateChanged`, `beforeSnapshotToken`, `afterSnapshotToken`, `finalPackageName`, and `finalActivity` provide a bounded observed-effect summary. `performed=true` means dispatch succeeded; it does not prove the intended visible effect happened.
 `resolution` exposes the selector-resolution path before dispatch:
 
 - `requestedStrategy`: the selector strategy requested by the caller
@@ -1833,9 +1845,27 @@ Failure responses include `error.details` with:
 
 Perform `GLOBAL_ACTION_BACK`. No request body required.
 
+Successful responses also expose bounded observed-effect fields:
+
+* `attemptedPath`
+* `stateChanged`
+* `beforeSnapshotToken`
+* `afterSnapshotToken`
+* `finalPackageName`
+* `finalActivity`
+
 ## 7.27 `POST /home`
 
 Perform `GLOBAL_ACTION_HOME`. No request body required.
+
+Successful responses also expose bounded observed-effect fields:
+
+* `attemptedPath`
+* `stateChanged`
+* `beforeSnapshotToken`
+* `afterSnapshotToken`
+* `finalPackageName`
+* `finalActivity`
 
 ## 7.28 `POST /recents`
 

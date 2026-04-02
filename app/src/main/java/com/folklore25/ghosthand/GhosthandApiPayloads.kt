@@ -381,6 +381,18 @@ object GhosthandApiPayloads {
         )
     }
 
+    fun clickFailureFields(hint: FindMissHint): Map<String, Any?> {
+        return linkedMapOf(
+            "failureCategory" to hint.failureCategory,
+            "selectorMatchCount" to hint.selectorMatchCount,
+            "actionableMatchCount" to hint.actionableMatchCount,
+            "searchedSurface" to hint.searchedSurface,
+            "matchSemantics" to hint.matchSemantics,
+            "matchedSurface" to hint.matchedSurface,
+            "matchedMatchSemantics" to hint.matchedMatchSemantics
+        )
+    }
+
     fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> {
         return linkedMapOf(
             "kind" to disclosure.kind,

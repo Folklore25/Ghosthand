@@ -2327,26 +2327,6 @@ internal fun buildClickDisclosure(
     return null
 }
 
-internal fun buildClickFailureDetails(
-    result: ClickAttemptResult,
-    clickableOnly: Boolean
-): JSONObject {
-    val missHint = result.selectorMissHint ?: return JSONObject()
-    return JSONObject()
-        .put("failureCategory", missHint.failureCategory ?: "no_selector_match")
-        .put("searchedSurface", missHint.searchedSurface)
-        .put("matchSemantics", missHint.matchSemantics)
-        .put("requestedSurface", missHint.requestedSurface)
-        .put("requestedMatchSemantics", missHint.requestedMatchSemantics)
-        .put("matchedSurface", missHint.matchedSurface ?: JSONObject.NULL)
-        .put("matchedMatchSemantics", missHint.matchedMatchSemantics ?: JSONObject.NULL)
-        .put("usedSurfaceFallback", missHint.usedSurfaceFallback)
-        .put("usedContainsFallback", missHint.usedContainsFallback)
-        .put("selectorMatchCount", missHint.selectorMatchCount)
-        .put("actionableMatchCount", missHint.actionableMatchCount)
-        .put("clickableOnly", clickableOnly)
-}
-
 internal fun buildScreenDisclosure(payload: JSONObject): GhosthandDisclosure? {
     return buildScreenDisclosure(
         partialOutput = payload.optBoolean("partialOutput", false),
@@ -2394,6 +2374,17 @@ internal fun buildMotionDisclosure(
             "Use /screen to confirm whether visible content actually changed."
         )
     )
+}
+
+internal fun buildClickFailureDetails(
+    result: ClickAttemptResult,
+    clickableOnly: Boolean
+): JSONObject {
+    val missHint = result.selectorMissHint ?: return JSONObject()
+    return JSONObject(GhosthandApiPayloads.clickFailureFields(missHint)).apply {
+        put("failureCategory", missHint.failureCategory ?: "no_selector_match")
+        put("clickableOnly", clickableOnly)
+    }
 }
 
 internal fun buildActionEffectDisclosure(

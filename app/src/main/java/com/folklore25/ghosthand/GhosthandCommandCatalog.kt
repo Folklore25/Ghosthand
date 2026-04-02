@@ -383,8 +383,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/back",
-            description = "Perform system back",
-            responseFields = listOf("performed"),
+            description = "Perform system back and report bounded observed effect fields alongside dispatch truth",
+            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
             transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
@@ -392,8 +392,8 @@ object GhosthandCommandCatalog {
             category = "interaction",
             method = "POST",
             path = "/home",
-            description = "Go to launcher home",
-            responseFields = listOf("performed"),
+            description = "Go to launcher home and report bounded observed effect fields alongside dispatch truth",
+            responseFields = listOf("performed", "attemptedPath", "stateChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "disclosure"),
             transportContract = "prompt_completion"
         ),
         GhosthandCommandDescriptor(
