@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-04-02T11:18:38.589Z",
+  "phase": "21",
+  "phase_name": "agent-interaction-hardening-for-1-2-0",
+  "phase_dir": ".planning/phases/21-agent-interaction-hardening-for-1-2-0",
+  "plan": 5,
+  "task": 1,
+  "total_tasks": 2,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Merge 1.2 branch to main",
+      "status": "done",
+      "commit": "19c36a7"
+    },
+    {
+      "id": 2,
+      "name": "Remove non-root /launch from 1.x surface",
+      "status": "done",
+      "commit": "90439fa"
+    },
+    {
+      "id": 3,
+      "name": "Refresh runtime status text per activity locale",
+      "status": "done",
+      "commit": "cf30397"
+    },
+    {
+      "id": 4,
+      "name": "Build and install release variants on connected devices",
+      "status": "done",
+      "commit": "manual"
+    },
+    {
+      "id": 5,
+      "name": "Phase 21 execution through secondary cleanup",
+      "status": "done",
+      "commit": "0545063"
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 1,
+      "name": "Push merged main to origin",
+      "status": "not_started"
+    },
+    {
+      "id": 2,
+      "name": "Resume localization follow-up only if English-mode issue is still reproducible after latest commit",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    {
+      "action": "Verify whether the English-mode localization issue is fixed on-device after commit cf30397",
+      "context": "The fix compiles and was committed, but no post-fix device verification was run in this session.",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Non-root /launch is intentionally removed from the supported 1.x runtime surface.",
+      "rationale": "It is not reliable enough to remain a truthful supported primitive and future launch work is deferred to a root-backed 2.0 line.",
+      "phase": "21"
+    },
+    {
+      "decision": "Localization fix stays narrow by rebinding AppTextResolver to activity context and refreshing stored runtime strings on resume.",
+      "rationale": "The issue looked like stale localized text rather than missing English resources, so a narrow runtime text refresh was preferable to a broad locale-system rewrite.",
+      "phase": "21"
+    }
+  ],
+  "uncommitted_files": [],
+  "next_action": "Start with `git push origin main` if you want the merged 1.2 line and localization fix synced remotely; otherwise verify the localization fix on-device before more code changes.",
+  "context_notes": "Repo is currently on main with a clean worktree. Phase 21 code landed, launch was removed from the 1.x surface, and a narrow localization fix was committed last. STATE/ROADMAP still point to Phase 21 as the active execution thread, so resume should treat this as post-phase cleanup rather than new feature work."
+}
