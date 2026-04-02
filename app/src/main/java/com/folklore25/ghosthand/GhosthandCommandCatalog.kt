@@ -46,7 +46,7 @@ data class GhosthandSelectorSupport(
 )
 
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.21"
+    const val schemaVersion = "1.22"
 
     val selectorAliases: Map<String, String> = linkedMapOf(
         "text" to "text",
@@ -94,8 +94,8 @@ object GhosthandCommandCatalog {
             category = "read",
             method = "GET",
             path = "/screen",
-            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. When a default accessibility read is empty or operationally insufficient, Ghosthand may include a bounded retry hint toward explicit `ocr` or `hybrid` without switching sources automatically. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
-            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "suggestedFallback", "suggestedSource", "fallbackReason", "retryHint", "elements", "disclosure"),
+            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. `summaryOnly=true` returns a compact orientation summary instead of the full element payload. When a default accessibility read is empty or operationally insufficient, Ghosthand may include a bounded retry hint toward explicit `ocr` or `hybrid` without switching sources automatically. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
+            responseFields = listOf("packageName", "activity", "snapshotToken", "capturedAt", "foregroundStableDuringCapture", "partialOutput", "candidateNodeCount", "returnedElementCount", "warnings", "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount", "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent", "source", "accessibilityElementCount", "ocrElementCount", "usedOcrFallback", "focusedEditablePresent", "suggestedFallback", "suggestedSource", "fallbackReason", "retryHint", "elements", "disclosure"),
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
             referenceStability = "snapshot_ephemeral",
@@ -103,6 +103,7 @@ object GhosthandCommandCatalog {
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
                 GhosthandCommandParam("source", "string", "query", false, "Read source mode", listOf("accessibility", "ocr", "hybrid")),
+                GhosthandCommandParam("summaryOnly", "boolean", "query", false, "Return compact orientation summary instead of full elements"),
                 GhosthandCommandParam("editable", "boolean", "query", false, "Filter to editable elements only"),
                 GhosthandCommandParam("scrollable", "boolean", "query", false, "Filter to scrollable elements only"),
                 GhosthandCommandParam("clickable", "boolean", "query", false, "Filter to clickable elements only"),

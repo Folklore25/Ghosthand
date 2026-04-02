@@ -1000,6 +1000,7 @@ class LocalApiServer(
 
     private fun buildScreenResponse(queryParameters: Map<String, String>): String {
         val mode = ScreenReadMode.fromWireValue(queryParameters["source"]) ?: ScreenReadMode.ACCESSIBILITY
+        val summaryOnly = screenSummaryOnlyRequested(queryParameters)
         val editableOnly = queryParameters["editable"] == "true"
         val scrollableOnly = queryParameters["scrollable"] == "true"
         val clickableOnly = queryParameters["clickable"] == "true"
@@ -1023,7 +1024,7 @@ class LocalApiServer(
             ScreenReadMode.ACCESSIBILITY -> {
                 val requiredSnapshot = snapshot
                     ?: return buildTreeUnavailableResponse(TreeUnavailableReason.NO_ACTIVE_ROOT)
-                stateCoordinator.createScreenPayload(
+                stateCoordinator.createScreenReadPayload(
                     snapshot = requiredSnapshot,
                     editableOnly = editableOnly,
                     scrollableOnly = scrollableOnly,
@@ -1031,29 +1032,29 @@ class LocalApiServer(
                     clickableOnly = clickableOnly
                 )
             }
-            ScreenReadMode.OCR -> GhosthandApiPayloads.screenReadPayload(
-                stateCoordinator.createOcrScreenPayload()
-            )
+            ScreenReadMode.OCR -> stateCoordinator.createOcrScreenPayload()
             ScreenReadMode.HYBRID -> {
                 if (snapshot != null) {
-                    GhosthandApiPayloads.screenReadPayload(
-                        stateCoordinator.createHybridScreenPayload(
-                            snapshot = snapshot,
-                            packageFilter = queryParameters["package"]
-                        )
+                    stateCoordinator.createHybridScreenPayload(
+                        snapshot = snapshot,
+                        packageFilter = queryParameters["package"]
                     )
                 } else {
-                    GhosthandApiPayloads.screenReadPayload(
-                        stateCoordinator.createOcrScreenPayload()
-                    )
+                    stateCoordinator.createOcrScreenPayload()
                 }
             }
+        }
+
+        val bodyPayload = if (summaryOnly) {
+            GhosthandApiPayloads.screenSummaryPayload(payload)
+        } else {
+            GhosthandApiPayloads.screenReadPayload(payload)
         }
 
         return buildJsonResponse(
             statusCode = 200,
             body = successEnvelope(
-                data = payload,
+                data = bodyPayload,
                 disclosure = buildScreenDisclosure(payload)
             )
         )
@@ -2158,6 +2159,10 @@ internal fun JSONObject.putPostActionState(state: PostActionState?): JSONObject 
     return this
 }
 
+internal fun screenSummaryOnlyRequested(queryParameters: Map<String, String>): Boolean {
+    return queryParameters["summaryOnly"] == "true"
+}
+
 internal fun buildWaitUiChangeDisclosure(
     result: StateCoordinator.WaitUiChangeResult
 ): GhosthandDisclosure? {
@@ -2388,6 +2393,13 @@ internal fun buildScreenDisclosure(payload: JSONObject): GhosthandDisclosure? {
     return buildScreenDisclosure(
         partialOutput = payload.optBoolean("partialOutput", false),
         foregroundStableDuringCapture = payload.optBoolean("foregroundStableDuringCapture", true)
+    )
+}
+
+internal fun buildScreenDisclosure(payload: ScreenReadPayload): GhosthandDisclosure? {
+    return buildScreenDisclosure(
+        partialOutput = payload.partialOutput,
+        foregroundStableDuringCapture = payload.foregroundStableDuringCapture
     )
 }
 

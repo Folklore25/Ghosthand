@@ -212,6 +212,22 @@ class StateCoordinator(
         )
     }
 
+    fun createScreenReadPayload(
+        snapshot: AccessibilityTreeSnapshot,
+        editableOnly: Boolean,
+        scrollableOnly: Boolean,
+        packageFilter: String?,
+        clickableOnly: Boolean
+    ): ScreenReadPayload {
+        return GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = snapshot,
+            editableOnly = editableOnly,
+            scrollableOnly = scrollableOnly,
+            packageFilter = packageFilter,
+            clickableOnly = clickableOnly
+        )
+    }
+
     fun createOcrScreenPayload(): ScreenReadPayload {
         val screenshotResult = captureBestScreenshot(0, 0)
         val foregroundSnapshot = foregroundAppProvider.snapshot()

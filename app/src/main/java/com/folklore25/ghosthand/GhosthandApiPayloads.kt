@@ -87,6 +87,10 @@ object GhosthandApiPayloads {
         return fieldsToJson(screenReadFields(payload))
     }
 
+    fun screenSummaryPayload(payload: ScreenReadPayload): JSONObject {
+        return fieldsToJson(screenSummaryFields(payload))
+    }
+
     fun nodePayload(node: FlatAccessibilityNode): JSONObject {
         return fieldsToJson(nodeFields(node))
     }
@@ -312,6 +316,29 @@ object GhosthandApiPayloads {
                     "source" to element.source
                 )
             }
+        )
+    }
+
+    fun screenSummaryFields(payload: ScreenReadPayload): Map<String, Any?> {
+        return linkedMapOf(
+            "packageName" to payload.packageName,
+            "activity" to payload.activity,
+            "snapshotToken" to payload.snapshotToken,
+            "capturedAt" to payload.capturedAt,
+            "foregroundStableDuringCapture" to payload.foregroundStableDuringCapture,
+            "partialOutput" to payload.partialOutput,
+            "candidateNodeCount" to payload.candidateNodeCount,
+            "returnedElementCount" to payload.returnedElementCount,
+            "warnings" to payload.warnings,
+            "omittedSummary" to payload.omittedSummary,
+            "source" to payload.source,
+            "accessibilityElementCount" to payload.accessibilityElementCount,
+            "ocrElementCount" to payload.ocrElementCount,
+            "usedOcrFallback" to payload.usedOcrFallback,
+            "focusedEditablePresent" to payload.elements.any { it.editable },
+            "suggestedFallback" to payload.retryHint?.source,
+            "suggestedSource" to payload.retryHint?.source,
+            "fallbackReason" to payload.retryHint?.reason
         )
     }
 

@@ -25,7 +25,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.21", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.22", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -205,11 +205,13 @@ class GhosthandCommandCatalogTest {
         val screenRoute = GhosthandCommandCatalog.commands.first { it.id == "screen" }
         assertTrue(screenRoute.params.all { it.location == "query" })
         assertTrue(screenRoute.params.any { it.name == "source" })
+        assertTrue(screenRoute.params.any { it.name == "summaryOnly" })
         assertTrue(screenRoute.responseFields.contains("elements"))
         assertTrue(screenRoute.responseFields.contains("source"))
         assertTrue(screenRoute.responseFields.contains("accessibilityElementCount"))
         assertTrue(screenRoute.responseFields.contains("ocrElementCount"))
         assertTrue(screenRoute.responseFields.contains("usedOcrFallback"))
+        assertTrue(screenRoute.responseFields.contains("focusedEditablePresent"))
         assertTrue(screenRoute.responseFields.contains("suggestedFallback"))
         assertTrue(screenRoute.responseFields.contains("suggestedSource"))
         assertTrue(screenRoute.responseFields.contains("fallbackReason"))
@@ -234,6 +236,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("same_snapshot_only", screenRoute.snapshotScope)
         assertEquals("selector_reresolution", screenRoute.recommendedInteractionModel)
         assertTrue(screenRoute.description.contains("source=accessibility"))
+        assertTrue(screenRoute.description.contains("summaryOnly=true"))
         assertTrue(screenRoute.description.contains("hybrid"))
         assertTrue(screenRoute.description.contains("retry hint"))
         assertTrue(screenRoute.description.contains("modal transitions"))

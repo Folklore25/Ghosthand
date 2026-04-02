@@ -64,6 +64,13 @@ class LocalApiServerRequestParsingTest {
     }
 
     @Test
+    fun screenSummaryOnlyRequestedDetectsExplicitOptIn() {
+        assertTrue(screenSummaryOnlyRequested(mapOf("summaryOnly" to "true")))
+        assertFalse(screenSummaryOnlyRequested(mapOf("summaryOnly" to "false")))
+        assertFalse(screenSummaryOnlyRequested(emptyMap()))
+    }
+
+    @Test
     fun selectorNormalizationLeavesNonFocusedStrategyQueryNullWhenAliasMissing() {
         val selector = GhosthandSelectors.normalize(
             text = null,

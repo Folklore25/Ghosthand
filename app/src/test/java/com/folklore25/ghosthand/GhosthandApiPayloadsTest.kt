@@ -288,6 +288,34 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun screenSummaryFieldsOmitElementsAndExposeCompactOrientationData() {
+        val snapshot = snapshot(
+            nodes = listOf(
+                node("p0@tsnap"),
+                node("p0.0@tsnap", text = "Editor", editable = true, centerX = 30, centerY = 40),
+                node("p0.1@tsnap", text = "Submit", clickable = true, centerX = 50, centerY = 60)
+            )
+        )
+
+        val fullPayload = GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = snapshot,
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+        val summary = GhosthandApiPayloads.screenSummaryFields(fullPayload)
+
+        assertEquals("com.example", summary["packageName"])
+        assertEquals("ExampleActivity", summary["activity"])
+        assertEquals("snap", summary["snapshotToken"])
+        assertEquals(3, summary["candidateNodeCount"])
+        assertEquals(2, summary["returnedElementCount"])
+        assertEquals(true, summary["focusedEditablePresent"])
+        assertFalse(summary.containsKey("elements"))
+    }
+
+    @Test
     fun rawTreePayloadBuildsNestedChildren() {
         val snapshot = snapshot(
             nodes = listOf(
