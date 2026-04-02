@@ -14,11 +14,14 @@ import androidx.lifecycle.ViewModelProvider
 class DiagnosticsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
+        AppTextResolver.initialize(this)
+        RuntimeStateStore.refreshLocalizedUiText(this)
         RuntimeStateStore.refreshRuntimeSnapshot(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppTextResolver.initialize(this)
         setContentView(R.layout.activity_diagnostics)
 
         val buildVersionValue: TextView = findViewById(R.id.diagnosticsBuildVersionValue)

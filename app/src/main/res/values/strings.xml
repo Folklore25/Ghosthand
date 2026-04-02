@@ -98,7 +98,7 @@
     <string name="home_update_action_download">Update</string>
     <string name="home_update_action_refresh">Check again</string>
     <string name="home_update_refresh_started">Checking GitHub release again</string>
-    <string name="home_update_trigger">Check updates</string>
+    <string name="home_update_trigger">Update</string>
     <string name="home_runtime_title">Primary Controls</string>
     <string name="home_runtime_subtitle">Start the local runtime here. Capability authorization and policy stay on the permissions page.</string>
     <string name="home_permissions_title">Permissions</string>

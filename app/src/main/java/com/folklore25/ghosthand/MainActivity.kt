@@ -16,11 +16,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        AppTextResolver.initialize(this)
+        RuntimeStateStore.refreshLocalizedUiText(this)
         RuntimeStateStore.refreshRuntimeSnapshot(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppTextResolver.initialize(this)
         setContentView(R.layout.activity_main)
         val homeContent = findViewById<View>(R.id.homeContentScroll)
         homeContent.visibility = View.INVISIBLE

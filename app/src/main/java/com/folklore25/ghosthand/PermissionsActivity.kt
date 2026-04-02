@@ -56,11 +56,14 @@ class PermissionsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        AppTextResolver.initialize(this)
+        RuntimeStateStore.refreshLocalizedUiText(this)
         RuntimeStateStore.refreshRuntimeSnapshot(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppTextResolver.initialize(this)
         setContentView(R.layout.activity_permissions)
 
         scrollView = findViewById(R.id.permissionsScroll)

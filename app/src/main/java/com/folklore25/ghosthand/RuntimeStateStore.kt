@@ -74,6 +74,16 @@ object RuntimeStateStore {
         }
     }
 
+    fun refreshLocalizedUiText(context: Context) {
+        AppTextResolver.initialize(context)
+        updateState { current ->
+            current.copy(
+                statusText = localizedStatusTextFor(current),
+                lastServiceAction = localizedLastServiceActionFor(current)
+            )
+        }
+    }
+
     fun markAppStarted() {
         updateState { current ->
             current.copy(
@@ -358,6 +368,33 @@ object RuntimeStateStore {
                 lastServiceAction = actionMessage,
                 statusText = statusMessage
             )
+        }
+    }
+
+    private fun localizedStatusTextFor(state: RuntimeState): String {
+        return when {
+            state.recoverableFailureStatus != null -> state.recoverableFailureStatus
+            state.localApiServerRunning -> AppTextResolver.getString(R.string.status_api_listening)
+            state.foregroundServiceRunning -> AppTextResolver.getString(R.string.status_service_without_api)
+            state.appStarted -> AppTextResolver.getString(R.string.status_app_started)
+            else -> state.statusText
+        }
+    }
+
+    private fun localizedLastServiceActionFor(state: RuntimeState): String {
+        if (state.lastServiceAction.isBlank()) {
+            return state.lastServiceAction
+        }
+
+        return when {
+            state.foregroundServiceRunning && state.localApiServerRunning ->
+                AppTextResolver.getString(R.string.status_service_running)
+            state.foregroundServiceRunning ->
+                AppTextResolver.getString(R.string.status_service_created)
+            !state.foregroundServiceRunning && state.appStarted ->
+                AppTextResolver.getString(R.string.status_service_stopped)
+            else ->
+                state.lastServiceAction
         }
     }
 }

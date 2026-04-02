@@ -13,7 +13,7 @@ object AppTextResolver {
     private var appContext: Context? = null
 
     fun initialize(context: Context) {
-        appContext = context.applicationContext
+        appContext = context
     }
 
     fun getString(resId: Int): String {
