@@ -45,16 +45,34 @@ data class GhosthandSelectorSupport(
     val boundedAids: List<String> = emptyList()
 )
 
-object GhosthandCommandCatalog {
-    const val schemaVersion = "1.24"
+private fun queryParam(
+    name: String,
+    type: String,
+    required: Boolean,
+    description: String,
+    allowedValues: List<String> = emptyList()
+): GhosthandCommandParam {
+    return GhosthandCommandParam(name, type, "query", required, description, allowedValues)
+}
 
-    val selectorAliases: Map<String, String> = linkedMapOf(
+private fun bodyParam(
+    name: String,
+    type: String,
+    required: Boolean,
+    description: String,
+    allowedValues: List<String> = emptyList()
+): GhosthandCommandParam {
+    return GhosthandCommandParam(name, type, "body", required, description, allowedValues)
+}
+
+internal object GhosthandSelectorCatalog {
+    val aliases: Map<String, String> = linkedMapOf(
         "text" to "text",
         "desc" to "contentDesc",
         "id" to "resourceId"
     )
 
-    val selectorStrategies: List<String> = listOf(
+    val strategies: List<String> = listOf(
         "text",
         "textContains",
         "resourceId",
@@ -62,7 +80,9 @@ object GhosthandCommandCatalog {
         "contentDescContains",
         "focused"
     )
+}
 
+internal object GhosthandReadCommandCatalog {
     val commands: List<GhosthandCommandDescriptor> = listOf(
         GhosthandCommandDescriptor(
             id = "ping",
@@ -102,13 +122,13 @@ object GhosthandCommandCatalog {
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
-                GhosthandCommandParam("source", "string", "query", false, "Read source mode", listOf("accessibility", "ocr", "hybrid")),
-                GhosthandCommandParam("summaryOnly", "boolean", "query", false, "Return compact orientation summary instead of full elements"),
-                GhosthandCommandParam("includePreview", "string", "query", false, "Opt-in lightweight preview mode", listOf("thumb")),
-                GhosthandCommandParam("editable", "boolean", "query", false, "Filter to editable elements only"),
-                GhosthandCommandParam("scrollable", "boolean", "query", false, "Filter to scrollable elements only"),
-                GhosthandCommandParam("clickable", "boolean", "query", false, "Filter to clickable elements only"),
-                GhosthandCommandParam("package", "string", "query", false, "Restrict results to a package name")
+                queryParam("source", "string", false, "Read source mode", listOf("accessibility", "ocr", "hybrid")),
+                queryParam("summaryOnly", "boolean", false, "Return compact orientation summary instead of full elements"),
+                queryParam("includePreview", "string", false, "Opt-in lightweight preview mode", listOf("thumb")),
+                queryParam("editable", "boolean", false, "Filter to editable elements only"),
+                queryParam("scrollable", "boolean", false, "Filter to scrollable elements only"),
+                queryParam("clickable", "boolean", false, "Filter to clickable elements only"),
+                queryParam("package", "string", false, "Restrict results to a package name")
             )
         ),
         GhosthandCommandDescriptor(
@@ -122,7 +142,7 @@ object GhosthandCommandCatalog {
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
-                GhosthandCommandParam("mode", "string", "query", false, "Tree shape to return", listOf("raw", "flat"))
+                queryParam("mode", "string", false, "Tree shape to return", listOf("raw", "flat"))
             )
         ),
         GhosthandCommandDescriptor(
@@ -154,7 +174,15 @@ object GhosthandCommandCatalog {
                     )
                 )
             )
-        ),
+        )
+    )
+}
+
+internal object GhosthandInteractionCommandCatalog {
+    private val selectorAliases = listOf("text", "desc", "id")
+    private val selectorPrimaryStrategies = listOf("text", "contentDesc", "resourceId")
+
+    val commands: List<GhosthandCommandDescriptor> = listOf(
         GhosthandCommandDescriptor(
             id = "tap",
             category = "interaction",
@@ -164,8 +192,8 @@ object GhosthandCommandCatalog {
             responseFields = listOf("performed", "backendUsed", "postActionState"),
             transportContract = "prompt_completion",
             params = listOf(
-                GhosthandCommandParam("x", "int", "body", true, "Screen X coordinate"),
-                GhosthandCommandParam("y", "int", "body", true, "Screen Y coordinate")
+                bodyParam("x", "int", true, "Screen X coordinate"),
+                bodyParam("y", "int", true, "Screen Y coordinate")
             ),
             exampleRequest = mapOf("x" to 540, "y" to 1200)
         ),
@@ -182,16 +210,16 @@ object GhosthandCommandCatalog {
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
-                GhosthandCommandParam("nodeId", "string", "body", false, "Snapshot-scoped node identifier"),
-                GhosthandCommandParam("text", "string", "body", false, "Exact visible text selector"),
-                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector; use when the meaningful label lives in contentDesc"),
-                GhosthandCommandParam("id", "string", "body", false, "Exact resource id selector"),
-                GhosthandCommandParam("clickable", "boolean", "body", false, "Override actionable-target resolution; default behavior is true for selector-based click")
+                bodyParam("nodeId", "string", false, "Snapshot-scoped node identifier"),
+                bodyParam("text", "string", false, "Exact visible text selector"),
+                bodyParam("desc", "string", false, "Exact content description selector; use when the meaningful label lives in contentDesc"),
+                bodyParam("id", "string", false, "Exact resource id selector"),
+                bodyParam("clickable", "boolean", false, "Override actionable-target resolution; default behavior is true for selector-based click")
             ),
             selectorSupport = GhosthandSelectorSupport(
-                aliases = listOf("text", "desc", "id"),
+                aliases = selectorAliases,
                 strategies = listOf("text", "resourceId", "contentDesc"),
-                primaryStrategies = listOf("text", "contentDesc", "resourceId")
+                primaryStrategies = selectorPrimaryStrategies
             ),
             exampleRequest = mapOf("desc" to "Settings"),
             exampleResponse = mapOf(
@@ -227,18 +255,18 @@ object GhosthandCommandCatalog {
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
-                GhosthandCommandParam("text", "string", "body", false, "Exact visible text selector"),
-                GhosthandCommandParam("desc", "string", "body", false, "Exact content description selector; use when the meaningful label lives in contentDesc"),
-                GhosthandCommandParam("id", "string", "body", false, "Exact resource id selector"),
-                GhosthandCommandParam("strategy", "string", "body", false, "Explicit strategy name", selectorStrategies),
-                GhosthandCommandParam("query", "string", "body", false, "Explicit strategy query"),
-                GhosthandCommandParam("clickable", "boolean", "body", false, "Resolve up to a clickable target"),
-                GhosthandCommandParam("index", "int", "body", false, "Bounded aid to select one match when a selector returns multiple results")
+                bodyParam("text", "string", false, "Exact visible text selector"),
+                bodyParam("desc", "string", false, "Exact content description selector; use when the meaningful label lives in contentDesc"),
+                bodyParam("id", "string", false, "Exact resource id selector"),
+                bodyParam("strategy", "string", false, "Explicit strategy name", GhosthandSelectorCatalog.strategies),
+                bodyParam("query", "string", false, "Explicit strategy query"),
+                bodyParam("clickable", "boolean", false, "Resolve up to a clickable target"),
+                bodyParam("index", "int", false, "Bounded aid to select one match when a selector returns multiple results")
             ),
             selectorSupport = GhosthandSelectorSupport(
-                aliases = listOf("text", "desc", "id"),
-                strategies = selectorStrategies,
-                primaryStrategies = listOf("text", "contentDesc", "resourceId"),
+                aliases = selectorAliases,
+                strategies = GhosthandSelectorCatalog.strategies,
+                primaryStrategies = selectorPrimaryStrategies,
                 boundedAids = listOf("index")
             ),
             exampleRequest = mapOf("desc" to "Settings", "clickable" to true),
@@ -259,11 +287,11 @@ object GhosthandCommandCatalog {
             description = "Explicit focused-input interaction route: mutate text, dispatch Enter, or request both in sequence without implicitly clearing existing text, with a compact post-action state summary when Ghosthand can cheaply observe the resulting surface",
             responseFields = listOf("performed", "textChanged", "keyDispatched", "textMutation", "keyDispatch", "postActionState"),
             params = listOf(
-                GhosthandCommandParam("text", "string", "body", false, "Text payload for explicit mutation"),
-                GhosthandCommandParam("textAction", "string", "body", false, "Text mutation mode", listOf("set", "append", "clear")),
-                GhosthandCommandParam("key", "string", "body", false, "Explicit key dispatch", listOf("enter")),
-                GhosthandCommandParam("append", "boolean", "body", false, "Legacy alias for textAction=append"),
-                GhosthandCommandParam("clear", "boolean", "body", false, "Legacy alias for textAction=clear")
+                bodyParam("text", "string", false, "Text payload for explicit mutation"),
+                bodyParam("textAction", "string", false, "Text mutation mode", listOf("set", "append", "clear")),
+                bodyParam("key", "string", false, "Explicit key dispatch", listOf("enter")),
+                bodyParam("append", "boolean", false, "Legacy alias for textAction=append"),
+                bodyParam("clear", "boolean", false, "Legacy alias for textAction=clear")
             ),
             focusRequirement = "focused_editable",
             exampleRequest = mapOf("textAction" to "set", "text" to "wifi", "key" to "enter")
@@ -279,8 +307,8 @@ object GhosthandCommandCatalog {
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
-                GhosthandCommandParam("nodeId", "string", "body", true, "Snapshot-scoped node identifier"),
-                GhosthandCommandParam("text", "string", "body", true, "Replacement text")
+                bodyParam("nodeId", "string", true, "Snapshot-scoped node identifier"),
+                bodyParam("text", "string", true, "Replacement text")
             ),
             exampleRequest = mapOf("nodeId" to "snap:abc123:path:0.1", "text" to "wifi")
         ),
@@ -295,10 +323,10 @@ object GhosthandCommandCatalog {
             snapshotScope = "same_snapshot_only",
             recommendedInteractionModel = "selector_reresolution",
             params = listOf(
-                GhosthandCommandParam("nodeId", "string", "body", false, "Snapshot-scoped node identifier"),
-                GhosthandCommandParam("target", "string", "body", false, "Text target used to locate a scroll container"),
-                GhosthandCommandParam("direction", "string", "body", true, "Scroll direction", listOf("up", "down", "left", "right")),
-                GhosthandCommandParam("count", "int", "body", false, "Repeat count")
+                bodyParam("nodeId", "string", false, "Snapshot-scoped node identifier"),
+                bodyParam("target", "string", false, "Text target used to locate a scroll container"),
+                bodyParam("direction", "string", true, "Scroll direction", listOf("up", "down", "left", "right")),
+                bodyParam("count", "int", false, "Repeat count")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text"),
@@ -316,13 +344,13 @@ object GhosthandCommandCatalog {
             description = "Swipe between two coordinates; canonical request uses from/to point objects, x1/y1/x2/y2 aliases are accepted for discoverability, contentChanged is the primary same-activity effect signal, and successful responses add a compact post-action state summary as descriptive shorthand",
             responseFields = listOf("performed", "backendUsed", "requestShape", "contentChanged", "beforeSnapshotToken", "afterSnapshotToken", "finalPackageName", "finalActivity", "postActionState", "disclosure"),
             params = listOf(
-                GhosthandCommandParam("from", "point", "body", true, "Start coordinate object"),
-                GhosthandCommandParam("to", "point", "body", true, "End coordinate object"),
-                GhosthandCommandParam("x1", "int", "body", false, "Alias start X coordinate"),
-                GhosthandCommandParam("y1", "int", "body", false, "Alias start Y coordinate"),
-                GhosthandCommandParam("x2", "int", "body", false, "Alias end X coordinate"),
-                GhosthandCommandParam("y2", "int", "body", false, "Alias end Y coordinate"),
-                GhosthandCommandParam("durationMs", "long", "body", true, "Swipe duration in milliseconds")
+                bodyParam("from", "point", true, "Start coordinate object"),
+                bodyParam("to", "point", true, "End coordinate object"),
+                bodyParam("x1", "int", false, "Alias start X coordinate"),
+                bodyParam("y1", "int", false, "Alias start Y coordinate"),
+                bodyParam("x2", "int", false, "Alias end X coordinate"),
+                bodyParam("y2", "int", false, "Alias end Y coordinate"),
+                bodyParam("durationMs", "long", true, "Swipe duration in milliseconds")
             ),
             delayedAcceptance = "recommended",
             exampleRequest = mapOf(
@@ -339,9 +367,9 @@ object GhosthandCommandCatalog {
             description = "Long press at coordinates and return a compact post-action state summary when Ghosthand can cheaply observe the resulting surface",
             responseFields = listOf("performed", "postActionState"),
             params = listOf(
-                GhosthandCommandParam("x", "int", "body", true, "Screen X coordinate"),
-                GhosthandCommandParam("y", "int", "body", true, "Screen Y coordinate"),
-                GhosthandCommandParam("durationMs", "long", "body", false, "Press duration in milliseconds")
+                bodyParam("x", "int", true, "Screen X coordinate"),
+                bodyParam("y", "int", true, "Screen Y coordinate"),
+                bodyParam("durationMs", "long", false, "Press duration in milliseconds")
             )
         ),
         GhosthandCommandDescriptor(
@@ -352,8 +380,8 @@ object GhosthandCommandCatalog {
             description = "Composite gesture or multi-stroke dispatch with a compact post-action state summary when Ghosthand can cheaply observe the resulting surface",
             responseFields = listOf("performed", "postActionState"),
             params = listOf(
-                GhosthandCommandParam("type", "string", "body", false, "Named gesture type", listOf("pinch_in", "pinch_out")),
-                GhosthandCommandParam("strokes", "stroke_array", "body", false, "Custom stroke descriptors")
+                bodyParam("type", "string", false, "Named gesture type", listOf("pinch_in", "pinch_out")),
+                bodyParam("strokes", "stroke_array", false, "Custom stroke descriptors")
             ),
             delayedAcceptance = "recommended"
         ),
@@ -383,7 +411,14 @@ object GhosthandCommandCatalog {
             description = "Open system recents and report a compact post-action state summary when Ghosthand can observe the resulting surface cheaply",
             responseFields = listOf("performed", "postActionState"),
             transportContract = "prompt_completion"
-        ),
+        )
+    )
+}
+
+internal object GhosthandSensingCommandCatalog {
+    private val selectorPrimaryStrategies = listOf("text", "contentDesc", "resourceId")
+
+    val commands: List<GhosthandCommandDescriptor> = listOf(
         GhosthandCommandDescriptor(
             id = "screenshot",
             category = "sensing",
@@ -402,8 +437,8 @@ object GhosthandCommandCatalog {
             description = "Read buffered notifications",
             responseFields = listOf("notifications"),
             params = listOf(
-                GhosthandCommandParam("package", "string", "query", false, "Restrict results to one package"),
-                GhosthandCommandParam("exclude", "csv", "query", false, "Comma-separated packages to exclude")
+                queryParam("package", "string", false, "Restrict results to one package"),
+                queryParam("exclude", "csv", false, "Comma-separated packages to exclude")
             )
         ),
         GhosthandCommandDescriptor(
@@ -414,8 +449,8 @@ object GhosthandCommandCatalog {
             description = "Post a local notification",
             responseFields = listOf("posted", "notificationId"),
             params = listOf(
-                GhosthandCommandParam("title", "string", "body", false, "Notification title"),
-                GhosthandCommandParam("text", "string", "body", true, "Notification body")
+                bodyParam("title", "string", false, "Notification title"),
+                bodyParam("text", "string", true, "Notification body")
             )
         ),
         GhosthandCommandDescriptor(
@@ -426,7 +461,7 @@ object GhosthandCommandCatalog {
             description = "Cancel a posted local notification",
             responseFields = listOf("canceled"),
             params = listOf(
-                GhosthandCommandParam("notificationId", "int", "body", true, "Notification identifier")
+                bodyParam("notificationId", "int", true, "Notification identifier")
             )
         ),
         GhosthandCommandDescriptor(
@@ -439,8 +474,8 @@ object GhosthandCommandCatalog {
             stateTruth = "final_settled_state",
             changeSignal = "transition_observed_during_window",
             params = listOf(
-                GhosthandCommandParam("timeout", "long", "query", false, "Maximum wait duration in milliseconds"),
-                GhosthandCommandParam("intervalMs", "long", "query", false, "Polling interval in milliseconds")
+                queryParam("timeout", "long", false, "Maximum wait duration in milliseconds"),
+                queryParam("intervalMs", "long", false, "Polling interval in milliseconds")
             ),
             delayedAcceptance = "required",
             exampleRequest = mapOf("timeout" to 3000, "intervalMs" to 200)
@@ -453,14 +488,14 @@ object GhosthandCommandCatalog {
             description = "Wait for a matching tree condition using the same selector aliases and strategies as `/find`; satisfied is kept for compatibility, while conditionMet, stateChanged, and timedOut separate selector success from broader surface change. During modal transitions, a short retry-oriented wait is often the right response when accessibility briefly drops before the surface settles.",
             responseFields = listOf("satisfied", "conditionMet", "stateChanged", "timedOut", "elapsedMs", "node", "reason", "disclosure"),
             params = listOf(
-                GhosthandCommandParam("condition", "selector", "body", true, "Selector object for the awaited condition; use text/desc/id aliases or explicit strategy+query"),
-                GhosthandCommandParam("timeoutMs", "long", "body", false, "Maximum wait duration in milliseconds"),
-                GhosthandCommandParam("intervalMs", "long", "body", false, "Polling interval in milliseconds")
+                bodyParam("condition", "selector", true, "Selector object for the awaited condition; use text/desc/id aliases or explicit strategy+query"),
+                bodyParam("timeoutMs", "long", false, "Maximum wait duration in milliseconds"),
+                bodyParam("intervalMs", "long", false, "Polling interval in milliseconds")
             ),
             selectorSupport = GhosthandSelectorSupport(
                 aliases = listOf("text", "desc", "id"),
-                strategies = selectorStrategies,
-                primaryStrategies = listOf("text", "contentDesc", "resourceId")
+                strategies = GhosthandSelectorCatalog.strategies,
+                primaryStrategies = selectorPrimaryStrategies
             ),
             delayedAcceptance = "required",
             exampleRequest = mapOf(
@@ -491,9 +526,14 @@ object GhosthandCommandCatalog {
             description = "Write clipboard text",
             responseFields = listOf("written"),
             params = listOf(
-                GhosthandCommandParam("text", "string", "body", true, "Clipboard payload")
+                bodyParam("text", "string", true, "Clipboard payload")
             )
-        ),
+        )
+    )
+}
+
+internal object GhosthandIntrospectionCommandCatalog {
+    val commands: List<GhosthandCommandDescriptor> = listOf(
         GhosthandCommandDescriptor(
             id = "commands",
             category = "introspection",
@@ -504,7 +544,7 @@ object GhosthandCommandCatalog {
             exampleResponse = mapOf(
                 "ok" to true,
                 "data" to mapOf(
-                    "schemaVersion" to schemaVersion,
+                    "schemaVersion" to GhosthandCommandCatalog.schemaVersion,
                     "commands" to listOf(
                         mapOf(
                             "id" to "click",
@@ -516,4 +556,18 @@ object GhosthandCommandCatalog {
             )
         )
     )
+}
+
+object GhosthandCommandCatalog {
+    const val schemaVersion = "1.24"
+
+    val selectorAliases: Map<String, String> = GhosthandSelectorCatalog.aliases
+
+    val selectorStrategies: List<String> = GhosthandSelectorCatalog.strategies
+
+    val commands: List<GhosthandCommandDescriptor> =
+        GhosthandReadCommandCatalog.commands +
+            GhosthandInteractionCommandCatalog.commands +
+            GhosthandSensingCommandCatalog.commands +
+            GhosthandIntrospectionCommandCatalog.commands
 }

@@ -14,6 +14,19 @@ import org.junit.Test
 
 class GhosthandCommandCatalogTest {
     @Test
+    fun routeGroupsAndSharedMetadataComposeThePublishedCatalog() {
+        assertEquals(GhosthandSelectorCatalog.aliases, GhosthandCommandCatalog.selectorAliases)
+        assertEquals(GhosthandSelectorCatalog.strategies, GhosthandCommandCatalog.selectorStrategies)
+        assertEquals(
+            GhosthandReadCommandCatalog.commands +
+                GhosthandInteractionCommandCatalog.commands +
+                GhosthandSensingCommandCatalog.commands +
+                GhosthandIntrospectionCommandCatalog.commands,
+            GhosthandCommandCatalog.commands
+        )
+    }
+
+    @Test
     fun commandsHaveUniqueMethodPathPairs() {
         val pairs = GhosthandCommandCatalog.commands.map { it.method to it.path }
         assertEquals(pairs.size, pairs.toSet().size)
