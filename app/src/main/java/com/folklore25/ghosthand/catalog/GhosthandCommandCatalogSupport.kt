@@ -29,7 +29,7 @@ internal object GhosthandSelectorCatalog {
         "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent",
         "source", "renderMode", "surfaceReadability", "visualAvailable", "previewAvailable",
         "previewPath", "previewWidth", "previewHeight", "accessibilityElementCount",
-        "ocrElementCount", "usedOcrFallback", "focusedEditablePresent", "suggestedFallback",
-        "suggestedSource", "fallbackReason", "retryHint", "elements", "disclosure"
+        "ocrElementCount", "usedOcrFallback", "focusedEditablePresent", "suggestedSource",
+        "fallbackReason", "elements", "disclosure"
     )
 }

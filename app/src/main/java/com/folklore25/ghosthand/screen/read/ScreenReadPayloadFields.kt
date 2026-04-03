@@ -83,18 +83,10 @@ object ScreenReadPayloadFields {
         payload: ScreenReadPayload,
         includeRetryHint: Boolean
     ): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "suggestedFallback" to payload.retryHint?.source,
-            "suggestedSource" to payload.retryHint?.source,
-            "fallbackReason" to payload.retryHint?.reason
-        ).apply {
-            if (includeRetryHint) {
-                put(
-                    "retryHint",
-                    payload.retryHint?.let { hint ->
-                        linkedMapOf("source" to hint.source, "reason" to hint.reason)
-                    }
-                )
+        return linkedMapOf<String, Any?>().apply {
+            payload.retryHint?.let { hint ->
+                put("suggestedSource", hint.source)
+                put("fallbackReason", hint.reason)
             }
         }
     }
