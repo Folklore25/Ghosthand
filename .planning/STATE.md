@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-04-03T15:59:22.326Z"
+status: executing
+last_updated: "2026-04-03T16:16:51.236Z"
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 3
-  total_plans: 27
+  total_plans: 32
   completed_plans: 19
 ---
 
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.3.1 maintainability convergence review fix pass** — Phase 24.1 is now planned as a strict corrective pass to finish the architecture convergence work that strict review rejected, without broadening scope or adding new capabilities.
+Current focus: **1.3.1 maintainability convergence fix 02** — Phase 24.2 is now planned as a strict second corrective pass to resolve the still-open coordinator, monolith, and canonical-ownership failures without broadening scope or adding features.
 
 ## Current Position
 
-Phase: 24.1 (maintainability-convergence-review-fix-pass) — EXECUTING
-Plan: 6 of 6
+Phase: 24.2 (maintainability-convergence-fix-02) — EXECUTING
+Plan: 1 of 5
 
-- **Phase:** 24.1
+- **Phase:** 24.2
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase complete — ready for verification
+- **Status:** Executing Phase 24.2
 
 ## Progress
 
@@ -37,25 +37,19 @@ Plan: 6 of 6
 - Phase 23: **PLANNED FOR V1.3.0** — post-action state legibility, `/screen` summary mode, render/readability signals, and lightweight visual preview access
 - Phase 24: **PLANNED FOR V1.3.1** — maintainability convergence, state or contract layering cleanup, vocabulary normalization, test ownership cleanup, and future 2.0 seam preparation
 - Phase 24.1: **PLANNED FOR V1.3.1 FIX PASS** — strict follow-up for LocalApiServer and StateCoordinator thinning, real package/domain decomposition, real layer convergence, real test ownership convergence, and stronger execution/observation seams
+- Phase 24.2: **PLANNED FOR V1.3.1 FIX PASS 02** — strict follow-up for the still-large coordinator, new handler/payload mini-monoliths, and missing canonical ownership of render/readability/state-legibility concepts
 
-Overall: Ghosthand is still trying to complete the maintainability convergence target; the initial refactor made useful progress, but the corrective pass exists because review judged the convergence incomplete in the places that matter most for future evolution.
+Overall: Ghosthand has made meaningful structural progress, but strict review still rejects the maintainability convergence target until the remaining coordinator size, replacement-monolith, and canonical-ownership problems are actually removed.
 
 ## Recent Decisions
 
 | Decision | Rationale |
 |---|---|
-| The previous 1.3.1 refactor attempt did not satisfy strict maintainability review | Useful decomposition progress is not enough if the runtime still centers on the same giant orchestration files |
-| This follow-up pass must target the actual review failures directly | The acceptance result is binding for the corrective scope |
-| Package structure must now express real domain ownership | A flatter codebase with helper files is still too easy to recentralize |
-| The 2.0 seam must become a stronger structural boundary between route/contract, execution, and observation concerns | A weak first-step seam does not sufficiently reduce future integration risk |
-| Phase 24.1 now has a binding architecture-fix note before code movement | The corrective pass needs explicit guidance for LocalApiServer thinning, StateCoordinator thinning, layer ownership, package moves, test ownership, and the stronger execution/observation seam |
-| `LocalApiServer` now stays at its public path but only owns lifecycle, gating, dispatch, and route-group wiring | Keeping the class location stable avoided unnecessary API churn while removing route behavior from the server shell |
-| Route behavior now lives in read/action/input/system/wait packages with shared server and route helpers | Future route edits should land in domain packages instead of re-expanding `LocalApiServer` |
-| `StateCoordinator` now composes state, screen, preview, and capability modules instead of owning those payloads inline | Future screen/state/preview changes should land in their domain packages rather than re-growing the coordinator |
-| Action effect payloads now publish only immediate effect truth; compact post-action summaries come from `state/summary` ownership | Prevents the effect layer from impersonating post-action state while keeping the response contract explicit |
-| Screen summary shaping now lives under `screen/summary`, with fallback and preview fields kept under `screen/read` | Makes full-screen versus summary ownership explicit instead of sharing one flat summary implementation |
-| Runtime owners for server, state, payload, catalog, wait, and execution now live in domain packages instead of the flat root runtime namespace | The filesystem now reflects actual runtime ownership and blocks silent re-flattening |
-| `LocalApiServer` and `StateCoordinator` remain thin shells that import explicit route, execution, observation, and payload collaborators | Strengthens the present-value seam without adding root-backed placeholder interfaces |
+| The second strict follow-up exists because 24.1 still did not satisfy maintainability convergence review | Structural progress is not enough if the remaining change points are still oversized and drift-prone |
+| Phase 24.2 now has a binding architecture-fix note before more code movement | The corrective pass needs an explicit acceptance gate that maps every remaining review failure to required ownership moves |
+| `StateCoordinator` is still too central at roughly 867 lines | The coordinator still mixes too many unrelated screen/state/input/preview responsibilities |
+| New large handler/payload files replaced the old monoliths | `ActionRouteHandlers`, `ReadRouteHandlers`, and `GhosthandPayloadSupport` are still too large to count as converged ownership |
+| Canonical ownership of render/readability/state-legibility concepts is still missing | Review explicitly called out duplicated derivation paths as a remaining failure |
 
 ## Decisions
 
@@ -67,13 +61,13 @@ Overall: Ghosthand is still trying to complete the maintainability convergence t
 ## Blockers / Concerns
 
 - `.planning/` and `docs/` are now local-only and intentionally untracked, so planning truth is local workspace state rather than repo-shared state.
-- Strict review rejected the previous convergence result because `LocalApiServer` and `StateCoordinator` still function as practical control centers, package structure remains too flat, and the layer/test convergence remains incomplete.
+- Remaining strict-review failures are concentrated in `state/StateCoordinator.kt` (867 lines), `routes/action/ActionRouteHandlers.kt` (657), `payload/GhosthandPayloadSupport.kt` (543), and `routes/read/ReadRouteHandlers.kt` (468).
 - OpenClaw and other external agent validation remain user-driven rather than directly invokable from this workspace.
 
 ## Session Continuity
 
-Last session: 2026-04-03T15:59:22.324Z
-Next action: verify Phase 24.1 completion and close out the corrective pass artifacts.
+Last session: 2026-04-04
+Next action: execute Phase 24.2-02 using the binding architecture-fix note to thin `StateCoordinator`, then reduce the new mini-monoliths and establish canonical ownership of render/readability/state-legibility concepts.
 
 ## Performance Metrics
 
