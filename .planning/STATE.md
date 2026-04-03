@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-03T15:04:47.361Z"
+last_updated: "2026-04-03T15:15:30.436Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 27
-  completed_plans: 15
+  completed_plans: 16
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,7 +22,7 @@ Current focus: **1.3.1 maintainability convergence review fix pass** — Phase 2
 ## Current Position
 
 Phase: 24.1 (maintainability-convergence-review-fix-pass) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 
 - **Phase:** 24.1
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
@@ -51,6 +51,7 @@ Overall: Ghosthand is still trying to complete the maintainability convergence t
 | Phase 24.1 now has a binding architecture-fix note before code movement | The corrective pass needs explicit guidance for LocalApiServer thinning, StateCoordinator thinning, layer ownership, package moves, test ownership, and the stronger execution/observation seam |
 | `LocalApiServer` now stays at its public path but only owns lifecycle, gating, dispatch, and route-group wiring | Keeping the class location stable avoided unnecessary API churn while removing route behavior from the server shell |
 | Route behavior now lives in read/action/input/system/wait packages with shared server and route helpers | Future route edits should land in domain packages instead of re-expanding `LocalApiServer` |
+| `StateCoordinator` now composes state, screen, preview, and capability modules instead of owning those payloads inline | Future screen/state/preview changes should land in their domain packages rather than re-growing the coordinator |
 
 ## Blockers / Concerns
 
@@ -60,5 +61,5 @@ Overall: Ghosthand is still trying to complete the maintainability convergence t
 
 ## Session Continuity
 
-Last session: 2026-04-03T15:04:47.359Z
-Next action: execute 24.1-03 against `24.1-ARCHITECTURE-FIX.md`, starting with `StateCoordinator` thinning into composition plus domain-owned state/screen modules.
+Last session: 2026-04-03T15:15:30.434Z
+Next action: execute 24.1-04 against `24.1-ARCHITECTURE-FIX.md`, enforcing non-overlapping ownership for state summary, screen summary, hint, and preview layers.
