@@ -133,5 +133,5 @@ Plans:
 - [x] 24.1-02: Thin `LocalApiServer` into route-domain handlers and server orchestration only
 - [x] 24.1-03: Thin `StateCoordinator` into domain composition modules
 - [x] 24.1-04: Enforce state/summary/hint/preview layer ownership boundaries
-- [ ] 24.1-05: Introduce real package/domain structure and strengthen the execution/observation seam
+- [x] 24.1-05: Introduce real package/domain structure and strengthen the execution/observation seam
 - [ ] 24.1-06: Converge tests by runtime behavior domain and align minimal contract surfaces

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-03T15:26:08.847Z"
+last_updated: "2026-04-03T15:41:32.207Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 27
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,7 +22,7 @@ Current focus: **1.3.1 maintainability convergence review fix pass** — Phase 2
 ## Current Position
 
 Phase: 24.1 (maintainability-convergence-review-fix-pass) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 
 - **Phase:** 24.1
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
@@ -54,6 +54,13 @@ Overall: Ghosthand is still trying to complete the maintainability convergence t
 | `StateCoordinator` now composes state, screen, preview, and capability modules instead of owning those payloads inline | Future screen/state/preview changes should land in their domain packages rather than re-growing the coordinator |
 | Action effect payloads now publish only immediate effect truth; compact post-action summaries come from `state/summary` ownership | Prevents the effect layer from impersonating post-action state while keeping the response contract explicit |
 | Screen summary shaping now lives under `screen/summary`, with fallback and preview fields kept under `screen/read` | Makes full-screen versus summary ownership explicit instead of sharing one flat summary implementation |
+| Runtime owners for server, state, payload, catalog, wait, and execution now live in domain packages instead of the flat root runtime namespace | The filesystem now reflects actual runtime ownership and blocks silent re-flattening |
+| `LocalApiServer` and `StateCoordinator` remain thin shells that import explicit route, execution, observation, and payload collaborators | Strengthens the present-value seam without adding root-backed placeholder interfaces |
+
+## Decisions
+
+- Runtime owners for server, state, payload, catalog, wait, and execution now live in domain packages instead of the flat root runtime namespace.
+- `LocalApiServer` and `StateCoordinator` remain thin shells that import explicit route, execution, observation, and payload collaborators without adding root-backed placeholders.
 
 ## Blockers / Concerns
 
@@ -63,5 +70,11 @@ Overall: Ghosthand is still trying to complete the maintainability convergence t
 
 ## Session Continuity
 
-Last session: 2026-04-03T15:26:08.845Z
-Next action: execute 24.1-05 against `24.1-ARCHITECTURE-FIX.md`, introducing real package/domain structure and strengthening the execution/observation seam.
+Last session: 2026-04-03T15:41:32.205Z
+Next action: execute 24.1-06 to finish the remaining 24.1 corrective pass on top of the converged runtime package map.
+
+## Performance Metrics
+
+| Phase | Plan | Duration | Tasks | Files |
+|---|---:|---:|---:|---:|
+| 24.1 | 05 | 13m | 1 | 45 |
