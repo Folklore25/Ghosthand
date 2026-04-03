@@ -10,8 +10,13 @@ import android.util.Log
 import com.folklore25.ghosthand.InputKeyFailureReason
 import com.folklore25.ghosthand.SetTextFailureReason
 import com.folklore25.ghosthand.TypeFailureReason
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
+import com.folklore25.ghosthand.payload.GhosthandInputPayloads
+import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
 import com.folklore25.ghosthand.routes.action.putPostActionState
+import com.folklore25.ghosthand.routes.action.BACKEND_ACCESSIBILITY
+import com.folklore25.ghosthand.routes.action.BACKEND_AUTO
+import com.folklore25.ghosthand.routes.action.DEFAULT_BACKEND
+import com.folklore25.ghosthand.routes.action.unsupportedBackendResponse
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -41,7 +46,7 @@ internal class InputRouteHandlers(
         val backend = body.optString("backend", DEFAULT_BACKEND).ifBlank { DEFAULT_BACKEND }
         when (backend) {
             BACKEND_AUTO, BACKEND_ACCESSIBILITY -> Unit
-            else -> return buildJsonResponse(422, errorEnvelope("UNSUPPORTED_OPERATION", "Only backend=accessibility and backend=auto are supported."))
+            else -> return unsupportedBackendResponse()
         }
         if (!body.has("text") || body.isNull("text")) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "text is required."))
@@ -75,7 +80,7 @@ internal class InputRouteHandlers(
     private fun buildInputResponse(requestBody: String): String {
         val body = parseJsonBodyOrNull(requestBody, "/input")
             ?: return badJsonBodyResponse()
-        val parsedRequest = GhosthandApiPayloads.parseInputRequest(body)
+        val parsedRequest = GhosthandInputPayloads.parseRequest(body)
         if (parsedRequest.errorMessage != null || parsedRequest.request == null) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", parsedRequest.errorMessage ?: "Invalid /input request."))
         }
@@ -86,7 +91,7 @@ internal class InputRouteHandlers(
                 fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
             )
         )
-        val resultPayload = GhosthandApiPayloads.inputResultJson(payloadResult)
+        val resultPayload = GhosthandPayloadJsonSupport.fieldsToJson(GhosthandInputPayloads.inputResultFields(payloadResult))
         Log.i(INPUT_LOG_TAG, "event=input_request textAction=${parsedRequest.request.textAction?.wireValue ?: "none"} key=${parsedRequest.request.key?.wireValue ?: "none"} success=${typeResult.performed}")
         return when {
             typeResult.performed -> buildJsonResponse(200, successEnvelope(resultPayload))
@@ -139,9 +144,6 @@ internal class InputRouteHandlers(
     }
 
     private companion object {
-        const val BACKEND_AUTO = "auto"
-        const val BACKEND_ACCESSIBILITY = "accessibility"
-        const val DEFAULT_BACKEND = "auto"
         const val TYPE_LOG_TAG = "GhostType"
         const val INPUT_LOG_TAG = "GhostInput"
         const val SETTEXT_LOG_TAG = "GhostSetText"

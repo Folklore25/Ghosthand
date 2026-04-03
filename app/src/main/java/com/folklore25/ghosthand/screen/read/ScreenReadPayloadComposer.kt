@@ -9,7 +9,7 @@ package com.folklore25.ghosthand.screen.read
 import com.folklore25.ghosthand.AccessibilityTreeSnapshot
 import com.folklore25.ghosthand.ForegroundAppSnapshot
 import com.folklore25.ghosthand.ScreenshotDispatchResult
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
+import com.folklore25.ghosthand.payload.GhosthandScreenPayloads
 import com.folklore25.ghosthand.preview.ScreenPreviewMetadata
 
 object ScreenReadPayloadComposer {
@@ -20,7 +20,7 @@ object ScreenReadPayloadComposer {
         packageFilter: String?,
         clickableOnly: Boolean
     ): ScreenReadPayload {
-        return GhosthandApiPayloads.accessibilityScreenRead(
+        return GhosthandScreenPayloads.accessibilityScreenRead(
             snapshot = snapshot,
             editableOnly = editableOnly,
             scrollableOnly = scrollableOnly,

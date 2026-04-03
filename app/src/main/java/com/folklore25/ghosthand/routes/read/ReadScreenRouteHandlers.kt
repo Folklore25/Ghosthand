@@ -7,8 +7,9 @@
 package com.folklore25.ghosthand.routes.read
 
 import com.folklore25.ghosthand.TreeUnavailableReason
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
+import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
+import com.folklore25.ghosthand.payload.GhosthandScreenPayloads
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.buildTreeUnavailableResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -70,9 +71,9 @@ internal class ReadScreenRouteHandlers(
         }
 
         val bodyPayload = if (summaryOnly) {
-            GhosthandApiPayloads.screenSummaryPayload(payload)
+            GhosthandPayloadJsonSupport.fieldsToJson(GhosthandScreenPayloads.summaryFields(payload))
         } else {
-            GhosthandApiPayloads.screenReadPayload(payload)
+            GhosthandPayloadJsonSupport.fieldsToJson(GhosthandScreenPayloads.screenReadFields(payload))
         }
 
         return buildJsonResponse(

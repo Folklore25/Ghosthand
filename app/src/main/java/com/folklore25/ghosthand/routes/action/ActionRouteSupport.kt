@@ -8,10 +8,10 @@ package com.folklore25.ghosthand.routes.action
 
 import com.folklore25.ghosthand.AccessibilityTreeSnapshot
 import com.folklore25.ghosthand.ActionEffectObservation
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.PostActionState
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONObject
 
 internal const val TARGET_TYPE_POINT = "point"
@@ -62,7 +62,7 @@ internal fun ScrollSurfaceObservation.toActionEffectObservation(): ActionEffectO
 
 internal fun JSONObject.putPostActionState(state: PostActionState?): JSONObject {
     state
-        ?.let(GhosthandApiPayloads::postActionStateFields)
+        ?.let(PostActionStateComposer::fields)
         ?.takeIf { it.isNotEmpty() }
         ?.let { put("postActionState", JSONObject(it)) }
     return this

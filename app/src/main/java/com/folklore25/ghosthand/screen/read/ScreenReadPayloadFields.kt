@@ -12,7 +12,7 @@ object ScreenReadPayloadFields {
         return linkedMapOf<String, Any?>().apply {
             putAll(surfaceContextFields(payload))
             putAll(surfaceObservationFields(payload, legibility))
-            putAll(surfaceFallbackFields(payload, includeRetryHint = true))
+            putAll(surfaceFallbackFields(payload))
             putAll(surfacePreviewFields(payload, legibility))
             putAll(
                 linkedMapOf(
@@ -79,10 +79,7 @@ object ScreenReadPayloadFields {
         )
     }
 
-    fun surfaceFallbackFields(
-        payload: ScreenReadPayload,
-        includeRetryHint: Boolean
-    ): Map<String, Any?> {
+    fun surfaceFallbackFields(payload: ScreenReadPayload): Map<String, Any?> {
         return linkedMapOf<String, Any?>().apply {
             payload.retryHint?.let { hint ->
                 put("suggestedSource", hint.source)

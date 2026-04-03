@@ -8,8 +8,9 @@ package com.folklore25.ghosthand.server
 
 import android.util.Log
 import com.folklore25.ghosthand.GhosthandHttp
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
+import com.folklore25.ghosthand.payload.GhosthandDisclosurePayloads
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
+import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
 import com.folklore25.ghosthand.routes.RoutePolicy
 import org.json.JSONObject
 import java.net.ServerSocket
@@ -88,7 +89,7 @@ internal object LocalApiServerEnvelope {
             .put("ok", true)
             .put("data", data)
             .apply {
-                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
+                disclosure?.let { put("disclosure", GhosthandPayloadJsonSupport.fieldsToJson(GhosthandDisclosurePayloads.disclosureFields(it))) }
             }
             .put("meta", buildMeta())
     }
@@ -109,7 +110,7 @@ internal object LocalApiServerEnvelope {
                     .put("details", details)
             )
             .apply {
-                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
+                disclosure?.let { put("disclosure", GhosthandPayloadJsonSupport.fieldsToJson(GhosthandDisclosurePayloads.disclosureFields(it))) }
             }
             .put("meta", buildMeta())
     }

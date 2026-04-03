@@ -6,8 +6,8 @@
 
 package com.folklore25.ghosthand.routes.action
 
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
+import com.folklore25.ghosthand.payload.GhosthandInteractionPayloads
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
 import com.folklore25.ghosthand.routes.successEnvelope
@@ -33,7 +33,7 @@ internal class ActionNavigationRouteHandlers(
             buildJsonResponse(
                 200,
                 successEnvelope(
-                    JSONObject(GhosthandApiPayloads.globalActionFields(result)),
+                    JSONObject(GhosthandInteractionPayloads.globalActionFields(result)),
                     disclosure = buildActionEffectDisclosure("/$actionName", result.performed, result.effect?.stateChanged ?: false)
                 )
             )

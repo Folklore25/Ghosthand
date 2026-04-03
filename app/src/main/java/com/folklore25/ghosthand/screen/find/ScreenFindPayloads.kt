@@ -11,7 +11,8 @@ import com.folklore25.ghosthand.AccessibilityTreeSnapshot
 import com.folklore25.ghosthand.AccessibilityTreeSnapshotResult
 import com.folklore25.ghosthand.FindNodeResult
 import com.folklore25.ghosthand.FlatAccessibilityNode
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
+import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
+import com.folklore25.ghosthand.payload.GhosthandScreenPayloads
 import org.json.JSONObject
 
 data class FocusedNodeResult(
@@ -29,14 +30,16 @@ object ScreenFindPayloads {
         index: Int,
         nodeFinder: AccessibilityNodeFinder
     ): JSONObject {
-        return GhosthandApiPayloads.findPayload(
-            findResult(
-                snapshot = snapshot,
-                strategy = strategy,
-                query = query,
-                clickableOnly = clickableOnly,
-                index = index,
-                nodeFinder = nodeFinder
+        return GhosthandPayloadJsonSupport.fieldsToJson(
+            GhosthandScreenPayloads.findFields(
+                findResult(
+                    snapshot = snapshot,
+                    strategy = strategy,
+                    query = query,
+                    clickableOnly = clickableOnly,
+                    index = index,
+                    nodeFinder = nodeFinder
+                )
             )
         )
     }

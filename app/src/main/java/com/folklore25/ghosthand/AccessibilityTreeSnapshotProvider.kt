@@ -9,9 +9,10 @@ package com.folklore25.ghosthand
 import android.content.Context
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
-import org.json.JSONObject
+import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
+import com.folklore25.ghosthand.payload.GhosthandScreenPayloads
 import java.time.Instant
+import org.json.JSONObject
 
 class AccessibilityTreeSnapshotProvider(
     context: Context
@@ -78,11 +79,11 @@ class AccessibilityTreeSnapshotProvider(
     }
 
     fun toJson(snapshot: AccessibilityTreeSnapshot): JSONObject {
-        return GhosthandApiPayloads.treePayload(snapshot)
+        return GhosthandPayloadJsonSupport.fieldsToJson(GhosthandScreenPayloads.treeFields(snapshot))
     }
 
     fun toRawJson(snapshot: AccessibilityTreeSnapshot): JSONObject {
-        return GhosthandApiPayloads.rawTreePayload(snapshot)
+        return GhosthandPayloadJsonSupport.fieldsToJson(GhosthandScreenPayloads.rawTreeFields(snapshot))
     }
 
     fun toScreenJson(
@@ -92,17 +93,19 @@ class AccessibilityTreeSnapshotProvider(
         packageFilter: String?,
         clickableOnly: Boolean
     ): JSONObject {
-        return GhosthandApiPayloads.screenPayload(
-            snapshot = snapshot,
-            editableOnly = editableOnly,
-            scrollableOnly = scrollableOnly,
-            packageFilter = packageFilter,
-            clickableOnly = clickableOnly
+        return GhosthandPayloadJsonSupport.fieldsToJson(
+            GhosthandScreenPayloads.screenFields(
+                snapshot = snapshot,
+                editableOnly = editableOnly,
+                scrollableOnly = scrollableOnly,
+                packageFilter = packageFilter,
+                clickableOnly = clickableOnly
+            )
         )
     }
 
     fun toJson(node: FlatAccessibilityNode): JSONObject {
-        return GhosthandApiPayloads.nodePayload(node)
+        return GhosthandPayloadJsonSupport.fieldsToJson(GhosthandScreenPayloads.nodeFields(node))
     }
 
     private fun collectNodes(

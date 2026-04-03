@@ -9,8 +9,10 @@ package com.folklore25.ghosthand.routes.action
 import android.util.Log
 import com.folklore25.ghosthand.ClickAttemptResult
 import com.folklore25.ghosthand.ClickFailureReason
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
+import com.folklore25.ghosthand.payload.GhosthandDisclosurePayloads
+import com.folklore25.ghosthand.payload.GhosthandInteractionPayloads
+import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -129,7 +131,7 @@ internal class ActionTapClickRouteHandlers(
             clickResult.performed -> buildJsonResponse(
                 200,
                 successEnvelope(
-                    data = GhosthandApiPayloads.clickPayload(clickResult),
+                    data = GhosthandPayloadJsonSupport.fieldsToJson(GhosthandInteractionPayloads.clickFields(clickResult)),
                     disclosure = buildClickDisclosure(selectorStrategy, clickableOnly, clickResult)
                         ?: buildActionEffectDisclosure("/click", clickResult.performed, clickResult.effect?.stateChanged ?: false)
                 )
@@ -164,7 +166,7 @@ internal fun clickSelectorRequiresClickableTarget(body: JSONObject): Boolean {
 
 internal fun buildClickFailureDetails(result: ClickAttemptResult, clickableOnly: Boolean): JSONObject {
     val missHint = result.selectorMissHint ?: return JSONObject()
-    return JSONObject(GhosthandApiPayloads.clickFailureFields(missHint)).apply {
+    return JSONObject(GhosthandDisclosurePayloads.clickFailureFields(missHint)).apply {
         put("failureCategory", missHint.failureCategory ?: "no_selector_match")
         put("clickableOnly", clickableOnly)
     }
