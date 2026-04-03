@@ -26,11 +26,7 @@ class StateCoordinator(
     private val accessibilityStatusProvider = AccessibilityStatusProvider(appContext)
     private val accessibilityTreeSnapshotProvider = AccessibilityTreeSnapshotProvider(appContext)
     private val accessibilityNodeFinder = AccessibilityNodeFinder()
-    private val accessibilityTapper = AccessibilityTapper()
-    private val accessibilityClicker = AccessibilityClicker()
-    private val accessibilitySwiper = AccessibilitySwiper()
-    private val accessibilityTyper = AccessibilityTyper()
-    private val accessibilityScroller = AccessibilityScroller()
+    private val interactionPlane: GhosthandInteractionPlane = AccessibilityInteractionPlane()
     private val capabilityPolicyStore = CapabilityPolicyStore.getInstance(appContext)
     private val clipboardProvider = ClipboardProvider(appContext)
     private val mediaProjectionProvider = MediaProjectionProvider(appContext)
@@ -277,11 +273,11 @@ class StateCoordinator(
     }
 
     fun tapPoint(x: Int, y: Int): TapAttemptResult {
-        return accessibilityTapper.tapPoint(x, y)
+        return interactionPlane.tapPoint(x, y)
     }
 
     fun tapNode(nodeId: String): TapAttemptResult {
-        return accessibilityTapper.tapNode(nodeId)
+        return interactionPlane.tapNode(nodeId)
     }
 
     fun swipe(
@@ -291,17 +287,11 @@ class StateCoordinator(
         toY: Int,
         durationMs: Long
     ): SwipeAttemptResult {
-        return accessibilitySwiper.swipe(
-            fromX = fromX,
-            fromY = fromY,
-            toX = toX,
-            toY = toY,
-            durationMs = durationMs
-        )
+        return interactionPlane.swipe(fromX, fromY, toX, toY, durationMs)
     }
 
     fun typeText(text: String): TypeAttemptResult {
-        return accessibilityTyper.typeText(text)
+        return interactionPlane.typeText(text)
     }
 
     fun createInfoPayload(): JSONObject {
@@ -356,7 +346,7 @@ class StateCoordinator(
     }
 
     fun clickNode(nodeId: String): ClickAttemptResult {
-        return accessibilityClicker.clickNode(nodeId)
+        return interactionPlane.clickNode(nodeId)
     }
 
     fun clickFirstMatch(
@@ -431,7 +421,7 @@ class StateCoordinator(
     }
 
     fun inputText(text: String): TypeAttemptResult {
-        return accessibilityTyper.typeText(text)
+        return interactionPlane.typeText(text)
     }
 
     fun performInput(request: GhosthandInputRequest): InputOperationResult {
@@ -442,7 +432,7 @@ class StateCoordinator(
                 InputTextAction.APPEND -> previousText + (request.text ?: "")
                 InputTextAction.CLEAR -> ""
             }
-            val result = accessibilityTyper.typeText(finalText)
+            val result = interactionPlane.typeText(finalText)
             InputTextMutationResult(
                 requested = true,
                 performed = result.performed,
@@ -456,7 +446,7 @@ class StateCoordinator(
         }
 
         val keyDispatch = request.key?.let { key ->
-            val result = accessibilityTyper.dispatchKey(key)
+            val result = interactionPlane.dispatchKey(key)
             InputKeyDispatchResult(
                 requested = true,
                 performed = result.performed,
@@ -479,7 +469,7 @@ class StateCoordinator(
     }
 
     fun setTextOnNode(nodeId: String, text: String): SetTextAttemptResult {
-        return accessibilityTyper.setTextOnNode(nodeId, text)
+        return interactionPlane.setTextOnNode(nodeId, text)
     }
 
     fun takeScreenshot(width: Int, height: Int): ScreenshotDispatchResult {
@@ -503,7 +493,7 @@ class StateCoordinator(
                 attemptedPath = "tree_unavailable"
             )
         }
-        return accessibilityScroller.scrollNode(treeResult.snapshot, nodeId, direction)
+        return interactionPlane.scrollNode(treeResult.snapshot, nodeId, direction)
     }
 
     fun scroll(
@@ -568,30 +558,15 @@ class StateCoordinator(
     }
 
     fun performGlobalAction(action: Int): GlobalActionResult {
-        val service = GhostAccessibilityExecutionCoreRegistry.currentInstance()
-            ?: return GlobalActionResult(performed = false, attemptedPath = "service_missing")
-        // doGlobalAction is defined on the concrete services, not the interface
-        return when (service) {
-            is GhostCoreAccessibilityService -> {
-                val performed = service.doGlobalAction(action)
-                GlobalActionResult(performed = performed, attemptedPath = if (performed) "global_action" else "dispatch_failed")
-            }
-            is GhostAccessibilityService -> {
-                val performed = service.doGlobalAction(action)
-                GlobalActionResult(performed = performed, attemptedPath = if (performed) "global_action" else "dispatch_failed")
-            }
-            else -> GlobalActionResult(performed = false, attemptedPath = "unknown_service_type")
-        }
+        return interactionPlane.performGlobalAction(action)
     }
 
     fun performLongPressGesture(x: Int, y: Int, durationMs: Long): Boolean {
-        val service = GhostAccessibilityExecutionCoreRegistry.currentInstance() ?: return false
-        return service.performLongPressGesture(x, y, durationMs)
+        return interactionPlane.performLongPressGesture(x, y, durationMs)
     }
 
     fun performGesture(strokes: List<GestureStroke>): Boolean {
-        val service = GhostAccessibilityExecutionCoreRegistry.currentInstance() ?: return false
-        return service.performGesture(strokes)
+        return interactionPlane.performGesture(strokes)
     }
 
     fun readClipboard(): ClipboardReadResult {

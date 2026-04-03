@@ -18,6 +18,19 @@ enum class ScreenReadMode(val wireValue: String) {
     }
 }
 
+enum class GhosthandRenderMode(val wireValue: String) {
+    ACCESSIBILITY("accessibility"),
+    LIMITED_ACCESSIBILITY("limited_accessibility"),
+    OCR("ocr"),
+    HYBRID("hybrid")
+}
+
+enum class GhosthandSurfaceReadability(val wireValue: String) {
+    GOOD("good"),
+    LIMITED("limited"),
+    POOR("poor")
+}
+
 data class ScreenReadElement(
     val nodeId: String? = null,
     val text: String = "",
@@ -81,21 +94,29 @@ data class ScreenReadPayload(
         return candidateNodeCount >= 20 && omittedNodeCount >= 20 && omittedRatio >= 0.40
     }
 
-    fun renderMode(): String {
+    fun renderModeKind(): GhosthandRenderMode {
         return when {
-            source == ScreenReadMode.HYBRID.wireValue -> "hybrid"
-            source == ScreenReadMode.OCR.wireValue -> "ocr"
-            retryHint != null -> "limited_accessibility"
-            else -> "accessibility"
+            source == ScreenReadMode.HYBRID.wireValue -> GhosthandRenderMode.HYBRID
+            source == ScreenReadMode.OCR.wireValue -> GhosthandRenderMode.OCR
+            retryHint != null -> GhosthandRenderMode.LIMITED_ACCESSIBILITY
+            else -> GhosthandRenderMode.ACCESSIBILITY
+        }
+    }
+
+    fun renderMode(): String {
+        return renderModeKind().wireValue
+    }
+
+    fun surfaceReadabilityKind(): GhosthandSurfaceReadability {
+        return when {
+            retryHint?.source == ScreenReadMode.OCR.wireValue -> GhosthandSurfaceReadability.POOR
+            retryHint != null || partialOutput -> GhosthandSurfaceReadability.LIMITED
+            else -> GhosthandSurfaceReadability.GOOD
         }
     }
 
     fun surfaceReadability(): String {
-        return when {
-            retryHint?.source == ScreenReadMode.OCR.wireValue -> "poor"
-            retryHint != null || partialOutput -> "limited"
-            else -> "good"
-        }
+        return surfaceReadabilityKind().wireValue
     }
 }
 
