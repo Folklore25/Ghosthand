@@ -44,6 +44,160 @@ internal class LocalApiServerRequestException(
     override val message: String
 ) : IllegalArgumentException(message)
 
+internal data class LocalApiServerRouteRequest(
+    val queryParameters: Map<String, String>,
+    val requestBody: String
+)
+
+internal data class LocalApiServerRoute(
+    val method: String,
+    val path: String,
+    val handler: (LocalApiServerRouteRequest) -> String
+)
+
+internal class LocalApiServerRouteRegistry(
+    routes: List<LocalApiServerRoute>,
+    private val pathPolicies: Map<String, RoutePolicy>
+) {
+    private val routesByKey = routes.associateBy { it.method to it.path }
+
+    fun dispatch(
+        method: String,
+        path: String,
+        queryParameters: Map<String, String>,
+        requestBody: String
+    ): String {
+        val route = routesByKey[method to path]
+        if (route != null) {
+            return route.handler(
+                LocalApiServerRouteRequest(
+                    queryParameters = queryParameters,
+                    requestBody = requestBody
+                )
+            )
+        }
+
+        val policy = pathPolicies[path]
+        return if (policy != null) {
+            LocalApiServerEnvelope.httpResponse(
+                statusCode = 405,
+                body = LocalApiServerEnvelope.error(
+                    code = "METHOD_NOT_ALLOWED",
+                    message = policy.methodNotAllowedMessage
+                )
+            )
+        } else {
+            LocalApiServerEnvelope.httpResponse(
+                statusCode = 404,
+                body = LocalApiServerEnvelope.error(
+                    code = "NOT_FOUND",
+                    message = "No endpoint matches $path."
+                )
+            )
+        }
+    }
+}
+
+internal object LocalApiServerEnvelope {
+    fun success(data: JSONObject, disclosure: GhosthandDisclosure? = null): JSONObject {
+        return JSONObject()
+            .put("ok", true)
+            .put("data", data)
+            .apply {
+                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
+            }
+            .put("meta", buildMeta())
+    }
+
+    fun error(
+        code: String,
+        message: String,
+        details: JSONObject = JSONObject(),
+        disclosure: GhosthandDisclosure? = null
+    ): JSONObject {
+        return JSONObject()
+            .put("ok", false)
+            .put("error", JSONObject()
+                .put("code", code)
+                .put("message", message)
+                .put("details", details)
+            )
+            .apply {
+                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
+            }
+            .put("meta", buildMeta())
+    }
+
+    fun httpResponse(statusCode: Int, body: JSONObject): String {
+        val bodyString = body.toString()
+        return buildString {
+            append("HTTP/1.1 ")
+            append(statusCode)
+            append(' ')
+            append(GhosthandHttp.statusText(statusCode))
+            append("\r\n")
+            append("Content-Type: application/json\r\n")
+            append("Content-Length: ")
+            append(bodyString.toByteArray(StandardCharsets.UTF_8).size)
+            append("\r\n")
+            append("Connection: close\r\n")
+            append("\r\n")
+            append(bodyString)
+        }
+    }
+
+    fun toJsonValue(value: Any?): Any {
+        return when (value) {
+            null -> JSONObject.NULL
+            is Map<*, *> -> JSONObject().apply {
+                value.forEach { (key, nestedValue) ->
+                    if (key != null) {
+                        put(key.toString(), toJsonValue(nestedValue))
+                    }
+                }
+            }
+            is Iterable<*> -> org.json.JSONArray().apply {
+                value.forEach { item ->
+                    put(toJsonValue(item))
+                }
+            }
+            is Array<*> -> org.json.JSONArray().apply {
+                value.forEach { item ->
+                    put(toJsonValue(item))
+                }
+            }
+            else -> value
+        }
+    }
+
+    private fun buildMeta(): JSONObject {
+        return JSONObject()
+            .put("requestId", "req_${UUID.randomUUID().toString().replace("-", "")}")
+            .put("timestamp", Instant.now().toString())
+    }
+}
+
+private fun successEnvelope(data: JSONObject, disclosure: GhosthandDisclosure? = null): JSONObject {
+    return LocalApiServerEnvelope.success(data, disclosure)
+}
+
+private fun errorEnvelope(
+    code: String,
+    message: String,
+    details: JSONObject = JSONObject(),
+    disclosure: GhosthandDisclosure? = null
+): JSONObject {
+    return LocalApiServerEnvelope.error(code, message, details, disclosure)
+}
+
+private fun buildJsonResponse(statusCode: Int, body: JSONObject): String {
+    return LocalApiServerEnvelope.httpResponse(statusCode, body)
+}
+
+private fun toJsonValue(value: Any?): Any {
+    return LocalApiServerEnvelope.toJsonValue(value)
+}
+
 internal object LocalApiServerProtocol {
     fun readRequest(
         inputStream: java.io.InputStream,
@@ -218,6 +372,7 @@ class LocalApiServer(
     private val running = AtomicBoolean(false)
     @Volatile
     private var resources = createResources()
+    private val routeRegistry by lazy(::createRouteRegistry)
 
     fun start() {
         if (!running.compareAndSet(false, true)) {
@@ -294,61 +449,14 @@ class LocalApiServer(
                     path = path,
                     capabilityAccess = stateCoordinator.capabilityAccessSnapshot()
                 )?.let { denied ->
-                    buildJsonResponse(
+                    LocalApiServerEnvelope.httpResponse(
                         statusCode = 403,
-                        body = errorEnvelope(
+                        body = LocalApiServerEnvelope.error(
                             code = "CAPABILITY_POLICY_DENIED",
                             message = denied
                         )
                     )
-                } ?: when {
-                    method == "GET" && path == "/ping" -> buildPingResponse()
-                    method == "GET" && path == "/health" -> buildHealthResponse()
-                    method == "GET" && path == "/commands" -> buildCommandsResponse()
-                    method == "GET" && path == "/state" -> buildStateResponse()
-                    method == "GET" && path == "/device" -> buildDeviceResponse()
-                    method == "GET" && path == "/foreground" -> buildForegroundResponse()
-                    method == "GET" && path == "/tree" -> buildTreeResponse(queryParameters)
-                    method == "POST" && path == "/find" -> buildFindResponse(requestBody)
-                    method == "POST" && path == "/tap" -> buildTapResponse(requestBody)
-                    method == "POST" && path == "/swipe" -> buildSwipeResponse(requestBody)
-                    method == "POST" && path == "/type" -> buildTypeResponse(requestBody)
-                    method == "GET" && path == "/screen" -> buildScreenResponse(queryParameters)
-                    method == "GET" && path == "/screenshot" -> buildScreenshotGetResponse(queryParameters)
-                    method == "POST" && path == "/screenshot" -> buildScreenshotResponse(requestBody)
-                    method == "GET" && path == "/info" -> buildInfoResponse()
-                    method == "GET" && path == "/focused" -> buildFocusedResponse()
-                    method == "POST" && path == "/click" -> buildClickResponse(requestBody)
-                    method == "POST" && path == "/input" -> buildInputResponse(requestBody)
-                    method == "POST" && path == "/setText" -> buildSetTextResponse(requestBody)
-                    method == "POST" && path == "/scroll" -> buildScrollResponse(requestBody)
-                    method == "POST" && path == "/longpress" -> buildLongpressResponse(requestBody)
-                    method == "POST" && path == "/gesture" -> buildGestureResponse(requestBody)
-                    method == "POST" && path == "/back" -> buildGlobalActionResponse("back", AccessibilityService.GLOBAL_ACTION_BACK)
-                    method == "POST" && path == "/home" -> buildGlobalActionResponse("home", AccessibilityService.GLOBAL_ACTION_HOME)
-                    method == "POST" && path == "/recents" -> buildGlobalActionResponse("recents", AccessibilityService.GLOBAL_ACTION_RECENTS)
-                    method == "GET" && path == "/clipboard" -> buildClipboardReadResponse()
-                    method == "POST" && path == "/clipboard" -> buildClipboardWriteResponse(requestBody)
-                    method == "GET" && path == "/wait" -> buildWaitUiChangeResponse(queryParameters)
-                    method == "POST" && path == "/wait" -> buildWaitResponse(requestBody)
-                    method == "GET" && path == "/notify" -> buildNotifyReadResponse(queryParameters)
-                    method == "POST" && path == "/notify" -> buildNotifyPostResponse(requestBody)
-                    method == "DELETE" && path == "/notify" -> buildNotifyCancelResponse(requestBody)
-                    GhosthandRoutePolicies.policyFor(path) != null -> buildJsonResponse(
-                        statusCode = 405,
-                        body = errorEnvelope(
-                            code = "METHOD_NOT_ALLOWED",
-                            message = GhosthandRoutePolicies.policyFor(path)!!.methodNotAllowedMessage
-                        )
-                    )
-                    else -> buildJsonResponse(
-                        statusCode = 404,
-                        body = errorEnvelope(
-                            code = "NOT_FOUND",
-                            message = "No endpoint matches $path."
-                        )
-                    )
-                }
+                } ?: routeRegistry.dispatch(method, path, queryParameters, requestBody)
 
                 OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8).use { writer ->
                     writer.write(response)
@@ -361,9 +469,9 @@ class LocalApiServer(
                 )
                 writeResponse(
                     client,
-                    buildJsonResponse(
+                    LocalApiServerEnvelope.httpResponse(
                         statusCode = error.statusCode,
-                        body = errorEnvelope(
+                        body = LocalApiServerEnvelope.error(
                             code = error.errorCode,
                             message = error.message
                         )
@@ -376,9 +484,9 @@ class LocalApiServer(
                 )
                 writeResponse(
                     client,
-                    buildJsonResponse(
+                    LocalApiServerEnvelope.httpResponse(
                         statusCode = 408,
-                        body = errorEnvelope(
+                        body = LocalApiServerEnvelope.error(
                             code = "REQUEST_TIMEOUT",
                             message = "Timed out waiting for the full HTTP request."
                         )
@@ -392,9 +500,9 @@ class LocalApiServer(
                 )
                 writeResponse(
                     client,
-                    buildJsonResponse(
+                    LocalApiServerEnvelope.httpResponse(
                         statusCode = 500,
-                        body = errorEnvelope(
+                        body = LocalApiServerEnvelope.error(
                             code = "INTERNAL_ERROR",
                             message = "Failed to handle request."
                         )
@@ -410,9 +518,9 @@ class LocalApiServer(
         client.use {
             writeResponse(
                 it,
-                buildJsonResponse(
+                LocalApiServerEnvelope.httpResponse(
                     statusCode = 503,
-                    body = errorEnvelope(
+                    body = LocalApiServerEnvelope.error(
                         code = "SERVER_BUSY",
                         message = "Local API server is at capacity. Retry the request."
                     )
@@ -437,9 +545,9 @@ class LocalApiServer(
     }
 
     private fun buildHealthResponse(): String {
-        return buildJsonResponse(
+        return LocalApiServerEnvelope.httpResponse(
             statusCode = 200,
-            body = successEnvelope(stateCoordinator.createHealthPayload())
+            body = LocalApiServerEnvelope.success(stateCoordinator.createHealthPayload())
         )
     }
 
@@ -488,14 +596,14 @@ class LocalApiServer(
                     .put("snapshotScope", command.snapshotScope)
                     .put("recommendedInteractionModel", command.recommendedInteractionModel)
                     .put("stability", command.stability)
-                    .put("exampleRequest", command.exampleRequest?.let(::toJsonValue) ?: JSONObject.NULL)
-                    .put("exampleResponse", command.exampleResponse?.let(::toJsonValue) ?: JSONObject.NULL)
+                    .put("exampleRequest", command.exampleRequest?.let(LocalApiServerEnvelope::toJsonValue) ?: JSONObject.NULL)
+                    .put("exampleResponse", command.exampleResponse?.let(LocalApiServerEnvelope::toJsonValue) ?: JSONObject.NULL)
             )
         }
 
-        return buildJsonResponse(
+        return LocalApiServerEnvelope.httpResponse(
             statusCode = 200,
-            body = successEnvelope(
+            body = LocalApiServerEnvelope.success(
                 JSONObject()
                     .put("schemaVersion", GhosthandCommandCatalog.schemaVersion)
                     .put(
@@ -516,54 +624,30 @@ class LocalApiServer(
     }
 
     private fun buildPingResponse(): String {
-        return buildJsonResponse(
+        return LocalApiServerEnvelope.httpResponse(
             statusCode = 200,
-            body = successEnvelope(stateCoordinator.createPingPayload())
+            body = LocalApiServerEnvelope.success(stateCoordinator.createPingPayload())
         )
     }
 
     private fun buildStateResponse(): String {
-        return buildJsonResponse(
+        return LocalApiServerEnvelope.httpResponse(
             statusCode = 200,
-            body = successEnvelope(stateCoordinator.createStatePayload())
+            body = LocalApiServerEnvelope.success(stateCoordinator.createStatePayload())
         )
     }
 
-    private fun toJsonValue(value: Any?): Any {
-        return when (value) {
-            null -> JSONObject.NULL
-            is Map<*, *> -> JSONObject().apply {
-                value.forEach { (key, nestedValue) ->
-                    if (key != null) {
-                        put(key.toString(), toJsonValue(nestedValue))
-                    }
-                }
-            }
-            is Iterable<*> -> org.json.JSONArray().apply {
-                value.forEach { item ->
-                    put(toJsonValue(item))
-                }
-            }
-            is Array<*> -> org.json.JSONArray().apply {
-                value.forEach { item ->
-                    put(toJsonValue(item))
-                }
-            }
-            else -> value
-        }
-    }
-
     private fun buildDeviceResponse(): String {
-        return buildJsonResponse(
+        return LocalApiServerEnvelope.httpResponse(
             statusCode = 200,
-            body = successEnvelope(stateCoordinator.createDevicePayload())
+            body = LocalApiServerEnvelope.success(stateCoordinator.createDevicePayload())
         )
     }
 
     private fun buildForegroundResponse(): String {
-        return buildJsonResponse(
+        return LocalApiServerEnvelope.httpResponse(
             statusCode = 200,
-            body = successEnvelope(stateCoordinator.createForegroundPayload())
+            body = LocalApiServerEnvelope.success(stateCoordinator.createForegroundPayload())
         )
     }
 
@@ -1789,59 +1873,6 @@ class LocalApiServer(
         }
     }
 
-    private fun successEnvelope(data: JSONObject, disclosure: GhosthandDisclosure? = null): JSONObject {
-        return JSONObject()
-            .put("ok", true)
-            .put("data", data)
-            .apply {
-                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
-            }
-            .put("meta", buildMeta())
-    }
-
-    private fun errorEnvelope(
-        code: String,
-        message: String,
-        details: JSONObject = JSONObject(),
-        disclosure: GhosthandDisclosure? = null
-    ): JSONObject {
-        return JSONObject()
-            .put("ok", false)
-            .put("error", JSONObject()
-                .put("code", code)
-                .put("message", message)
-                .put("details", details)
-            )
-            .apply {
-                disclosure?.let { put("disclosure", GhosthandApiPayloads.disclosureJson(it)) }
-            }
-            .put("meta", buildMeta())
-    }
-
-    private fun buildMeta(): JSONObject {
-        return JSONObject()
-            .put("requestId", "req_${UUID.randomUUID().toString().replace("-", "")}")
-            .put("timestamp", Instant.now().toString())
-    }
-
-    private fun buildJsonResponse(statusCode: Int, body: JSONObject): String {
-        val bodyString = body.toString()
-        return buildString {
-            append("HTTP/1.1 ")
-            append(statusCode)
-            append(' ')
-            append(GhosthandHttp.statusText(statusCode))
-            append("\r\n")
-            append("Content-Type: application/json\r\n")
-            append("Content-Length: ")
-            append(bodyString.toByteArray(StandardCharsets.UTF_8).size)
-            append("\r\n")
-            append("Connection: close\r\n")
-            append("\r\n")
-            append(bodyString)
-        }
-    }
-
     private fun parseSelector(body: JSONObject): SelectorQuery? {
         val query = body.opt("query").let { value ->
             when {
@@ -1889,6 +1920,27 @@ class LocalApiServer(
         )
     }
 
+    private fun successEnvelope(data: JSONObject, disclosure: GhosthandDisclosure? = null): JSONObject {
+        return LocalApiServerEnvelope.success(data, disclosure)
+    }
+
+    private fun errorEnvelope(
+        code: String,
+        message: String,
+        details: JSONObject = JSONObject(),
+        disclosure: GhosthandDisclosure? = null
+    ): JSONObject {
+        return LocalApiServerEnvelope.error(code, message, details, disclosure)
+    }
+
+    private fun buildJsonResponse(statusCode: Int, body: JSONObject): String {
+        return LocalApiServerEnvelope.httpResponse(statusCode, body)
+    }
+
+    private fun toJsonValue(value: Any?): Any {
+        return LocalApiServerEnvelope.toJsonValue(value)
+    }
+
     private fun hasInputAccessibilityUnavailable(result: InputOperationResult): Boolean {
         return result.textMutation?.failureReason == TypeFailureReason.ACCESSIBILITY_UNAVAILABLE ||
             result.keyDispatch?.failureReason == InputKeyFailureReason.ACCESSIBILITY_UNAVAILABLE
@@ -1931,6 +1983,78 @@ class LocalApiServer(
         return ThreadFactory { runnable ->
             Thread(runnable, "$namePrefix-${count.getAndIncrement()}")
         }
+    }
+
+    private fun createRouteRegistry(): LocalApiServerRouteRegistry {
+        return LocalApiServerRouteRegistry(
+            routes = listOf(
+                LocalApiServerRoute("GET", "/ping") { buildPingResponse() },
+                LocalApiServerRoute("GET", "/health") { buildHealthResponse() },
+                LocalApiServerRoute("GET", "/commands") { buildCommandsResponse() },
+                LocalApiServerRoute("GET", "/state") { buildStateResponse() },
+                LocalApiServerRoute("GET", "/device") { buildDeviceResponse() },
+                LocalApiServerRoute("GET", "/foreground") { buildForegroundResponse() },
+                LocalApiServerRoute("GET", "/tree") { request -> buildTreeResponse(request.queryParameters) },
+                LocalApiServerRoute("POST", "/find") { request -> buildFindResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/tap") { request -> buildTapResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/swipe") { request -> buildSwipeResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/type") { request -> buildTypeResponse(request.requestBody) },
+                LocalApiServerRoute("GET", "/screen") { request -> buildScreenResponse(request.queryParameters) },
+                LocalApiServerRoute("GET", "/screenshot") { request -> buildScreenshotGetResponse(request.queryParameters) },
+                LocalApiServerRoute("POST", "/screenshot") { request -> buildScreenshotResponse(request.requestBody) },
+                LocalApiServerRoute("GET", "/info") { buildInfoResponse() },
+                LocalApiServerRoute("GET", "/focused") { buildFocusedResponse() },
+                LocalApiServerRoute("POST", "/click") { request -> buildClickResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/input") { request -> buildInputResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/setText") { request -> buildSetTextResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/scroll") { request -> buildScrollResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/longpress") { request -> buildLongpressResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/gesture") { request -> buildGestureResponse(request.requestBody) },
+                LocalApiServerRoute("POST", "/back") { buildGlobalActionResponse("back", AccessibilityService.GLOBAL_ACTION_BACK) },
+                LocalApiServerRoute("POST", "/home") { buildGlobalActionResponse("home", AccessibilityService.GLOBAL_ACTION_HOME) },
+                LocalApiServerRoute("POST", "/recents") { buildGlobalActionResponse("recents", AccessibilityService.GLOBAL_ACTION_RECENTS) },
+                LocalApiServerRoute("GET", "/clipboard") { buildClipboardReadResponse() },
+                LocalApiServerRoute("POST", "/clipboard") { request -> buildClipboardWriteResponse(request.requestBody) },
+                LocalApiServerRoute("GET", "/wait") { request -> buildWaitUiChangeResponse(request.queryParameters) },
+                LocalApiServerRoute("POST", "/wait") { request -> buildWaitResponse(request.requestBody) },
+                LocalApiServerRoute("GET", "/notify") { request -> buildNotifyReadResponse(request.queryParameters) },
+                LocalApiServerRoute("POST", "/notify") { request -> buildNotifyPostResponse(request.requestBody) },
+                LocalApiServerRoute("DELETE", "/notify") { request -> buildNotifyCancelResponse(request.requestBody) }
+            ),
+            pathPolicies = buildMap {
+                listOf(
+                    "/ping",
+                    "/health",
+                    "/commands",
+                    "/state",
+                    "/device",
+                    "/foreground",
+                    "/tree",
+                    "/find",
+                    "/tap",
+                    "/swipe",
+                    "/type",
+                    "/screen",
+                    "/screenshot",
+                    "/info",
+                    "/focused",
+                    "/click",
+                    "/input",
+                    "/setText",
+                    "/scroll",
+                    "/longpress",
+                    "/gesture",
+                    "/back",
+                    "/home",
+                    "/recents",
+                    "/clipboard",
+                    "/wait",
+                    "/notify"
+                ).forEach { path ->
+                    GhosthandRoutePolicies.policyFor(path)?.let { put(path, it) }
+                }
+            }
+        )
     }
 
     companion object {

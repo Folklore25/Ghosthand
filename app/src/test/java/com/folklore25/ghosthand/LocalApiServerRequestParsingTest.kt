@@ -189,6 +189,25 @@ class LocalApiServerRequestParsingTest {
         assertFalse(resources.hasActiveClients())
     }
 
+    @Test
+    fun routeRegistryDispatchesMatchingMethodAndPath() {
+        val registry = LocalApiServerRouteRegistry(
+            routes = listOf(
+                LocalApiServerRoute("GET", "/screen") { "matched" }
+            ),
+            pathPolicies = emptyMap()
+        )
+
+        val response = registry.dispatch(
+            method = "GET",
+            path = "/screen",
+            queryParameters = emptyMap(),
+            requestBody = ""
+        )
+
+        assertEquals("matched", response)
+    }
+
     private fun expectParseFailure(block: () -> Unit): LocalApiServerRequestException {
         try {
             block()
