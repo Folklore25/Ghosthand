@@ -4,8 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.state
 
+import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.capability.GovernedCapabilityPayloads
 import com.folklore25.ghosthand.payload.PostActionState
 import com.folklore25.ghosthand.screen.read.ScreenReadMode
@@ -126,8 +127,8 @@ class StateCoordinatorStatePayloadTest {
     @Test
     fun permissionsPayloadSeparatesGovernedCapabilitiesFromSystemPermissionDiagnostics() {
         val coordinator = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/StateCoordinator.kt",
-            "src/main/java/com/folklore25/ghosthand/StateCoordinator.kt"
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
 
         assertTrue(coordinator.contains("private val statePayloadComposer = StatePayloadComposer"))

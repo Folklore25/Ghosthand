@@ -90,10 +90,16 @@ class MaintainabilityConvergencePackageOwnershipTest {
         )
 
         expectedPaths.forEach { path ->
-            assertTrue("Expected runtime-domain test at $path", File(path).exists())
+            assertTrue(
+                "Expected runtime-domain test at $path",
+                listOf(path, path.removePrefix("app/")).any { candidate -> File(candidate).exists() }
+            )
         }
         retiredFlatPaths.forEach { path ->
-            assertFalse("Flat runtime-domain test should be retired at $path", File(path).exists())
+            assertFalse(
+                "Flat runtime-domain test should be retired at $path",
+                listOf(path, path.removePrefix("app/")).any { candidate -> File(candidate).exists() }
+            )
         }
     }
 }

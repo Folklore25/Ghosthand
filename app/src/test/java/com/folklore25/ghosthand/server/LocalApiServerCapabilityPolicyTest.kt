@@ -4,8 +4,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.server
 
+import com.folklore25.ghosthand.AppCapabilityPolicyState
+import com.folklore25.ghosthand.CapabilityAccessSnapshot
+import com.folklore25.ghosthand.CapabilityEffectiveState
+import com.folklore25.ghosthand.GhosthandCapability
+import com.folklore25.ghosthand.GovernedCapabilitySnapshot
+import com.folklore25.ghosthand.ScreenshotSystemAuthorizationState
 import com.folklore25.ghosthand.server.CapabilityRoutePolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

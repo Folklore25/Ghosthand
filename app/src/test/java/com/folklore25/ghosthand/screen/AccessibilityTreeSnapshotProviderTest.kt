@@ -4,8 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.screen
 
+import com.folklore25.ghosthand.ForegroundAppSnapshot
+import com.folklore25.ghosthand.assessSnapshotFreshness
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

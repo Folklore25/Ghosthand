@@ -4,8 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.screen
 
+import com.folklore25.ghosthand.TestFileSupport
 import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.preview.ScreenPreviewMetadata
 import com.folklore25.ghosthand.screen.read.*
@@ -360,8 +361,8 @@ class StateCoordinatorScreenPayloadTest {
     @Test
     fun coordinatorDelegatesScreenReadCompositionToDomainModules() {
         val coordinator = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/StateCoordinator.kt",
-            "src/main/java/com/folklore25/ghosthand/StateCoordinator.kt"
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
 
         assertTrue(coordinator.contains("private val screenReadPayloadComposer = ScreenReadPayloadComposer"))
@@ -375,8 +376,8 @@ class StateCoordinatorScreenPayloadTest {
     @Test
     fun screenPayloadSupportUsesDedicatedSummaryComposer() {
         val payloadSupport = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/GhosthandPayloadSupport.kt",
-            "src/main/java/com/folklore25/ghosthand/GhosthandPayloadSupport.kt"
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt",
+            "src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt"
         )
 
         assertTrue(payloadSupport.contains("ScreenSummaryPayloadComposer.summaryFields(payload)"))

@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.payload
 
-import com.folklore25.ghosthand.payload.*
+import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.screen.read.*
 import com.folklore25.ghosthand.state.*
 import org.junit.Assert.assertEquals
@@ -209,8 +209,8 @@ class GhosthandApiPayloadsTest {
     @Test
     fun interactionPayloadSupportKeepsActionEffectSeparateFromPostActionState() {
         val payloadSupport = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/GhosthandPayloadSupport.kt",
-            "src/main/java/com/folklore25/ghosthand/GhosthandPayloadSupport.kt"
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt",
+            "src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt"
         )
 
         assertFalse(payloadSupport.contains("fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {\n        return linkedMapOf<String, Any?>(\n            \"stateChanged\" to effect.stateChanged,\n            \"beforeSnapshotToken\" to effect.beforeSnapshotToken,\n            \"afterSnapshotToken\" to effect.afterSnapshotToken,\n            \"finalPackageName\" to effect.finalPackageName,\n            \"finalActivity\" to effect.finalActivity\n        ).apply {\n            postActionStateFields("))

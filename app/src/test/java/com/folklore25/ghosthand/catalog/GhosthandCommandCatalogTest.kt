@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.catalog
 
 import com.folklore25.ghosthand.catalog.*
 import com.folklore25.ghosthand.routes.GhosthandRoutePolicies

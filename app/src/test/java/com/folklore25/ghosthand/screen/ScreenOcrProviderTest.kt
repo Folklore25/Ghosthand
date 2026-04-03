@@ -4,8 +4,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.screen
 
+import com.folklore25.ghosthand.ScreenOcrEngine
+import com.folklore25.ghosthand.ScreenOcrProvider
+import com.folklore25.ghosthand.ScreenshotDispatchResult
 import com.folklore25.ghosthand.screen.read.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

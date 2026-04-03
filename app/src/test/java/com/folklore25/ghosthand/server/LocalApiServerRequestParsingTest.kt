@@ -4,8 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.server
 
+import com.folklore25.ghosthand.GhosthandSelectors
 import com.folklore25.ghosthand.payload.*
 import com.folklore25.ghosthand.routes.read.screenPreviewThumbRequested
 import com.folklore25.ghosthand.routes.read.screenSummaryOnlyRequested

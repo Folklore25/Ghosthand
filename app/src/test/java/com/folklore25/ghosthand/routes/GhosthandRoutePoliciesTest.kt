@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.routes
 
 import com.folklore25.ghosthand.routes.GhosthandRoutePolicies
 import org.junit.Assert.assertEquals
