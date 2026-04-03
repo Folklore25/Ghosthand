@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-04-03T15:41:32.207Z"
+status: verifying
+last_updated: "2026-04-03T15:59:22.326Z"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 27
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # STATE.md — Ghosthand Project
@@ -27,7 +27,7 @@ Plan: 6 of 6
 - **Phase:** 24.1
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Ready to execute
+- **Status:** Phase complete — ready for verification
 
 ## Progress
 
@@ -61,6 +61,8 @@ Overall: Ghosthand is still trying to complete the maintainability convergence t
 
 - Runtime owners for server, state, payload, catalog, wait, and execution now live in domain packages instead of the flat root runtime namespace.
 - `LocalApiServer` and `StateCoordinator` remain thin shells that import explicit route, execution, observation, and payload collaborators without adding root-backed placeholders.
+- [Phase 24.1]: Runtime-domain tests now follow behavior ownership even when some non-runtime UI tests remain in the flat root package.
+- [Phase 24.1]: Because docs/API.md is absent in this workspace, contract alignment stays bounded to the command catalog rather than introducing new documentation.
 
 ## Blockers / Concerns
 
@@ -70,11 +72,12 @@ Overall: Ghosthand is still trying to complete the maintainability convergence t
 
 ## Session Continuity
 
-Last session: 2026-04-03T15:41:32.205Z
-Next action: execute 24.1-06 to finish the remaining 24.1 corrective pass on top of the converged runtime package map.
+Last session: 2026-04-03T15:59:22.324Z
+Next action: verify Phase 24.1 completion and close out the corrective pass artifacts.
 
 ## Performance Metrics
 
 | Phase | Plan | Duration | Tasks | Files |
 |---|---:|---:|---:|---:|
 | 24.1 | 05 | 13m | 1 | 45 |
+| 24.1 | 06 | 11m | 2 | 13 |
