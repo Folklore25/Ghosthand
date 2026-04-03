@@ -17,6 +17,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 23: State Legibility Mainline For 1.3.0** - Make Ghosthand easier for agents to trust between actions through post-action state summaries, `/screen` summary mode, clearer render/readability signals, and lightweight visual preview access.
 - [ ] **Phase 24: Maintainability Convergence For 1.3.1** - Refactor the 1.x runtime into cleaner maintainable modules, converge state and contract layers, normalize vocabulary, strengthen test ownership, and prepare a clean future 2.0 root-plane seam without implementing root functionality.
 - [x] **Phase 24.1: Maintainability Convergence Review Fix Pass** - Finish the failed 1.3.1 maintainability convergence work by materially thinning `LocalApiServer` and `StateCoordinator`, enforcing real layer ownership, introducing real package/domain structure, converging test ownership, and strengthening the non-root to future-root seam without adding features. (completed 2026-04-03)
+- [ ] **Phase 24.2: Maintainability Convergence Fix 02** - Finish the still-unresolved 1.3.1 convergence work by thinning `StateCoordinator` further, breaking up the new large handler/payload monoliths, and establishing canonical ownership of shared state-legibility concepts without adding features.
 
 ## Phase Details
 
@@ -135,3 +136,23 @@ Plans:
 - [x] 24.1-04: Enforce state/summary/hint/preview layer ownership boundaries
 - [x] 24.1-05: Introduce real package/domain structure and strengthen the execution/observation seam
 - [x] 24.1-06: Converge tests by runtime behavior domain and align minimal contract surfaces
+
+### Phase 24.2: Maintainability Convergence Fix 02
+**Goal**: Complete the remaining maintainability convergence work that strict review still rejects by materially shrinking `StateCoordinator`, reducing the newly created large domain monoliths, and establishing canonical ownership of state-legibility concepts.
+**Depends on**: Phase 24.1
+**Success Criteria** (what must be TRUE):
+  1. [FIX2-01] `StateCoordinator` is materially thinner and no longer the practical control surface for unrelated screen/state/input/preview/capability behavior.
+  2. [FIX2-02] The newly created large domain files, especially action-route, read-route, and payload-support files, are materially reduced so they no longer act as replacement monoliths.
+  3. [FIX2-03] Core state-legibility concepts such as `renderMode`, `surfaceReadability`, `visualAvailable`, `previewAvailable`, and `focusedEditablePresent` have one clear canonical derivation path.
+  4. [FIX2-04] Package and test structure gains from 24.1 are preserved and sharpened rather than flattened or bypassed.
+  5. [FIX2-05] The route/contract vs execution vs observation seam remains stronger without adding root or libsu functionality.
+  6. [FIX2-06] No new product capabilities, root code, workflow steering, or unrelated expansion is introduced.
+  7. [FIX2-07] The Android project still compiles after the fix pass lands.
+**Plans**: TBD
+
+Plans:
+- [x] 24.2-01: Architecture-fix note and corrective traceability for the remaining convergence failures
+- [ ] 24.2-02: Further thin `StateCoordinator` into screen/state/preview/capability/find/execution delegates
+- [ ] 24.2-03: Reduce the new large route and payload monoliths by stable behavior family
+- [ ] 24.2-04: Establish canonical ownership of render/readability and related state-legibility concepts
+- [ ] 24.2-05: Preserve package/test convergence and run final verification gates
