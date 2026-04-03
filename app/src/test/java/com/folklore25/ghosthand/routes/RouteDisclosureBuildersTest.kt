@@ -23,13 +23,58 @@ import com.folklore25.ghosthand.routes.wait.buildWaitConditionDisclosure
 import com.folklore25.ghosthand.routes.wait.buildWaitUiChangeDisclosure
 import com.folklore25.ghosthand.routes.wait.normalizeWaitConditionResult
 import com.folklore25.ghosthand.state.summary.PostActionStateComposer
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RouteDisclosureBuildersTest {
+    @Test
+    fun routeRegistriesCollapseToFamilyOwnedShells() {
+        val actionHandlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteHandlers.kt"
+        )
+        val readHandlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/read/ReadRouteHandlers.kt"
+        )
+
+        listOf(
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionTapClickRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionMotionRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionGestureRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionNavigationRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadTreeRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadFindRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenshotRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadStateRouteHandlers.kt"
+        ).forEach { path ->
+            assertTrue(
+                "Expected family-owned route file at $path",
+                listOf(path, path.removePrefix("app/")).map(::File).any(File::exists)
+            )
+        }
+
+        assertFalse(actionHandlers.contains("private fun buildTapResponse"))
+        assertFalse(actionHandlers.contains("private fun buildSwipeResponse"))
+        assertFalse(actionHandlers.contains("private fun buildClickResponse"))
+        assertFalse(actionHandlers.contains("private fun buildScrollResponse"))
+        assertFalse(actionHandlers.contains("private fun buildGestureResponse"))
+        assertFalse(actionHandlers.contains("private fun buildGlobalActionResponse"))
+
+        assertFalse(readHandlers.contains("private fun buildTreeResponse"))
+        assertFalse(readHandlers.contains("private fun buildFindResponse"))
+        assertFalse(readHandlers.contains("private fun buildScreenResponse"))
+        assertFalse(readHandlers.contains("private fun buildScreenshotGetResponse"))
+        assertFalse(readHandlers.contains("private fun buildInfoResponse"))
+        assertFalse(readHandlers.contains("private fun buildFocusedResponse"))
+    }
+
     @Test
     fun waitUiChangeDisclosureClarifiesChangedFalse() {
         val disclosure = buildWaitUiChangeDisclosure(

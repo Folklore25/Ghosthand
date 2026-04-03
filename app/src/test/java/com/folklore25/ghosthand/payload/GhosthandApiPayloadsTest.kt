@@ -9,6 +9,7 @@ package com.folklore25.ghosthand.payload
 import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.screen.read.*
 import com.folklore25.ghosthand.state.*
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -17,6 +18,40 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GhosthandApiPayloadsTest {
+    @Test
+    fun payloadSupportIsSplitByStableBehaviorFamily() {
+        val apiPayloads = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandApiPayloads.kt",
+            "src/main/java/com/folklore25/ghosthand/payload/GhosthandApiPayloads.kt"
+        )
+
+        listOf(
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandInputPayloadSupport.kt",
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandInteractionPayloadSupport.kt",
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandDisclosurePayloadSupport.kt",
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandScreenPayloadSupport.kt",
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadJsonSupport.kt"
+        ).forEach { path ->
+            assertTrue(
+                "Expected payload family file at $path",
+                listOf(path, path.removePrefix("app/")).map(::File).any(File::exists)
+            )
+        }
+
+        assertFalse(
+            "Payload monolith should be retired",
+            listOf(
+                "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt",
+                "src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt"
+            ).map(::File).any(File::exists)
+        )
+        assertTrue(apiPayloads.contains("GhosthandInputPayloads"))
+        assertTrue(apiPayloads.contains("GhosthandInteractionPayloads"))
+        assertTrue(apiPayloads.contains("GhosthandDisclosurePayloads"))
+        assertTrue(apiPayloads.contains("GhosthandScreenPayloads"))
+        assertTrue(apiPayloads.contains("GhosthandPayloadJsonSupport"))
+    }
+
     @Test
     fun requestAndScreenHelpersShareTheExistingPublicContract() {
         val parsed = GhosthandInputPayloads.parseRequest(mapOf("text" to "hello world"))
