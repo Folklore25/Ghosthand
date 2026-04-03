@@ -152,7 +152,7 @@ Plans:
 
 Plans:
 - [x] 24.2-01: Architecture-fix note and corrective traceability for the remaining convergence failures
-- [ ] 24.2-02: Further thin `StateCoordinator` into screen/state/preview/capability/find/execution delegates
+- [x] 24.2-02: Further thin `StateCoordinator` into screen/state/preview/capability/find/execution delegates
 - [ ] 24.2-03: Reduce the new large route and payload monoliths by stable behavior family
 - [ ] 24.2-04: Establish canonical ownership of render/readability and related state-legibility concepts
 - [ ] 24.2-05: Preserve package/test convergence and run final verification gates
