@@ -47,52 +47,8 @@ internal class SystemRouteHandlers(
 
     private fun buildCommandsResponse(): String {
         val commands = JSONArray()
-        GhosthandCommandCatalog.commands.forEach { command ->
-            val params = JSONArray()
-            command.params.forEach { param ->
-                params.put(
-                    JSONObject()
-                        .put("name", param.name)
-                        .put("type", param.type)
-                        .put("location", param.location)
-                        .put("required", param.required)
-                        .put("description", param.description)
-                        .put("allowedValues", JSONArray(param.allowedValues))
-                )
-            }
-
-            commands.put(
-                JSONObject()
-                    .put("id", command.id)
-                    .put("category", command.category)
-                    .put("method", command.method)
-                    .put("path", command.path)
-                    .put("description", command.description)
-                    .put("params", params)
-                    .put("responseFields", JSONArray(command.responseFields))
-                    .put(
-                        "selectorSupport",
-                        command.selectorSupport?.let { selectorSupport ->
-                            JSONObject()
-                                .put("aliases", JSONArray(selectorSupport.aliases))
-                                .put("strategies", JSONArray(selectorSupport.strategies))
-                                .put("primaryStrategies", JSONArray(selectorSupport.primaryStrategies))
-                                .put("boundedAids", JSONArray(selectorSupport.boundedAids))
-                        } ?: JSONObject.NULL
-                    )
-                    .put("focusRequirement", command.focusRequirement)
-                    .put("delayedAcceptance", command.delayedAcceptance)
-                    .put("transportContract", command.transportContract)
-                    .put("stateTruth", command.stateTruth)
-                    .put("changeSignal", command.changeSignal)
-                    .put("operatorUses", JSONArray(command.operatorUses))
-                    .put("referenceStability", command.referenceStability)
-                    .put("snapshotScope", command.snapshotScope)
-                    .put("recommendedInteractionModel", command.recommendedInteractionModel)
-                    .put("stability", command.stability)
-                    .put("exampleRequest", command.exampleRequest?.let(::toJsonValue) ?: JSONObject.NULL)
-                    .put("exampleResponse", command.exampleResponse?.let(::toJsonValue) ?: JSONObject.NULL)
-            )
+        GhosthandCommandCatalog.commandPayloads().forEach { command ->
+            commands.put(toJsonValue(command))
         }
 
         return buildJsonResponse(
