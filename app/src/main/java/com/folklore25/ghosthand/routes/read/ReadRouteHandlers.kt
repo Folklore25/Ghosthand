@@ -11,6 +11,7 @@ import com.folklore25.ghosthand.FindNodeResult
 import com.folklore25.ghosthand.TreeUnavailableReason
 import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
+import com.folklore25.ghosthand.preview.ScreenPreviewCaptureSupport
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.buildTreeUnavailableResponse
@@ -198,15 +199,7 @@ internal class ReadRouteHandlers(
                 StateCoordinator.SCREEN_PREVIEW_WIDTH,
                 StateCoordinator.SCREEN_PREVIEW_HEIGHT
             )
-            if (preview.available && !preview.base64.isNullOrBlank()) {
-                payload.copy(
-                    previewWidth = preview.width,
-                    previewHeight = preview.height,
-                    previewImage = "data:image/png;base64,${preview.base64}"
-                )
-            } else {
-                payload
-            }
+            ScreenPreviewCaptureSupport.withPreviewImage(payload, preview)
         } else {
             payload
         }

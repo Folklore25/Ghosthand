@@ -365,12 +365,10 @@ class StateCoordinatorScreenPayloadTest {
             "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
 
-        assertTrue(coordinator.contains("private val screenReadPayloadComposer = ScreenReadPayloadComposer"))
-        assertTrue(coordinator.contains("private val screenPreviewMetadata = ScreenPreviewMetadata"))
-        assertTrue(coordinator.contains("screenPreviewMetadata.apply("))
-        assertTrue(coordinator.contains("screenReadPayloadComposer.createOcrPayload("))
-        assertTrue(coordinator.contains("screenReadPayloadComposer.createHybridPayload("))
-        assertTrue(coordinator.contains("screenReadPayloadComposer.createAccessibilityPayload("))
+        assertTrue(coordinator.contains("private val screenReadCoordinator = ScreenReadCoordinator("))
+        assertTrue(coordinator.contains("screenReadCoordinator.createAccessibilityPayload("))
+        assertTrue(coordinator.contains("screenReadCoordinator.createOcrPayload()"))
+        assertTrue(coordinator.contains("screenReadCoordinator.createHybridPayload("))
     }
 
     @Test
