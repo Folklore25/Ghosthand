@@ -73,6 +73,7 @@ object ScreenReadPayloadComposer {
             accessibilityElementCount = 0,
             ocrElementCount = ocrResult.elements.size,
             usedOcrFallback = false,
+            focusedEditablePresent = null,
             visualAvailable = screenshotResult.available,
             previewAvailable = screenshotResult.available,
             previewToken = foregroundSnapshot.packageName?.let {
@@ -107,6 +108,7 @@ object ScreenReadPayloadComposer {
             source = ScreenReadMode.HYBRID.wireValue,
             ocrElementCount = ocrPayload.ocrElementCount,
             usedOcrFallback = true,
+            focusedEditablePresent = accessibilityPayload.focusedEditablePresent ?: ocrPayload.focusedEditablePresent,
             visualAvailable = ocrPayload.visualAvailable ?: accessibilityPayload.visualAvailable,
             previewAvailable = ocrPayload.previewAvailable ?: accessibilityPayload.previewAvailable,
             previewToken = accessibilityPayload.previewToken ?: ocrPayload.previewToken,

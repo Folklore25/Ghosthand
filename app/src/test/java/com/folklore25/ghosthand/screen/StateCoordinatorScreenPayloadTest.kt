@@ -305,6 +305,7 @@ class StateCoordinatorScreenPayloadTest {
             accessibilityElementCount = 1,
             ocrElementCount = 0,
             usedOcrFallback = false,
+            focusedEditablePresent = true,
             retryHint = null
         )
 

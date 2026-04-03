@@ -16,6 +16,10 @@ import com.folklore25.ghosthand.screen.read.ScreenReadMode
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 import com.folklore25.ghosthand.screen.read.ScreenReadPayloadFields
 import com.folklore25.ghosthand.screen.read.ScreenReadRetryHint
+import com.folklore25.ghosthand.screen.read.deriveAccessibilityRetryHint
+import com.folklore25.ghosthand.screen.read.hasActionableBounds
+import com.folklore25.ghosthand.screen.read.isLowSignalNode
+import com.folklore25.ghosthand.screen.read.isValidGeometry
 import com.folklore25.ghosthand.screen.summary.ScreenSummaryPayloadComposer
 
 internal object GhosthandScreenPayloads {
@@ -143,7 +147,8 @@ internal object GhosthandScreenPayloads {
             source = ScreenReadMode.ACCESSIBILITY.wireValue,
             accessibilityElementCount = elements.size,
             ocrElementCount = 0,
-            usedOcrFallback = false
+            usedOcrFallback = false,
+            focusedEditablePresent = filteredNodes.any { it.focused && it.editable }
         )
         return payload.copy(retryHint = accessibilityRetryHint(payload))
     }
@@ -224,17 +229,11 @@ internal object GhosthandScreenPayloads {
     }
 
     private fun accessibilityRetryHint(payload: ScreenReadPayload): ScreenReadRetryHint? {
-        return when {
-            payload.returnedElementCount == 0 -> ScreenReadRetryHint(
-                source = ScreenReadMode.OCR.wireValue,
-                reason = "accessibility_empty"
-            )
-            payload.accessibilityTreeIsOperationallyInsufficient() -> ScreenReadRetryHint(
-                source = ScreenReadMode.HYBRID.wireValue,
-                reason = "accessibility_operationally_insufficient"
-            )
-            else -> null
-        }
+        return deriveAccessibilityRetryHint(
+            candidateNodeCount = payload.candidateNodeCount,
+            returnedElementCount = payload.returnedElementCount,
+            omittedNodeCount = payload.omittedNodeCount
+        )
     }
 
     private fun buildOmittedCategories(
@@ -305,21 +304,4 @@ internal object GhosthandScreenPayloads {
     private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
         return if (partialOutput) listOf("partial_output") else emptyList()
     }
-}
-
-private fun NodeBounds.isValidGeometry(): Boolean {
-    return right > left && bottom > top
-}
-
-private fun FlatAccessibilityNode.hasActionableBounds(): Boolean {
-    if (!bounds.isValidGeometry()) return false
-    if (bounds.left < 0 || bounds.top < 0 || bounds.right < 0 || bounds.bottom < 0) return false
-    return centerX in bounds.left..bounds.right && centerY in bounds.top..bounds.bottom
-}
-
-private fun FlatAccessibilityNode.isLowSignalNode(): Boolean {
-    val hasMeaningfulLabel = !text.isNullOrBlank() || !contentDesc.isNullOrBlank() || !resourceId.isNullOrBlank()
-    if (hasMeaningfulLabel) return false
-    if (clickable || editable || scrollable || focused) return false
-    return true
 }
