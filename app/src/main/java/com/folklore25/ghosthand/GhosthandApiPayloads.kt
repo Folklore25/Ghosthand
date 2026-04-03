@@ -60,79 +60,86 @@ data class PostActionState(
     val visualAvailable: Boolean? = null
 )
 
-object GhosthandApiPayloads {
-    fun treePayload(snapshot: AccessibilityTreeSnapshot): JSONObject {
-        return fieldsToJson(treeFields(snapshot))
+internal object GhosthandInputPayloads {
+    fun parseRequest(body: JSONObject): GhosthandInputRequestParseResult {
+        return parseRequest(
+            linkedMapOf<String, Any?>().apply {
+                body.keys().forEach { key ->
+                    put(key, if (body.isNull(key)) null else body.opt(key))
+                }
+            }
+        )
     }
 
-    fun rawTreePayload(snapshot: AccessibilityTreeSnapshot): JSONObject {
-        return fieldsToJson(rawTreeFields(snapshot))
-    }
+    fun parseRequest(body: Map<String, Any?>): GhosthandInputRequestParseResult {
+        val text = when {
+            body.containsKey("text") && body["text"] != null -> body["text"] as? String
+                ?: return GhosthandInputRequestParseResult(errorMessage = "text must be a string.")
+            else -> null
+        }
+        val explicitTextAction = when {
+            body.containsKey("textAction") && body["textAction"] != null -> {
+                val raw = body["textAction"] as? String
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be a string.")
+                InputTextAction.fromWireValue(raw)
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be one of: set, append, clear.")
+            }
+            else -> null
+        }
+        val key = when {
+            body.containsKey("key") && body["key"] != null -> {
+                val raw = body["key"] as? String
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be a string.")
+                InputKey.fromWireValue(raw)
+                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be one of: enter.")
+            }
+            else -> null
+        }
 
-    fun screenPayload(
-        snapshot: AccessibilityTreeSnapshot,
-        editableOnly: Boolean,
-        scrollableOnly: Boolean,
-        packageFilter: String?,
-        clickableOnly: Boolean
-    ): JSONObject {
-        return screenReadPayload(
-            accessibilityScreenRead(
-                snapshot = snapshot,
-                editableOnly = editableOnly,
-                scrollableOnly = scrollableOnly,
-                packageFilter = packageFilter,
-                clickableOnly = clickableOnly
+        val append = body["append"] as? Boolean ?: false
+        val clear = body["clear"] as? Boolean ?: false
+        if (explicitTextAction == null && append && clear) {
+            return GhosthandInputRequestParseResult(errorMessage = "append and clear cannot both be true.")
+        }
+
+        val textAction = explicitTextAction ?: when {
+            append -> InputTextAction.APPEND
+            text != null -> InputTextAction.SET
+            clear -> InputTextAction.CLEAR
+            else -> null
+        }
+
+        if (textAction == null && key == null) {
+            return GhosthandInputRequestParseResult(errorMessage = "At least one explicit /input operation is required.")
+        }
+        if (textAction == InputTextAction.CLEAR && text != null) {
+            return GhosthandInputRequestParseResult(errorMessage = "text must be omitted when textAction=clear.")
+        }
+        if (textAction != null && textAction != InputTextAction.CLEAR && text == null) {
+            return GhosthandInputRequestParseResult(
+                errorMessage = "text is required when textAction=${textAction.wireValue}."
+            )
+        }
+
+        return GhosthandInputRequestParseResult(
+            request = GhosthandInputRequest(
+                textAction = textAction,
+                text = text,
+                key = key
             )
         )
     }
 
-    fun screenReadPayload(payload: ScreenReadPayload): JSONObject {
-        return fieldsToJson(screenReadFields(payload))
-    }
-
-    fun screenSummaryPayload(payload: ScreenReadPayload): JSONObject {
-        return fieldsToJson(screenSummaryFields(payload))
-    }
-
-    fun nodePayload(node: FlatAccessibilityNode): JSONObject {
-        return fieldsToJson(nodeFields(node))
-    }
-
-    fun findPayload(result: FindNodeResult): JSONObject {
-        return fieldsToJson(findFields(result))
-    }
-
-    fun clickPayload(result: ClickAttemptResult): JSONObject {
-        return fieldsToJson(clickFields(result))
-    }
-
-    fun clickFields(result: ClickAttemptResult): Map<String, Any?> {
-        val payload = linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "backendUsed" to result.backendUsed,
-            "attemptedPath" to result.attemptedPath
-        )
-        result.effect?.let { effect ->
-            payload.putAll(actionEffectFields(effect))
-        }
-        result.selectorResolution?.let { resolution ->
-            payload["resolution"] = clickResolutionFields(resolution)
-        }
-        return payload
-    }
-
-    fun globalActionFields(result: GlobalActionResult): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "attemptedPath" to result.attemptedPath
-        ).apply {
-            result.effect?.let { effect ->
-                putAll(actionEffectFields(effect))
-            }
+    fun parseRequest(body: String): GhosthandInputRequestParseResult {
+        return try {
+            parseRequest(JSONObject(body))
+        } catch (_: JSONException) {
+            GhosthandInputRequestParseResult(errorMessage = "Request body must be valid JSON.")
         }
     }
+}
 
+internal object GhosthandTreePayloads {
     fun treeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> {
         val invalidBoundsCount = snapshot.nodes.count { !it.bounds.isValidGeometry() }
         val lowSignalCount = snapshot.nodes.count { it.isLowSignalNode() }
@@ -177,25 +184,61 @@ object GhosthandApiPayloads {
         )
     }
 
-    fun screenFields(
-        snapshot: AccessibilityTreeSnapshot,
-        editableOnly: Boolean,
-        scrollableOnly: Boolean,
-        packageFilter: String?,
-        clickableOnly: Boolean
-    ): Map<String, Any?> {
-        return screenReadFields(
-            accessibilityScreenRead(
-                snapshot = snapshot,
-                editableOnly = editableOnly,
-                scrollableOnly = scrollableOnly,
-                packageFilter = packageFilter,
-                clickableOnly = clickableOnly
+    fun nodeFields(node: FlatAccessibilityNode): Map<String, Any?> {
+        val boundsValid = node.bounds.isValidGeometry()
+        val actionableBounds = node.hasActionableBounds()
+        val lowSignal = node.isLowSignalNode()
+        return linkedMapOf(
+            "nodeId" to node.nodeId,
+            "text" to node.text,
+            "contentDesc" to node.contentDesc,
+            "resourceId" to node.resourceId,
+            "className" to node.className,
+            "clickable" to node.clickable,
+            "editable" to node.editable,
+            "enabled" to node.enabled,
+            "scrollable" to node.scrollable,
+            "boundsValid" to boundsValid,
+            "actionableBounds" to actionableBounds,
+            "lowSignal" to lowSignal,
+            "centerX" to node.centerX,
+            "centerY" to node.centerY,
+            "bounds" to linkedMapOf(
+                "left" to node.bounds.left,
+                "top" to node.bounds.top,
+                "right" to node.bounds.right,
+                "bottom" to node.bounds.bottom
             )
         )
     }
 
-    fun accessibilityScreenRead(
+    private fun buildRawTreeFields(
+        snapshot: AccessibilityTreeSnapshot,
+        path: List<Int>
+    ): Map<String, Any?>? {
+        val targetNode = snapshot.nodes.firstOrNull { node ->
+            AccessibilityNodeLocator.pathSegments(node.nodeId) == path
+        } ?: return null
+
+        val children = snapshot.nodes
+            .asSequence()
+            .filter { candidate ->
+                val candidatePath = AccessibilityNodeLocator.pathSegments(candidate.nodeId)
+                candidatePath.size == path.size + 1 &&
+                    candidatePath.dropLast(1) == path
+            }
+            .sortedBy { AccessibilityNodeLocator.pathSegments(it.nodeId).lastOrNull() ?: 0 }
+            .mapNotNull { child ->
+                buildRawTreeFields(snapshot, AccessibilityNodeLocator.pathSegments(child.nodeId))
+            }
+            .toList()
+
+        return nodeFields(targetNode) + ("children" to children)
+    }
+}
+
+internal object GhosthandScreenPayloads {
+    fun readPayload(
         snapshot: AccessibilityTreeSnapshot,
         editableOnly: Boolean,
         scrollableOnly: Boolean,
@@ -215,24 +258,21 @@ object GhosthandApiPayloads {
         val omittedLowSignalCount = actionableNodes.size - readableNodes.size
         val omittedNodeCount = omittedInvalidBoundsCount + omittedLowSignalCount
         val partialOutput = omittedNodeCount > 0
-        val elements = readableNodes
-            .asSequence()
-            .map { node ->
-                ScreenReadElement(
-                    nodeId = node.nodeId,
-                    text = node.text ?: "",
-                    desc = node.contentDesc ?: "",
-                    id = node.resourceId ?: "",
-                    clickable = node.clickable,
-                    editable = node.editable,
-                    scrollable = node.scrollable,
-                    bounds = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]",
-                    centerX = node.centerX,
-                    centerY = node.centerY,
-                    source = ScreenReadMode.ACCESSIBILITY.wireValue
-                )
-            }
-            .toList()
+        val elements = readableNodes.map { node ->
+            ScreenReadElement(
+                nodeId = node.nodeId,
+                text = node.text ?: "",
+                desc = node.contentDesc ?: "",
+                id = node.resourceId ?: "",
+                clickable = node.clickable,
+                editable = node.editable,
+                scrollable = node.scrollable,
+                bounds = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]",
+                centerX = node.centerX,
+                centerY = node.centerY,
+                source = ScreenReadMode.ACCESSIBILITY.wireValue
+            )
+        }
 
         val payload = ScreenReadPayload(
             packageName = snapshot.packageName,
@@ -252,14 +292,8 @@ object GhosthandApiPayloads {
             omittedInvalidBoundsCount = omittedInvalidBoundsCount,
             omittedLowSignalCount = omittedLowSignalCount,
             omittedNodeCount = omittedNodeCount,
-            omittedCategories = buildOmittedCategories(
-                omittedInvalidBoundsCount = omittedInvalidBoundsCount,
-                omittedLowSignalCount = omittedLowSignalCount
-            ),
-            omittedSummary = buildOmittedSummary(
-                omittedInvalidBoundsCount = omittedInvalidBoundsCount,
-                omittedLowSignalCount = omittedLowSignalCount
-            ),
+            omittedCategories = buildOmittedCategories(omittedInvalidBoundsCount, omittedLowSignalCount),
+            omittedSummary = buildOmittedSummary(omittedInvalidBoundsCount, omittedLowSignalCount),
             invalidBoundsPresent = omittedInvalidBoundsCount > 0,
             lowSignalPresent = omittedLowSignalCount > 0,
             elements = elements,
@@ -269,12 +303,10 @@ object GhosthandApiPayloads {
             usedOcrFallback = false
         )
 
-        return payload.copy(
-            retryHint = accessibilityRetryHint(payload)
-        )
+        return payload.copy(retryHint = retryHint(payload))
     }
 
-    fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
+    fun readFields(payload: ScreenReadPayload): Map<String, Any?> {
         return linkedMapOf(
             "packageName" to payload.packageName,
             "activity" to payload.activity,
@@ -313,25 +345,11 @@ object GhosthandApiPayloads {
                 )
             },
             "previewImage" to payload.previewImage,
-            "elements" to payload.elements.map { element ->
-                linkedMapOf(
-                    "nodeId" to element.nodeId,
-                    "text" to element.text,
-                    "desc" to element.desc,
-                    "id" to element.id,
-                    "clickable" to element.clickable,
-                    "editable" to element.editable,
-                    "scrollable" to element.scrollable,
-                    "bounds" to element.bounds,
-                    "centerX" to element.centerX,
-                    "centerY" to element.centerY,
-                    "source" to element.source
-                )
-            }
+            "elements" to payload.elements.map(::elementFields)
         )
     }
 
-    fun screenSummaryFields(payload: ScreenReadPayload): Map<String, Any?> {
+    fun summaryFields(payload: ScreenReadPayload): Map<String, Any?> {
         return linkedMapOf(
             "packageName" to payload.packageName,
             "activity" to payload.activity,
@@ -361,75 +379,77 @@ object GhosthandApiPayloads {
         )
     }
 
-    fun nodeFields(node: FlatAccessibilityNode): Map<String, Any?> {
-        val boundsValid = node.bounds.isValidGeometry()
-        val actionableBounds = node.hasActionableBounds()
-        val lowSignal = node.isLowSignalNode()
+    private fun elementFields(element: ScreenReadElement): Map<String, Any?> {
         return linkedMapOf(
-            "nodeId" to node.nodeId,
-            "text" to node.text,
-            "contentDesc" to node.contentDesc,
-            "resourceId" to node.resourceId,
-            "className" to node.className,
-            "clickable" to node.clickable,
-            "editable" to node.editable,
-            "enabled" to node.enabled,
-            "scrollable" to node.scrollable,
-            "boundsValid" to boundsValid,
-            "actionableBounds" to actionableBounds,
-            "lowSignal" to lowSignal,
-            "centerX" to node.centerX,
-            "centerY" to node.centerY,
-            "bounds" to linkedMapOf(
-                "left" to node.bounds.left,
-                "top" to node.bounds.top,
-                "right" to node.bounds.right,
-                "bottom" to node.bounds.bottom
-            )
+            "nodeId" to element.nodeId,
+            "text" to element.text,
+            "desc" to element.desc,
+            "id" to element.id,
+            "clickable" to element.clickable,
+            "editable" to element.editable,
+            "scrollable" to element.scrollable,
+            "bounds" to element.bounds,
+            "centerX" to element.centerX,
+            "centerY" to element.centerY,
+            "source" to element.source
         )
     }
 
-    fun findFields(result: FindNodeResult): Map<String, Any?> {
+    private fun retryHint(payload: ScreenReadPayload): ScreenReadRetryHint? {
+        return when {
+            payload.returnedElementCount == 0 -> ScreenReadRetryHint(
+                source = ScreenReadMode.OCR.wireValue,
+                reason = "accessibility_empty"
+            )
+            payload.accessibilityTreeIsOperationallyInsufficient() -> ScreenReadRetryHint(
+                source = ScreenReadMode.HYBRID.wireValue,
+                reason = "accessibility_operationally_insufficient"
+            )
+            else -> null
+        }
+    }
+
+    private fun buildOmittedCategories(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): List<String> {
+        return buildList {
+            if (omittedInvalidBoundsCount > 0) add("invalid_bounds")
+            if (omittedLowSignalCount > 0) add("low_signal")
+        }
+    }
+
+    private fun buildOmittedSummary(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): String? {
+        val parts = buildList {
+            if (omittedInvalidBoundsCount > 0) add("$omittedInvalidBoundsCount invalid-bounds")
+            if (omittedLowSignalCount > 0) add("$omittedLowSignalCount low-signal")
+        }
+        return if (parts.isEmpty()) null else "Omitted ${parts.joinToString(" and ")} nodes."
+    }
+}
+
+internal object GhosthandActionPayloads {
+    fun clickFields(result: ClickAttemptResult): Map<String, Any?> {
         val payload = linkedMapOf<String, Any?>(
-            "found" to result.found,
-            "matchCount" to result.matches.size,
-            "index" to result.selectedIndex
+            "performed" to result.performed,
+            "backendUsed" to result.backendUsed,
+            "attemptedPath" to result.attemptedPath
         )
-
-        result.missHint?.let { hint ->
-            payload["searchedSurface"] = hint.searchedSurface
-            payload["matchSemantics"] = hint.matchSemantics
-            payload["requestedSurface"] = hint.requestedSurface
-            payload["requestedMatchSemantics"] = hint.requestedMatchSemantics
-            payload["matchedSurface"] = hint.matchedSurface
-            payload["matchedMatchSemantics"] = hint.matchedMatchSemantics
-            payload["usedSurfaceFallback"] = hint.usedSurfaceFallback
-            payload["usedContainsFallback"] = hint.usedContainsFallback
-            if (hint.suggestedAlternateSurfaces.isNotEmpty()) {
-                payload["suggestedAlternateSurfaces"] = hint.suggestedAlternateSurfaces
-            }
-            if (hint.suggestedAlternateStrategies.isNotEmpty()) {
-                payload["suggestedAlternateStrategies"] = hint.suggestedAlternateStrategies
-            }
-        }
-
-        val node = result.node
-        if (node == null) {
-            payload["node"] = null
-            return payload
-        }
-
-        payload["node"] = nodeFields(node)
-        payload["text"] = node.text ?: ""
-        payload["desc"] = node.contentDesc ?: ""
-        payload["id"] = node.resourceId ?: ""
-        payload["bounds"] = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]"
-        payload["centerX"] = node.centerX
-        payload["centerY"] = node.centerY
-        payload["clickable"] = node.clickable
-        payload["editable"] = node.editable
-        payload["scrollable"] = node.scrollable
+        result.effect?.let { payload.putAll(actionEffectFields(it)) }
+        result.selectorResolution?.let { payload["resolution"] = clickResolutionFields(it) }
         return payload
+    }
+
+    fun globalActionFields(result: GlobalActionResult): Map<String, Any?> {
+        return linkedMapOf<String, Any?>(
+            "performed" to result.performed,
+            "attemptedPath" to result.attemptedPath
+        ).apply {
+            result.effect?.let { putAll(actionEffectFields(it)) }
+        }
     }
 
     fun clickResolutionFields(resolution: ClickSelectorResolution): Map<String, Any?> {
@@ -492,96 +512,6 @@ object GhosthandApiPayloads {
         )
     }
 
-    fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> {
-        return linkedMapOf(
-            "kind" to disclosure.kind,
-            "summary" to disclosure.summary,
-            "assumptionToCorrect" to disclosure.assumptionToCorrect,
-            "nextBestActions" to disclosure.nextBestActions
-        )
-    }
-
-    fun disclosureJson(disclosure: GhosthandDisclosure): JSONObject {
-        return fieldsToJson(disclosureFields(disclosure))
-    }
-
-    fun parseInputRequest(body: JSONObject): GhosthandInputRequestParseResult {
-        return parseInputRequest(
-            linkedMapOf<String, Any?>().apply {
-                body.keys().forEach { key ->
-                    put(key, if (body.isNull(key)) null else body.opt(key))
-                }
-            }
-        )
-    }
-
-    fun parseInputRequest(body: Map<String, Any?>): GhosthandInputRequestParseResult {
-        val text = when {
-            body.containsKey("text") && body["text"] != null -> body["text"] as? String
-                ?: return GhosthandInputRequestParseResult(errorMessage = "text must be a string.")
-            else -> null
-        }
-        val explicitTextAction = when {
-            body.containsKey("textAction") && body["textAction"] != null -> {
-                val raw = body["textAction"] as? String
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be a string.")
-                InputTextAction.fromWireValue(raw)
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be one of: set, append, clear.")
-            }
-            else -> null
-        }
-        val key = when {
-            body.containsKey("key") && body["key"] != null -> {
-                val raw = body["key"] as? String
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be a string.")
-                InputKey.fromWireValue(raw)
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be one of: enter.")
-            }
-            else -> null
-        }
-
-        val append = body["append"] as? Boolean ?: false
-        val clear = body["clear"] as? Boolean ?: false
-        if (explicitTextAction == null && append && clear) {
-            return GhosthandInputRequestParseResult(errorMessage = "append and clear cannot both be true.")
-        }
-
-        val textAction = explicitTextAction ?: when {
-            append -> InputTextAction.APPEND
-            text != null -> InputTextAction.SET
-            clear -> InputTextAction.CLEAR
-            else -> null
-        }
-
-        if (textAction == null && key == null) {
-            return GhosthandInputRequestParseResult(errorMessage = "At least one explicit /input operation is required.")
-        }
-        if (textAction == InputTextAction.CLEAR && text != null) {
-            return GhosthandInputRequestParseResult(errorMessage = "text must be omitted when textAction=clear.")
-        }
-        if (textAction != null && textAction != InputTextAction.CLEAR && text == null) {
-            return GhosthandInputRequestParseResult(
-                errorMessage = "text is required when textAction=${textAction.wireValue}."
-            )
-        }
-
-        return GhosthandInputRequestParseResult(
-            request = GhosthandInputRequest(
-                textAction = textAction,
-                text = text,
-                key = key
-            )
-        )
-    }
-
-    fun parseInputRequest(body: String): GhosthandInputRequestParseResult {
-        return try {
-            parseInputRequest(JSONObject(body))
-        } catch (_: JSONException) {
-            GhosthandInputRequestParseResult(errorMessage = "Request body must be valid JSON.")
-        }
-    }
-
     fun inputResultFields(result: InputOperationResult): Map<String, Any?> {
         return linkedMapOf<String, Any?>(
             "performed" to result.performed,
@@ -616,129 +546,257 @@ object GhosthandApiPayloads {
                 ?.let { put("postActionState", it) }
         }
     }
+}
 
-    fun inputResultJson(result: InputOperationResult): JSONObject {
-        return fieldsToJson(inputResultFields(result))
-    }
+internal object GhosthandDiscoveryPayloads {
+    fun findFields(result: FindNodeResult): Map<String, Any?> {
+        val payload = linkedMapOf<String, Any?>(
+            "found" to result.found,
+            "matchCount" to result.matches.size,
+            "index" to result.selectedIndex
+        )
 
-    private fun buildRawTreeFields(
-        snapshot: AccessibilityTreeSnapshot,
-        path: List<Int>
-    ): Map<String, Any?>? {
-        val targetNode = snapshot.nodes.firstOrNull { node ->
-            AccessibilityNodeLocator.pathSegments(node.nodeId) == path
-        } ?: return null
-
-        val children = snapshot.nodes
-            .asSequence()
-            .filter { candidate ->
-                val candidatePath = AccessibilityNodeLocator.pathSegments(candidate.nodeId)
-                candidatePath.size == path.size + 1 &&
-                    candidatePath.dropLast(1) == path
+        result.missHint?.let { hint ->
+            payload["searchedSurface"] = hint.searchedSurface
+            payload["matchSemantics"] = hint.matchSemantics
+            payload["requestedSurface"] = hint.requestedSurface
+            payload["requestedMatchSemantics"] = hint.requestedMatchSemantics
+            payload["matchedSurface"] = hint.matchedSurface
+            payload["matchedMatchSemantics"] = hint.matchedMatchSemantics
+            payload["usedSurfaceFallback"] = hint.usedSurfaceFallback
+            payload["usedContainsFallback"] = hint.usedContainsFallback
+            if (hint.suggestedAlternateSurfaces.isNotEmpty()) {
+                payload["suggestedAlternateSurfaces"] = hint.suggestedAlternateSurfaces
             }
-            .sortedBy { AccessibilityNodeLocator.pathSegments(it.nodeId).lastOrNull() ?: 0 }
-            .mapNotNull { child ->
-                buildRawTreeFields(snapshot, AccessibilityNodeLocator.pathSegments(child.nodeId))
+            if (hint.suggestedAlternateStrategies.isNotEmpty()) {
+                payload["suggestedAlternateStrategies"] = hint.suggestedAlternateStrategies
             }
-            .toList()
+        }
 
-        return nodeFields(targetNode) + ("children" to children)
+        val node = result.node ?: run {
+            payload["node"] = null
+            return payload
+        }
+
+        payload["node"] = GhosthandTreePayloads.nodeFields(node)
+        payload["text"] = node.text ?: ""
+        payload["desc"] = node.contentDesc ?: ""
+        payload["id"] = node.resourceId ?: ""
+        payload["bounds"] = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]"
+        payload["centerX"] = node.centerX
+        payload["centerY"] = node.centerY
+        payload["clickable"] = node.clickable
+        payload["editable"] = node.editable
+        payload["scrollable"] = node.scrollable
+        return payload
     }
+}
 
-    private fun fieldsToJson(fields: Map<String, Any?>): JSONObject {
+internal object GhosthandDisclosurePayloads {
+    fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> {
+        return linkedMapOf(
+            "kind" to disclosure.kind,
+            "summary" to disclosure.summary,
+            "assumptionToCorrect" to disclosure.assumptionToCorrect,
+            "nextBestActions" to disclosure.nextBestActions
+        )
+    }
+}
+
+internal object GhosthandJsonPayloads {
+    fun toJson(fields: Map<String, Any?>): JSONObject {
         return JSONObject().apply {
-            fields.forEach { (key, value) ->
-                put(key, toJsonValue(value))
-            }
+            fields.forEach { (key, value) -> put(key, toJsonValue(value)) }
         }
     }
 
     private fun toJsonValue(value: Any?): Any {
         return when (value) {
             null -> JSONObject.NULL
-            is Map<*, *> -> {
-                JSONObject().apply {
-                    value.forEach { (key, nestedValue) ->
-                        put(key as String, toJsonValue(nestedValue))
-                    }
+            is Map<*, *> -> JSONObject().apply {
+                value.forEach { (key, nestedValue) ->
+                    put(key as String, toJsonValue(nestedValue))
                 }
             }
-            is List<*> -> {
-                JSONArray().apply {
-                    value.forEach { item -> put(toJsonValue(item)) }
-                }
+            is List<*> -> JSONArray().apply {
+                value.forEach { item -> put(toJsonValue(item)) }
             }
             else -> value
         }
     }
+}
 
-    private fun warningsForInvalidBounds(count: Int, route: String): List<String> {
-        if (count <= 0) {
-            return emptyList()
-        }
-        return when (route) {
-            "screen" -> listOf("omitted_nodes_with_invalid_bounds")
-            else -> listOf("invalid_bounds_present")
-        }
+object GhosthandApiPayloads {
+    fun treePayload(snapshot: AccessibilityTreeSnapshot): JSONObject {
+        return GhosthandJsonPayloads.toJson(treeFields(snapshot))
     }
 
-    private fun combinedWarnings(
-        freshnessWarnings: List<String>,
-        geometryWarnings: List<String>,
-        readabilityWarnings: List<String>,
-        partialWarnings: List<String> = emptyList()
-    ): List<String> {
-        return (freshnessWarnings + geometryWarnings + readabilityWarnings + partialWarnings).distinct()
+    fun rawTreePayload(snapshot: AccessibilityTreeSnapshot): JSONObject {
+        return GhosthandJsonPayloads.toJson(rawTreeFields(snapshot))
     }
 
-    private fun warningsForLowSignal(count: Int, route: String): List<String> {
-        if (count <= 0) {
-            return emptyList()
-        }
-        return when (route) {
-            "screen" -> listOf("omitted_low_signal_nodes")
-            else -> listOf("low_signal_nodes_present")
-        }
-    }
-
-    private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
-        return if (partialOutput) listOf("partial_output") else emptyList()
-    }
-
-    private fun accessibilityRetryHint(payload: ScreenReadPayload): ScreenReadRetryHint? {
-        return when {
-            payload.returnedElementCount == 0 -> ScreenReadRetryHint(
-                source = ScreenReadMode.OCR.wireValue,
-                reason = "accessibility_empty"
+    fun screenPayload(
+        snapshot: AccessibilityTreeSnapshot,
+        editableOnly: Boolean,
+        scrollableOnly: Boolean,
+        packageFilter: String?,
+        clickableOnly: Boolean
+    ): JSONObject {
+        return screenReadPayload(
+            accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = editableOnly,
+                scrollableOnly = scrollableOnly,
+                packageFilter = packageFilter,
+                clickableOnly = clickableOnly
             )
-            payload.accessibilityTreeIsOperationallyInsufficient() -> ScreenReadRetryHint(
-                source = ScreenReadMode.HYBRID.wireValue,
-                reason = "accessibility_operationally_insufficient"
+        )
+    }
+
+    fun screenReadPayload(payload: ScreenReadPayload): JSONObject {
+        return GhosthandJsonPayloads.toJson(screenReadFields(payload))
+    }
+
+    fun screenSummaryPayload(payload: ScreenReadPayload): JSONObject {
+        return GhosthandJsonPayloads.toJson(screenSummaryFields(payload))
+    }
+
+    fun nodePayload(node: FlatAccessibilityNode): JSONObject {
+        return GhosthandJsonPayloads.toJson(nodeFields(node))
+    }
+
+    fun findPayload(result: FindNodeResult): JSONObject {
+        return GhosthandJsonPayloads.toJson(findFields(result))
+    }
+
+    fun clickPayload(result: ClickAttemptResult): JSONObject {
+        return GhosthandJsonPayloads.toJson(clickFields(result))
+    }
+
+    fun clickFields(result: ClickAttemptResult): Map<String, Any?> = GhosthandActionPayloads.clickFields(result)
+
+    fun globalActionFields(result: GlobalActionResult): Map<String, Any?> =
+        GhosthandActionPayloads.globalActionFields(result)
+
+    fun treeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> =
+        GhosthandTreePayloads.treeFields(snapshot)
+
+    fun rawTreeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> =
+        GhosthandTreePayloads.rawTreeFields(snapshot)
+
+    fun screenFields(
+        snapshot: AccessibilityTreeSnapshot,
+        editableOnly: Boolean,
+        scrollableOnly: Boolean,
+        packageFilter: String?,
+        clickableOnly: Boolean
+    ): Map<String, Any?> {
+        return screenReadFields(
+            accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = editableOnly,
+                scrollableOnly = scrollableOnly,
+                packageFilter = packageFilter,
+                clickableOnly = clickableOnly
             )
-            else -> null
-        }
+        )
     }
 
-    private fun buildOmittedCategories(
-        omittedInvalidBoundsCount: Int,
-        omittedLowSignalCount: Int
-    ): List<String> {
-        return buildList {
-            if (omittedInvalidBoundsCount > 0) add("invalid_bounds")
-            if (omittedLowSignalCount > 0) add("low_signal")
-        }
+    fun accessibilityScreenRead(
+        snapshot: AccessibilityTreeSnapshot,
+        editableOnly: Boolean,
+        scrollableOnly: Boolean,
+        packageFilter: String?,
+        clickableOnly: Boolean
+    ): ScreenReadPayload {
+        return GhosthandScreenPayloads.readPayload(
+            snapshot = snapshot,
+            editableOnly = editableOnly,
+            scrollableOnly = scrollableOnly,
+            packageFilter = packageFilter,
+            clickableOnly = clickableOnly
+        )
     }
 
-    private fun buildOmittedSummary(
-        omittedInvalidBoundsCount: Int,
-        omittedLowSignalCount: Int
-    ): String? {
-        val parts = buildList {
-            if (omittedInvalidBoundsCount > 0) add("$omittedInvalidBoundsCount invalid-bounds")
-            if (omittedLowSignalCount > 0) add("$omittedLowSignalCount low-signal")
-        }
-        return if (parts.isEmpty()) null else "Omitted ${parts.joinToString(" and ")} nodes."
+    fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> =
+        GhosthandScreenPayloads.readFields(payload)
+
+    fun screenSummaryFields(payload: ScreenReadPayload): Map<String, Any?> =
+        GhosthandScreenPayloads.summaryFields(payload)
+
+    fun nodeFields(node: FlatAccessibilityNode): Map<String, Any?> =
+        GhosthandTreePayloads.nodeFields(node)
+
+    fun findFields(result: FindNodeResult): Map<String, Any?> =
+        GhosthandDiscoveryPayloads.findFields(result)
+
+    fun clickResolutionFields(resolution: ClickSelectorResolution): Map<String, Any?> =
+        GhosthandActionPayloads.clickResolutionFields(resolution)
+
+    fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> =
+        GhosthandActionPayloads.actionEffectFields(effect)
+
+    fun postActionStateFields(state: PostActionState): Map<String, Any?> =
+        GhosthandActionPayloads.postActionStateFields(state)
+
+    fun clickFailureFields(hint: FindMissHint): Map<String, Any?> =
+        GhosthandActionPayloads.clickFailureFields(hint)
+
+    fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> =
+        GhosthandDisclosurePayloads.disclosureFields(disclosure)
+
+    fun disclosureJson(disclosure: GhosthandDisclosure): JSONObject {
+        return GhosthandJsonPayloads.toJson(disclosureFields(disclosure))
     }
+
+    fun parseInputRequest(body: JSONObject): GhosthandInputRequestParseResult =
+        GhosthandInputPayloads.parseRequest(body)
+
+    fun parseInputRequest(body: Map<String, Any?>): GhosthandInputRequestParseResult =
+        GhosthandInputPayloads.parseRequest(body)
+
+    fun parseInputRequest(body: String): GhosthandInputRequestParseResult =
+        GhosthandInputPayloads.parseRequest(body)
+
+    fun inputResultFields(result: InputOperationResult): Map<String, Any?> =
+        GhosthandActionPayloads.inputResultFields(result)
+
+    fun inputResultJson(result: InputOperationResult): JSONObject {
+        return GhosthandJsonPayloads.toJson(inputResultFields(result))
+    }
+}
+
+private fun warningsForInvalidBounds(count: Int, route: String): List<String> {
+    if (count <= 0) {
+        return emptyList()
+    }
+    return when (route) {
+        "screen" -> listOf("omitted_nodes_with_invalid_bounds")
+        else -> listOf("invalid_bounds_present")
+    }
+}
+
+private fun combinedWarnings(
+    freshnessWarnings: List<String>,
+    geometryWarnings: List<String>,
+    readabilityWarnings: List<String>,
+    partialWarnings: List<String> = emptyList()
+): List<String> {
+    return (freshnessWarnings + geometryWarnings + readabilityWarnings + partialWarnings).distinct()
+}
+
+private fun warningsForLowSignal(count: Int, route: String): List<String> {
+    if (count <= 0) {
+        return emptyList()
+    }
+    return when (route) {
+        "screen" -> listOf("omitted_low_signal_nodes")
+        else -> listOf("low_signal_nodes_present")
+    }
+}
+
+private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
+    return if (partialOutput) listOf("partial_output") else emptyList()
 }
 
 private fun NodeBounds.isValidGeometry(): Boolean {

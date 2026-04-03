@@ -15,6 +15,30 @@ import org.junit.Test
 
 class GhosthandApiPayloadsTest {
     @Test
+    fun requestAndScreenHelpersShareTheExistingPublicContract() {
+        val parsed = GhosthandInputPayloads.parseRequest(mapOf("text" to "hello world"))
+        assertEquals(GhosthandApiPayloads.parseInputRequest(mapOf("text" to "hello world")), parsed)
+
+        val payload = GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = snapshot(
+                nodes = listOf(
+                    node("p0@tsnap"),
+                    node("p0.0@tsnap", text = "Editor", editable = true, centerX = 30, centerY = 40)
+                )
+            ),
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+
+        assertEquals(
+            GhosthandApiPayloads.screenSummaryFields(payload),
+            GhosthandScreenPayloads.summaryFields(payload)
+        )
+    }
+
+    @Test
     fun parseInputRequestDefaultsPlainTextToSetAction() {
         val parsed = GhosthandApiPayloads.parseInputRequest(mapOf("text" to "hello world"))
 
