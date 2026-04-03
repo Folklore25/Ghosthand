@@ -308,4 +308,51 @@ class StateCoordinatorStatePayloadTest {
         assertTrue(screenshotAccess.contains("fun captureBestAvailable("))
         assertTrue(previewCoordinator.contains("fun captureBestScreenshot("))
     }
+
+    @Test
+    fun coordinatorDelegatesRouteAdjacentExecutionOwnershipToInteractionExecutionCoordinator() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+        )
+        val executionCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/interaction/execution/InteractionExecutionCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/interaction/execution/InteractionExecutionCoordinator.kt"
+        )
+
+        assertTrue(coordinator.contains("private val interactionExecutionCoordinator = InteractionExecutionCoordinator("))
+        assertTrue(coordinator.contains("interactionExecutionCoordinator.clickFirstMatch("))
+        assertTrue(coordinator.contains("interactionExecutionCoordinator.clickFirstMatchFresh("))
+        assertTrue(coordinator.contains("interactionExecutionCoordinator.performInput("))
+        assertTrue(coordinator.contains("interactionExecutionCoordinator.scrollNode("))
+        assertTrue(coordinator.contains("interactionExecutionCoordinator.scroll("))
+        assertTrue(coordinator.contains("interactionExecutionCoordinator.performLongPressGesture("))
+        assertTrue(coordinator.contains("interactionExecutionCoordinator.performGesture("))
+        assertFalse(coordinator.contains("accessibilityNodeFinder.findNodesForClick("))
+        assertFalse(coordinator.contains("repeat(count.coerceAtLeast(1))"))
+        assertTrue(executionCoordinator.contains("fun clickFirstMatchFresh("))
+        assertTrue(executionCoordinator.contains("fun performInput(request: GhosthandInputRequest): InputOperationResult"))
+        assertTrue(executionCoordinator.contains("fun scroll(direction: String, target: String?, count: Int): ScrollBatchResult"))
+    }
+
+    @Test
+    fun coordinatorDelegatesWaitPollingOwnershipToWaitCoordinator() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+        )
+        val waitCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitCoordinator.kt"
+        )
+
+        assertTrue(coordinator.contains("private val waitCoordinator = GhosthandWaitCoordinator("))
+        assertTrue(coordinator.contains("waitCoordinator.waitForCondition("))
+        assertTrue(coordinator.contains("waitCoordinator.waitForUiChange("))
+        assertFalse(coordinator.contains("internal object StateCoordinatorObservationSupport"))
+        assertFalse(coordinator.contains("while (System.currentTimeMillis() < deadline)"))
+        assertTrue(waitCoordinator.contains("fun waitForCondition("))
+        assertTrue(waitCoordinator.contains("fun waitForUiChange("))
+        assertTrue(waitCoordinator.contains("GhosthandWaitLogic.hasUiChanged("))
+    }
 }
