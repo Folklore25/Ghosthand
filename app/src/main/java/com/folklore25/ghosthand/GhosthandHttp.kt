@@ -6,6 +6,7 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.server.LocalApiServerRequestException
 import java.io.InputStream
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets

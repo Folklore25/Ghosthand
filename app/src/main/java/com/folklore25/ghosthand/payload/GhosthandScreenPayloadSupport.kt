@@ -1,0 +1,307 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+package com.folklore25.ghosthand.payload
+
+import com.folklore25.ghosthand.AccessibilityNodeLocator
+import com.folklore25.ghosthand.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.FindNodeResult
+import com.folklore25.ghosthand.FlatAccessibilityNode
+import com.folklore25.ghosthand.NodeBounds
+import com.folklore25.ghosthand.screen.read.ScreenReadElement
+import com.folklore25.ghosthand.screen.read.ScreenReadMode
+import com.folklore25.ghosthand.screen.read.ScreenReadPayload
+import com.folklore25.ghosthand.screen.read.ScreenReadPayloadFields
+import com.folklore25.ghosthand.screen.read.ScreenReadRetryHint
+import com.folklore25.ghosthand.screen.read.deriveAccessibilityRetryHint
+import com.folklore25.ghosthand.screen.read.hasActionableBounds
+import com.folklore25.ghosthand.screen.read.isLowSignalNode
+import com.folklore25.ghosthand.screen.read.isValidGeometry
+import com.folklore25.ghosthand.screen.summary.ScreenSummaryPayloadComposer
+
+internal object GhosthandScreenPayloads {
+    fun treeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> {
+        val invalidBoundsCount = snapshot.nodes.count { !it.bounds.isValidGeometry() }
+        val lowSignalCount = snapshot.nodes.count { it.isLowSignalNode() }
+        return linkedMapOf(
+            "packageName" to snapshot.packageName,
+            "activity" to snapshot.activity,
+            "snapshotToken" to snapshot.snapshotToken,
+            "capturedAt" to snapshot.capturedAt,
+            "foregroundStableDuringCapture" to snapshot.foregroundStableDuringCapture,
+            "partialOutput" to false,
+            "returnedNodeCount" to snapshot.nodes.size,
+            "warnings" to combinedWarnings(
+                freshnessWarnings = snapshot.freshnessWarnings,
+                geometryWarnings = warningsForInvalidBounds(invalidBoundsCount, "tree"),
+                readabilityWarnings = warningsForLowSignal(lowSignalCount, "tree")
+            ),
+            "invalidBoundsCount" to invalidBoundsCount,
+            "lowSignalCount" to lowSignalCount,
+            "nodes" to snapshot.nodes.map(::nodeFields)
+        )
+    }
+
+    fun rawTreeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> {
+        val invalidBoundsCount = snapshot.nodes.count { !it.bounds.isValidGeometry() }
+        val lowSignalCount = snapshot.nodes.count { it.isLowSignalNode() }
+        return linkedMapOf(
+            "packageName" to snapshot.packageName,
+            "activity" to snapshot.activity,
+            "snapshotToken" to snapshot.snapshotToken,
+            "capturedAt" to snapshot.capturedAt,
+            "foregroundStableDuringCapture" to snapshot.foregroundStableDuringCapture,
+            "partialOutput" to false,
+            "returnedNodeCount" to snapshot.nodes.size,
+            "warnings" to combinedWarnings(
+                freshnessWarnings = snapshot.freshnessWarnings,
+                geometryWarnings = warningsForInvalidBounds(invalidBoundsCount, "tree"),
+                readabilityWarnings = warningsForLowSignal(lowSignalCount, "tree")
+            ),
+            "invalidBoundsCount" to invalidBoundsCount,
+            "lowSignalCount" to lowSignalCount,
+            "root" to buildRawTreeFields(snapshot, listOf(0))
+        )
+    }
+
+    fun screenFields(
+        snapshot: AccessibilityTreeSnapshot,
+        editableOnly: Boolean,
+        scrollableOnly: Boolean,
+        packageFilter: String?,
+        clickableOnly: Boolean
+    ): Map<String, Any?> {
+        return screenReadFields(
+            accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = editableOnly,
+                scrollableOnly = scrollableOnly,
+                packageFilter = packageFilter,
+                clickableOnly = clickableOnly
+            )
+        )
+    }
+
+    fun accessibilityScreenRead(
+        snapshot: AccessibilityTreeSnapshot,
+        editableOnly: Boolean,
+        scrollableOnly: Boolean,
+        packageFilter: String?,
+        clickableOnly: Boolean
+    ): ScreenReadPayload {
+        val filteredNodes = snapshot.nodes
+            .asSequence()
+            .filter { !editableOnly || it.editable }
+            .filter { !scrollableOnly || it.scrollable }
+            .filter { !clickableOnly || it.clickable }
+            .filter { packageFilter.isNullOrBlank() || snapshot.packageName == packageFilter }
+            .toList()
+        val actionableNodes = filteredNodes.filter { it.hasActionableBounds() }
+        val omittedInvalidBoundsCount = filteredNodes.size - actionableNodes.size
+        val readableNodes = actionableNodes.filterNot { it.isLowSignalNode() }
+        val omittedLowSignalCount = actionableNodes.size - readableNodes.size
+        val omittedNodeCount = omittedInvalidBoundsCount + omittedLowSignalCount
+        val partialOutput = omittedNodeCount > 0
+        val elements = readableNodes.map { node ->
+            ScreenReadElement(
+                nodeId = node.nodeId,
+                text = node.text ?: "",
+                desc = node.contentDesc ?: "",
+                id = node.resourceId ?: "",
+                clickable = node.clickable,
+                editable = node.editable,
+                focused = node.focused,
+                scrollable = node.scrollable,
+                bounds = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]",
+                centerX = node.centerX,
+                centerY = node.centerY,
+                source = ScreenReadMode.ACCESSIBILITY.wireValue
+            )
+        }
+        val payload = ScreenReadPayload(
+            packageName = snapshot.packageName,
+            activity = snapshot.activity,
+            snapshotToken = snapshot.snapshotToken,
+            capturedAt = snapshot.capturedAt,
+            foregroundStableDuringCapture = snapshot.foregroundStableDuringCapture,
+            partialOutput = partialOutput,
+            candidateNodeCount = filteredNodes.size,
+            returnedElementCount = elements.size,
+            warnings = combinedWarnings(
+                freshnessWarnings = snapshot.freshnessWarnings,
+                geometryWarnings = warningsForInvalidBounds(omittedInvalidBoundsCount, "screen"),
+                readabilityWarnings = warningsForLowSignal(omittedLowSignalCount, "screen"),
+                partialWarnings = warningsForPartialOutput(partialOutput)
+            ),
+            omittedInvalidBoundsCount = omittedInvalidBoundsCount,
+            omittedLowSignalCount = omittedLowSignalCount,
+            omittedNodeCount = omittedNodeCount,
+            omittedCategories = buildOmittedCategories(omittedInvalidBoundsCount, omittedLowSignalCount),
+            omittedSummary = buildOmittedSummary(omittedInvalidBoundsCount, omittedLowSignalCount),
+            invalidBoundsPresent = omittedInvalidBoundsCount > 0,
+            lowSignalPresent = omittedLowSignalCount > 0,
+            elements = elements,
+            source = ScreenReadMode.ACCESSIBILITY.wireValue,
+            accessibilityElementCount = elements.size,
+            ocrElementCount = 0,
+            usedOcrFallback = false,
+            focusedEditablePresent = filteredNodes.any { it.focused && it.editable }
+        )
+        return payload.copy(retryHint = accessibilityRetryHint(payload))
+    }
+
+    fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
+        return ScreenReadPayloadFields.screenReadFields(payload)
+    }
+
+    fun summaryFields(payload: ScreenReadPayload): Map<String, Any?> {
+        return ScreenSummaryPayloadComposer.summaryFields(payload)
+    }
+
+    fun nodeFields(node: FlatAccessibilityNode): Map<String, Any?> {
+        val boundsValid = node.bounds.isValidGeometry()
+        val actionableBounds = node.hasActionableBounds()
+        val lowSignal = node.isLowSignalNode()
+        return linkedMapOf(
+            "nodeId" to node.nodeId,
+            "text" to node.text,
+            "contentDesc" to node.contentDesc,
+            "resourceId" to node.resourceId,
+            "className" to node.className,
+            "clickable" to node.clickable,
+            "editable" to node.editable,
+            "enabled" to node.enabled,
+            "scrollable" to node.scrollable,
+            "boundsValid" to boundsValid,
+            "actionableBounds" to actionableBounds,
+            "lowSignal" to lowSignal,
+            "centerX" to node.centerX,
+            "centerY" to node.centerY,
+            "bounds" to linkedMapOf(
+                "left" to node.bounds.left,
+                "top" to node.bounds.top,
+                "right" to node.bounds.right,
+                "bottom" to node.bounds.bottom
+            )
+        )
+    }
+
+    fun findFields(result: FindNodeResult): Map<String, Any?> {
+        val payload = linkedMapOf<String, Any?>(
+            "found" to result.found,
+            "matchCount" to result.matches.size,
+            "index" to result.selectedIndex
+        )
+        result.missHint?.let { hint ->
+            payload["searchedSurface"] = hint.searchedSurface
+            payload["matchSemantics"] = hint.matchSemantics
+            payload["requestedSurface"] = hint.requestedSurface
+            payload["requestedMatchSemantics"] = hint.requestedMatchSemantics
+            payload["matchedSurface"] = hint.matchedSurface
+            payload["matchedMatchSemantics"] = hint.matchedMatchSemantics
+            payload["usedSurfaceFallback"] = hint.usedSurfaceFallback
+            payload["usedContainsFallback"] = hint.usedContainsFallback
+            if (hint.suggestedAlternateSurfaces.isNotEmpty()) {
+                payload["suggestedAlternateSurfaces"] = hint.suggestedAlternateSurfaces
+            }
+            if (hint.suggestedAlternateStrategies.isNotEmpty()) {
+                payload["suggestedAlternateStrategies"] = hint.suggestedAlternateStrategies
+            }
+        }
+        val node = result.node ?: run {
+            payload["node"] = null
+            return payload
+        }
+        payload["node"] = nodeFields(node)
+        payload["text"] = node.text ?: ""
+        payload["desc"] = node.contentDesc ?: ""
+        payload["id"] = node.resourceId ?: ""
+        payload["bounds"] = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]"
+        payload["centerX"] = node.centerX
+        payload["centerY"] = node.centerY
+        payload["clickable"] = node.clickable
+        payload["editable"] = node.editable
+        payload["scrollable"] = node.scrollable
+        return payload
+    }
+
+    private fun accessibilityRetryHint(payload: ScreenReadPayload): ScreenReadRetryHint? {
+        return deriveAccessibilityRetryHint(
+            candidateNodeCount = payload.candidateNodeCount,
+            returnedElementCount = payload.returnedElementCount,
+            omittedNodeCount = payload.omittedNodeCount
+        )
+    }
+
+    private fun buildOmittedCategories(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): List<String> = buildList {
+        if (omittedInvalidBoundsCount > 0) add("invalid_bounds")
+        if (omittedLowSignalCount > 0) add("low_signal")
+    }
+
+    private fun buildOmittedSummary(
+        omittedInvalidBoundsCount: Int,
+        omittedLowSignalCount: Int
+    ): String? {
+        val parts = buildList {
+            if (omittedInvalidBoundsCount > 0) add("$omittedInvalidBoundsCount invalid-bounds")
+            if (omittedLowSignalCount > 0) add("$omittedLowSignalCount low-signal")
+        }
+        return if (parts.isEmpty()) null else "Omitted ${parts.joinToString(" and ")} nodes."
+    }
+
+    private fun buildRawTreeFields(
+        snapshot: AccessibilityTreeSnapshot,
+        path: List<Int>
+    ): Map<String, Any?>? {
+        val targetNode = snapshot.nodes.firstOrNull { node ->
+            AccessibilityNodeLocator.pathSegments(node.nodeId) == path
+        } ?: return null
+
+        val children = snapshot.nodes
+            .asSequence()
+            .filter { candidate ->
+                val candidatePath = AccessibilityNodeLocator.pathSegments(candidate.nodeId)
+                candidatePath.size == path.size + 1 && candidatePath.dropLast(1) == path
+            }
+            .sortedBy { AccessibilityNodeLocator.pathSegments(it.nodeId).lastOrNull() ?: 0 }
+            .mapNotNull { child -> buildRawTreeFields(snapshot, AccessibilityNodeLocator.pathSegments(child.nodeId)) }
+            .toList()
+
+        return nodeFields(targetNode) + ("children" to children)
+    }
+
+    private fun warningsForInvalidBounds(count: Int, route: String): List<String> {
+        if (count <= 0) return emptyList()
+        return when (route) {
+            "screen" -> listOf("omitted_nodes_with_invalid_bounds")
+            else -> listOf("invalid_bounds_present")
+        }
+    }
+
+    private fun combinedWarnings(
+        freshnessWarnings: List<String>,
+        geometryWarnings: List<String>,
+        readabilityWarnings: List<String>,
+        partialWarnings: List<String> = emptyList()
+    ): List<String> {
+        return (freshnessWarnings + geometryWarnings + readabilityWarnings + partialWarnings).distinct()
+    }
+
+    private fun warningsForLowSignal(count: Int, route: String): List<String> {
+        if (count <= 0) return emptyList()
+        return when (route) {
+            "screen" -> listOf("omitted_low_signal_nodes")
+            else -> listOf("low_signal_nodes_present")
+        }
+    }
+
+    private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
+        return if (partialOutput) listOf("partial_output") else emptyList()
+    }
+}

@@ -11,6 +11,9 @@ import android.util.Base64
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.folklore25.ghosthand.screen.read.ScreenOcrResult
+import com.folklore25.ghosthand.screen.read.ScreenReadElement
+import com.folklore25.ghosthand.screen.read.ScreenReadMode
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
