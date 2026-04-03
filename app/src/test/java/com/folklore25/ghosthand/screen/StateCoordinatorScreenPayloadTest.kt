@@ -258,6 +258,7 @@ class StateCoordinatorScreenPayloadTest {
             accessibilityElementCount = 1,
             ocrElementCount = 0,
             usedOcrFallback = false,
+            focusedEditablePresent = true,
             retryHint = null
         )
         val payload = GhosthandApiPayloads.screenSummaryFields(screenReadPayload)
@@ -268,6 +269,50 @@ class StateCoordinatorScreenPayloadTest {
             ScreenSummaryPayloadComposer.summaryFields(screenReadPayload),
             payload
         )
+    }
+
+    @Test
+    fun screenReadFieldsProjectCanonicalFocusedEditableTruth() {
+        val screenReadPayload = ScreenReadPayload(
+            packageName = "com.example",
+            activity = "EditorActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-04-01T00:00:00Z",
+            foregroundStableDuringCapture = true,
+            partialOutput = false,
+            candidateNodeCount = 2,
+            returnedElementCount = 1,
+            warnings = emptyList(),
+            omittedInvalidBoundsCount = 1,
+            omittedLowSignalCount = 0,
+            omittedNodeCount = 1,
+            omittedCategories = listOf("invalid_bounds"),
+            omittedSummary = "Omitted 1 invalid-bounds node.",
+            invalidBoundsPresent = true,
+            lowSignalPresent = false,
+            elements = listOf(
+                ScreenReadElement(
+                    nodeId = "p0.1@tsnap",
+                    text = "Submit",
+                    clickable = true,
+                    bounds = "[20,20][60,40]",
+                    centerX = 40,
+                    centerY = 30,
+                    source = ScreenReadMode.ACCESSIBILITY.wireValue
+                )
+            ),
+            source = ScreenReadMode.ACCESSIBILITY.wireValue,
+            accessibilityElementCount = 1,
+            ocrElementCount = 0,
+            usedOcrFallback = false,
+            retryHint = null
+        )
+
+        val fields = GhosthandApiPayloads.screenReadFields(screenReadPayload)
+        val summary = GhosthandApiPayloads.screenSummaryFields(screenReadPayload)
+
+        assertEquals(true, summary["focusedEditablePresent"])
+        assertEquals(summary["focusedEditablePresent"], fields["focusedEditablePresent"])
     }
 
     @Test

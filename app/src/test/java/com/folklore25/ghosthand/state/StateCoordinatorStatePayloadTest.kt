@@ -8,6 +8,7 @@ package com.folklore25.ghosthand.state
 
 import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.capability.GovernedCapabilityPayloads
+import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.PostActionState
 import com.folklore25.ghosthand.screen.read.ScreenReadMode
 import com.folklore25.ghosthand.screen.read.ScreenReadRetryHint
@@ -166,6 +167,68 @@ class StateCoordinatorStatePayloadTest {
         assertEquals("ExampleActivity", state?.activity)
         assertEquals("after", state?.snapshotToken)
         assertNull(state?.renderMode)
+    }
+
+    @Test
+    fun postActionStateMatchesCanonicalScreenSummaryLegibilityProjection() {
+        val snapshot = AccessibilityTreeSnapshot(
+            packageName = "com.example",
+            activity = "EditorActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-04-02T00:00:00Z",
+            nodes = listOf(
+                FlatAccessibilityNode(
+                    nodeId = "p0@snap",
+                    text = null,
+                    contentDesc = null,
+                    resourceId = null,
+                    className = "android.widget.FrameLayout",
+                    clickable = false,
+                    editable = false,
+                    enabled = true,
+                    focused = false,
+                    scrollable = false,
+                    centerX = 50,
+                    centerY = 50,
+                    bounds = NodeBounds(0, 0, 100, 100)
+                ),
+                FlatAccessibilityNode(
+                    nodeId = "p0.0@snap",
+                    text = "Search",
+                    contentDesc = null,
+                    resourceId = "search_box",
+                    className = "android.widget.EditText",
+                    clickable = true,
+                    editable = true,
+                    enabled = true,
+                    focused = true,
+                    scrollable = false,
+                    centerX = -5,
+                    centerY = 20,
+                    bounds = NodeBounds(-10, 0, 0, 40)
+                )
+            ),
+            foregroundStableDuringCapture = true
+        )
+
+        val state = PostActionStateComposer.fromObservedEffect(
+            actionEffect = null,
+            fallbackSnapshot = snapshot
+        )
+        val summary = GhosthandApiPayloads.screenSummaryFields(
+            GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = false,
+                scrollableOnly = false,
+                packageFilter = null,
+                clickableOnly = false
+            )
+        )
+
+        assertEquals(summary["focusedEditablePresent"], state?.focusedEditablePresent)
+        assertEquals(summary["renderMode"], state?.renderMode)
+        assertEquals(summary["surfaceReadability"], state?.surfaceReadability)
+        assertEquals(summary["visualAvailable"], state?.visualAvailable)
     }
 
     @Test
