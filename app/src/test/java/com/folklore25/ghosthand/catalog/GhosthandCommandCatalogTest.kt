@@ -10,6 +10,7 @@ import com.folklore25.ghosthand.catalog.*
 import com.folklore25.ghosthand.routes.GhosthandRoutePolicies
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,6 +43,44 @@ class GhosthandCommandCatalogTest {
         assertTrue(commandsRoute.description.isNotBlank())
         assertEquals("1.24", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
+    }
+
+    @Test
+    fun commandPayloadsPreserveFinalSurfaceWithoutMeaninglessDefaultMetadata() {
+        val screenPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "screen" }
+        assertEquals("/screen", screenPayload["path"])
+        assertEquals(
+            GhosthandSelectorCatalog.screenResponseFields,
+            screenPayload["responseFields"]
+        )
+        assertEquals("structured_actionable_surface_snapshot", screenPayload["stateTruth"])
+        assertEquals("selector_reresolution", screenPayload["recommendedInteractionModel"])
+        assertEquals("snapshot_ephemeral", screenPayload["referenceStability"])
+        assertEquals("same_snapshot_only", screenPayload["snapshotScope"])
+        assertNull(screenPayload["selectorSupport"])
+        assertNull(screenPayload["exampleRequest"])
+        assertNull(screenPayload["exampleResponse"])
+        assertNull(screenPayload["focusRequirement"])
+        assertNull(screenPayload["delayedAcceptance"])
+        assertNull(screenPayload["changeSignal"])
+        val screenParams = screenPayload["params"] as List<*>
+        val sourceParam = screenParams.first { (it as Map<*, *>)["name"] == "source" } as Map<*, *>
+        assertEquals(listOf("accessibility", "ocr", "hybrid"), sourceParam["allowedValues"])
+        val packageParam = screenParams.first { (it as Map<*, *>)["name"] == "package" } as Map<*, *>
+        assertFalse(packageParam.containsKey("allowedValues"))
+
+        val clickPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "click" }
+        assertTrue(clickPayload.containsKey("selectorSupport"))
+        assertTrue(clickPayload.containsKey("exampleRequest"))
+        assertTrue(clickPayload.containsKey("exampleResponse"))
+        assertEquals("none", clickPayload["focusRequirement"])
+
+        val commandsPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "commands" }
+        assertEquals("/commands", commandsPayload["path"])
+        assertNull(commandsPayload["selectorSupport"])
+        assertNull(commandsPayload["exampleRequest"])
+        assertNotNull(commandsPayload["exampleResponse"])
+        assertNull(commandsPayload["operatorUses"])
     }
 
     @Test
