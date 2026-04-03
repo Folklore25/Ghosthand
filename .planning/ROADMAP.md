@@ -192,6 +192,6 @@ Plans:
 
 Plans:
 - [x] 24.4-01: Preview mechanism cleanup and explicit retrieval-path alignment
-- [ ] 24.4-02: Field and hint convergence with noise reduction
+- [x] 24.4-02: Field and hint convergence with noise reduction
 - [ ] 24.4-03: Project-structure and code cleanup for the 1.3.x line
 - [ ] 24.4-04: Final contract/catalog/docs alignment and closeout verification
