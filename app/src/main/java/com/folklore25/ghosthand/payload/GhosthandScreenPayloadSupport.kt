@@ -6,212 +6,17 @@
 
 package com.folklore25.ghosthand.payload
 
-import com.folklore25.ghosthand.*
-import com.folklore25.ghosthand.interaction.effects.ActionEffectPayloads
+import com.folklore25.ghosthand.AccessibilityNodeLocator
+import com.folklore25.ghosthand.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.FindNodeResult
+import com.folklore25.ghosthand.FlatAccessibilityNode
+import com.folklore25.ghosthand.NodeBounds
 import com.folklore25.ghosthand.screen.read.ScreenReadElement
 import com.folklore25.ghosthand.screen.read.ScreenReadMode
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 import com.folklore25.ghosthand.screen.read.ScreenReadPayloadFields
 import com.folklore25.ghosthand.screen.read.ScreenReadRetryHint
 import com.folklore25.ghosthand.screen.summary.ScreenSummaryPayloadComposer
-import com.folklore25.ghosthand.state.InputOperationResult
-import com.folklore25.ghosthand.state.summary.PostActionStateComposer
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
-
-internal object GhosthandInputPayloads {
-    fun parseRequest(body: JSONObject): GhosthandInputRequestParseResult {
-        return parseRequest(
-            linkedMapOf<String, Any?>().apply {
-                body.keys().forEach { key ->
-                    put(key, if (body.isNull(key)) null else body.opt(key))
-                }
-            }
-        )
-    }
-
-    fun parseRequest(body: String): GhosthandInputRequestParseResult {
-        return try {
-            parseRequest(JSONObject(body))
-        } catch (_: JSONException) {
-            GhosthandInputRequestParseResult(errorMessage = "Request body must be valid JSON.")
-        }
-    }
-
-    fun parseRequest(body: Map<String, Any?>): GhosthandInputRequestParseResult {
-        val text = when {
-            body.containsKey("text") && body["text"] != null -> body["text"] as? String
-                ?: return GhosthandInputRequestParseResult(errorMessage = "text must be a string.")
-            else -> null
-        }
-        val explicitTextAction = when {
-            body.containsKey("textAction") && body["textAction"] != null -> {
-                val raw = body["textAction"] as? String
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be a string.")
-                InputTextAction.fromWireValue(raw)
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "textAction must be one of: set, append, clear.")
-            }
-            else -> null
-        }
-        val key = when {
-            body.containsKey("key") && body["key"] != null -> {
-                val raw = body["key"] as? String
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be a string.")
-                InputKey.fromWireValue(raw)
-                    ?: return GhosthandInputRequestParseResult(errorMessage = "key must be one of: enter.")
-            }
-            else -> null
-        }
-
-        val append = body["append"] as? Boolean ?: false
-        val clear = body["clear"] as? Boolean ?: false
-        if (explicitTextAction == null && append && clear) {
-            return GhosthandInputRequestParseResult(errorMessage = "append and clear cannot both be true.")
-        }
-
-        val textAction = explicitTextAction ?: when {
-            append -> InputTextAction.APPEND
-            text != null -> InputTextAction.SET
-            clear -> InputTextAction.CLEAR
-            else -> null
-        }
-
-        if (textAction == null && key == null) {
-            return GhosthandInputRequestParseResult(errorMessage = "At least one explicit /input operation is required.")
-        }
-        if (textAction == InputTextAction.CLEAR && text != null) {
-            return GhosthandInputRequestParseResult(errorMessage = "text must be omitted when textAction=clear.")
-        }
-        if (textAction != null && textAction != InputTextAction.CLEAR && text == null) {
-            return GhosthandInputRequestParseResult(
-                errorMessage = "text is required when textAction=${textAction.wireValue}."
-            )
-        }
-
-        return GhosthandInputRequestParseResult(
-            request = GhosthandInputRequest(
-                textAction = textAction,
-                text = text,
-                key = key
-            )
-        )
-    }
-}
-
-internal object GhosthandInteractionPayloads {
-    fun clickFields(result: ClickAttemptResult): Map<String, Any?> {
-        val payload = linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "backendUsed" to result.backendUsed,
-            "attemptedPath" to result.attemptedPath
-        )
-        result.effect?.let { effect -> payload.putAll(actionEffectFields(effect)) }
-        PostActionStateComposer.fromObservedEffect(
-            actionEffect = result.effect,
-            fallbackSnapshot = null
-        )?.let(PostActionStateComposer::fields)?.takeIf { it.isNotEmpty() }?.let { payload["postActionState"] = it }
-        result.selectorResolution?.let { resolution ->
-            payload["resolution"] = clickResolutionFields(resolution)
-        }
-        return payload
-    }
-
-    fun globalActionFields(result: GlobalActionResult): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "attemptedPath" to result.attemptedPath
-        ).apply {
-            result.effect?.let { effect -> putAll(ActionEffectPayloads.fields(effect)) }
-            PostActionStateComposer.fromObservedEffect(
-                actionEffect = result.effect,
-                fallbackSnapshot = null
-            )?.let(PostActionStateComposer::fields)?.takeIf { it.isNotEmpty() }?.let { put("postActionState", it) }
-        }
-    }
-
-    fun clickResolutionFields(resolution: ClickSelectorResolution): Map<String, Any?> {
-        return linkedMapOf(
-            "requestedStrategy" to resolution.requestedStrategy,
-            "effectiveStrategy" to resolution.effectiveStrategy,
-            "requestedSurface" to resolution.requestedSurface,
-            "matchedSurface" to resolution.matchedSurface,
-            "requestedMatchSemantics" to resolution.requestedMatchSemantics,
-            "matchedMatchSemantics" to resolution.matchedMatchSemantics,
-            "usedSurfaceFallback" to resolution.usedSurfaceFallback,
-            "usedContainsFallback" to resolution.usedContainsFallback,
-            "matchedNodeId" to resolution.matchedNodeId,
-            "matchedNodeClickable" to resolution.matchedNodeClickable,
-            "resolvedNodeId" to resolution.resolvedNodeId,
-            "resolutionKind" to resolution.resolutionKind,
-            "ancestorDepth" to resolution.ancestorDepth
-        )
-    }
-
-    fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {
-        return ActionEffectPayloads.fields(effect)
-    }
-
-    fun postActionStateFields(state: PostActionState): Map<String, Any?> {
-        return PostActionStateComposer.fields(state)
-    }
-
-    fun clickFailureFields(hint: FindMissHint): Map<String, Any?> {
-        return linkedMapOf(
-            "failureCategory" to hint.failureCategory,
-            "selectorMatchCount" to hint.selectorMatchCount,
-            "actionableMatchCount" to hint.actionableMatchCount,
-            "searchedSurface" to hint.searchedSurface,
-            "matchSemantics" to hint.matchSemantics,
-            "matchedSurface" to hint.matchedSurface,
-            "matchedMatchSemantics" to hint.matchedMatchSemantics
-        )
-    }
-
-    fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> {
-        return linkedMapOf(
-            "kind" to disclosure.kind,
-            "summary" to disclosure.summary,
-            "assumptionToCorrect" to disclosure.assumptionToCorrect,
-            "nextBestActions" to disclosure.nextBestActions
-        )
-    }
-
-    fun inputResultFields(result: InputOperationResult): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "textChanged" to (result.textMutation?.performed ?: false),
-            "keyDispatched" to (result.keyDispatch?.performed ?: false),
-            "textMutation" to result.textMutation?.let { mutation ->
-                linkedMapOf(
-                    "requested" to mutation.requested,
-                    "performed" to mutation.performed,
-                    "action" to mutation.action,
-                    "previousText" to mutation.previousText,
-                    "text" to mutation.finalText,
-                    "backendUsed" to mutation.backendUsed,
-                    "failureReason" to mutation.failureReason?.name,
-                    "attemptedPath" to mutation.attemptedPath
-                )
-            },
-            "keyDispatch" to result.keyDispatch?.let { dispatch ->
-                linkedMapOf(
-                    "requested" to dispatch.requested,
-                    "performed" to dispatch.performed,
-                    "key" to dispatch.key,
-                    "backendUsed" to dispatch.backendUsed,
-                    "failureReason" to dispatch.failureReason?.name,
-                    "attemptedPath" to dispatch.attemptedPath
-                )
-            }
-        ).apply {
-            result.postActionState
-                ?.let(PostActionStateComposer::fields)
-                ?.takeIf { it.isNotEmpty() }
-                ?.let { put("postActionState", it) }
-        }
-    }
-}
 
 internal object GhosthandScreenPayloads {
     fun treeFields(snapshot: AccessibilityTreeSnapshot): Map<String, Any?> {
@@ -297,17 +102,17 @@ internal object GhosthandScreenPayloads {
         val omittedNodeCount = omittedInvalidBoundsCount + omittedLowSignalCount
         val partialOutput = omittedNodeCount > 0
         val elements = readableNodes.map { node ->
-                ScreenReadElement(
-                    nodeId = node.nodeId,
-                    text = node.text ?: "",
-                    desc = node.contentDesc ?: "",
-                    id = node.resourceId ?: "",
-                    clickable = node.clickable,
-                    editable = node.editable,
-                    focused = node.focused,
-                    scrollable = node.scrollable,
-                    bounds = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]",
-                    centerX = node.centerX,
+            ScreenReadElement(
+                nodeId = node.nodeId,
+                text = node.text ?: "",
+                desc = node.contentDesc ?: "",
+                id = node.resourceId ?: "",
+                clickable = node.clickable,
+                editable = node.editable,
+                focused = node.focused,
+                scrollable = node.scrollable,
+                bounds = "[${node.bounds.left},${node.bounds.top}][${node.bounds.right},${node.bounds.bottom}]",
+                centerX = node.centerX,
                 centerY = node.centerY,
                 source = ScreenReadMode.ACCESSIBILITY.wireValue
             )
@@ -499,29 +304,6 @@ internal object GhosthandScreenPayloads {
 
     private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
         return if (partialOutput) listOf("partial_output") else emptyList()
-    }
-}
-
-internal object GhosthandPayloadJsonSupport {
-    fun fieldsToJson(fields: Map<String, Any?>): JSONObject {
-        return JSONObject().apply {
-            fields.forEach { (key, value) -> put(key, toJsonValue(value)) }
-        }
-    }
-
-    fun toJsonValue(value: Any?): Any {
-        return when (value) {
-            null -> JSONObject.NULL
-            is Map<*, *> -> JSONObject().apply {
-                value.forEach { (key, nestedValue) ->
-                    put(key as String, toJsonValue(nestedValue))
-                }
-            }
-            is List<*> -> JSONArray().apply {
-                value.forEach { item -> put(toJsonValue(item)) }
-            }
-            else -> value
-        }
     }
 }
 

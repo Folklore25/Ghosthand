@@ -244,8 +244,8 @@ class GhosthandApiPayloadsTest {
     @Test
     fun interactionPayloadSupportKeepsActionEffectSeparateFromPostActionState() {
         val payloadSupport = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt",
-            "src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt"
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandInteractionPayloadSupport.kt",
+            "src/main/java/com/folklore25/ghosthand/payload/GhosthandInteractionPayloadSupport.kt"
         )
 
         assertFalse(payloadSupport.contains("fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {\n        return linkedMapOf<String, Any?>(\n            \"stateChanged\" to effect.stateChanged,\n            \"beforeSnapshotToken\" to effect.beforeSnapshotToken,\n            \"afterSnapshotToken\" to effect.afterSnapshotToken,\n            \"finalPackageName\" to effect.finalPackageName,\n            \"finalActivity\" to effect.finalActivity\n        ).apply {\n            postActionStateFields("))

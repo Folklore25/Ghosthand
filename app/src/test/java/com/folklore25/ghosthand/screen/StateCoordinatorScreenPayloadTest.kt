@@ -374,8 +374,8 @@ class StateCoordinatorScreenPayloadTest {
     @Test
     fun screenPayloadSupportUsesDedicatedSummaryComposer() {
         val payloadSupport = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt",
-            "src/main/java/com/folklore25/ghosthand/payload/GhosthandPayloadSupport.kt"
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandScreenPayloadSupport.kt",
+            "src/main/java/com/folklore25/ghosthand/payload/GhosthandScreenPayloadSupport.kt"
         )
 
         assertTrue(payloadSupport.contains("ScreenSummaryPayloadComposer.summaryFields(payload)"))

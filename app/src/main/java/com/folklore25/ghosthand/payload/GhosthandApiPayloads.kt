@@ -112,13 +112,13 @@ object GhosthandApiPayloads {
         GhosthandInteractionPayloads.postActionStateFields(state)
 
     fun clickFailureFields(hint: FindMissHint): Map<String, Any?> =
-        GhosthandInteractionPayloads.clickFailureFields(hint)
+        GhosthandDisclosurePayloads.clickFailureFields(hint)
 
     fun disclosureFields(disclosure: GhosthandDisclosure): Map<String, Any?> =
-        GhosthandInteractionPayloads.disclosureFields(disclosure)
+        GhosthandDisclosurePayloads.disclosureFields(disclosure)
 
     fun disclosureJson(disclosure: GhosthandDisclosure): JSONObject =
-        GhosthandPayloadJsonSupport.fieldsToJson(GhosthandInteractionPayloads.disclosureFields(disclosure))
+        GhosthandPayloadJsonSupport.fieldsToJson(GhosthandDisclosurePayloads.disclosureFields(disclosure))
 
     fun parseInputRequest(body: JSONObject): GhosthandInputRequestParseResult =
         GhosthandInputPayloads.parseRequest(body)
@@ -130,8 +130,8 @@ object GhosthandApiPayloads {
         GhosthandInputPayloads.parseRequest(body)
 
     fun inputResultFields(result: InputOperationResult): Map<String, Any?> =
-        GhosthandInteractionPayloads.inputResultFields(result)
+        GhosthandInputPayloads.inputResultFields(result)
 
     fun inputResultJson(result: InputOperationResult): JSONObject =
-        GhosthandPayloadJsonSupport.fieldsToJson(GhosthandInteractionPayloads.inputResultFields(result))
+        GhosthandPayloadJsonSupport.fieldsToJson(GhosthandInputPayloads.inputResultFields(result))
 }

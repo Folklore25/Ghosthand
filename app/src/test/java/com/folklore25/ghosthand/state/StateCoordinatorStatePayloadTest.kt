@@ -170,13 +170,23 @@ class StateCoordinatorStatePayloadTest {
 
     @Test
     fun routeActionHandlersDelegatePostActionStateOwnershipToStateSummaryModule() {
-        val handlers = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteHandlers.kt",
-            "src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteHandlers.kt"
+        val tapClickHandlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionTapClickRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/action/ActionTapClickRouteHandlers.kt"
+        )
+        val motionHandlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionMotionRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/action/ActionMotionRouteHandlers.kt"
+        )
+        val gestureHandlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionGestureRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/action/ActionGestureRouteHandlers.kt"
         )
 
-        assertTrue(handlers.contains("PostActionStateComposer.fromObservedEffect("))
-        assertFalse(handlers.contains("internal fun buildPostActionState("))
+        assertTrue(tapClickHandlers.contains("PostActionStateComposer.fromObservedEffect("))
+        assertTrue(motionHandlers.contains("PostActionStateComposer.fromObservedEffect("))
+        assertTrue(gestureHandlers.contains("PostActionStateComposer.fromObservedEffect("))
+        assertFalse(tapClickHandlers.contains("internal fun buildPostActionState("))
     }
 
     @Test
