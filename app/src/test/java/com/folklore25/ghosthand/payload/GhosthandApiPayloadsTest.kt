@@ -398,7 +398,7 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
-    fun screenSummaryFieldsExposePreviewMetadataWithoutImageBytes() {
+    fun screenSummaryFieldsExposePreviewMetadataWithExplicitScreenshotPath() {
         val summary = GhosthandApiPayloads.screenSummaryFields(
             GhosthandApiPayloads.accessibilityScreenRead(
                 snapshot = snapshot(
@@ -414,15 +414,14 @@ class GhosthandApiPayloadsTest {
             ).copy(
                 visualAvailable = true,
                 previewAvailable = true,
-                previewToken = "preview:snap",
+                previewPath = "/screenshot?width=240&height=240",
                 previewWidth = 240,
-                previewHeight = 240,
-                previewImage = "data:image/png;base64,thumb"
+                previewHeight = 240
             )
         )
 
         assertEquals(true, summary["previewAvailable"])
-        assertEquals("preview:snap", summary["previewToken"])
+        assertEquals("/screenshot?width=240&height=240", summary["previewPath"])
         assertEquals(240, summary["previewWidth"])
         assertEquals(240, summary["previewHeight"])
         assertFalse(summary.containsKey("previewImage"))

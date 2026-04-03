@@ -7,8 +7,8 @@
 package com.folklore25.ghosthand.server
 
 import com.folklore25.ghosthand.GhosthandSelectors
+import com.folklore25.ghosthand.TestFileSupport
 import com.folklore25.ghosthand.payload.*
-import com.folklore25.ghosthand.routes.read.screenPreviewThumbRequested
 import com.folklore25.ghosthand.routes.read.screenSummaryOnlyRequested
 import com.folklore25.ghosthand.server.LocalApiServerProtocol
 import com.folklore25.ghosthand.server.LocalApiServerResources
@@ -80,10 +80,14 @@ class LocalApiServerRequestParsingTest {
     }
 
     @Test
-    fun screenPreviewThumbRequestedDetectsExplicitOptIn() {
-        assertTrue(screenPreviewThumbRequested(mapOf("includePreview" to "thumb")))
-        assertFalse(screenPreviewThumbRequested(mapOf("includePreview" to "full")))
-        assertFalse(screenPreviewThumbRequested(emptyMap()))
+    fun screenPreviewThumbOptInHelperIsRemovedFromReadRouteHandlers() {
+        val routeHandlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenRouteHandlers.kt"
+        )
+
+        assertFalse(routeHandlers.contains("screenPreviewThumbRequested"))
+        assertFalse(routeHandlers.contains("includePreview"))
     }
 
     @Test

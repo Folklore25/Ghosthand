@@ -54,7 +54,7 @@ class StateCoordinatorScreenPayloadTest {
             usedOcrFallback = false,
             visualAvailable = false,
             previewAvailable = false,
-            previewToken = null,
+            previewPath = null,
             previewWidth = null,
             previewHeight = null,
             retryHint = null
@@ -91,7 +91,7 @@ class StateCoordinatorScreenPayloadTest {
             usedOcrFallback = false,
             visualAvailable = true,
             previewAvailable = true,
-            previewToken = "preview:ocr",
+            previewPath = "/screenshot?width=240&height=240",
             previewWidth = 240,
             previewHeight = 240,
             retryHint = null
@@ -106,7 +106,7 @@ class StateCoordinatorScreenPayloadTest {
         assertEquals(2, merged.returnedElementCount)
         assertEquals(1, merged.ocrElementCount)
         assertEquals(true, merged.usedOcrFallback)
-        assertEquals("preview:ocr", merged.previewToken)
+        assertEquals("/screenshot?width=240&height=240", merged.previewPath)
         assertTrue(merged.warnings.contains("ocr_fallback_used"))
         assertTrue(merged.warnings.contains("ocr_warning"))
     }
@@ -161,7 +161,8 @@ class StateCoordinatorScreenPayloadTest {
         assertEquals("hybrid", payload["renderMode"])
         assertEquals("limited", payload["surfaceReadability"])
         assertEquals(true, payload["visualAvailable"])
-        assertEquals(null, payload["previewImage"])
+        assertEquals(null, payload["previewPath"])
+        assertFalse(payload.containsKey("previewImage"))
         assertEquals(1, payload["accessibilityElementCount"])
         assertEquals(1, payload["ocrElementCount"])
         assertEquals(true, payload["usedOcrFallback"])
@@ -317,7 +318,7 @@ class StateCoordinatorScreenPayloadTest {
     }
 
     @Test
-    fun screenReadFieldsExposePreviewMetadataWhenAvailable() {
+    fun screenReadFieldsExposeExplicitPreviewPathWhenAvailable() {
         val payload = GhosthandApiPayloads.screenReadFields(
             ScreenReadPayload(
                 packageName = "com.example",
@@ -352,23 +353,22 @@ class StateCoordinatorScreenPayloadTest {
                 usedOcrFallback = false,
                 visualAvailable = true,
                 previewAvailable = true,
-                previewToken = "preview:snap",
+                previewPath = "/screenshot?width=240&height=240",
                 previewWidth = 240,
                 previewHeight = 240,
-                previewImage = "data:image/png;base64,thumb",
                 retryHint = null
             )
         )
 
         assertEquals(true, payload["previewAvailable"])
-        assertEquals("preview:snap", payload["previewToken"])
+        assertEquals("/screenshot?width=240&height=240", payload["previewPath"])
         assertEquals(240, payload["previewWidth"])
         assertEquals(240, payload["previewHeight"])
-        assertEquals("data:image/png;base64,thumb", payload["previewImage"])
+        assertFalse(payload.containsKey("previewImage"))
     }
 
     @Test
-    fun previewMetadataSupportExposesPreviewAvailabilityInDedicatedPreviewModule() {
+    fun previewMetadataSupportExposesPreviewAvailabilityAndRouteInDedicatedPreviewModule() {
         val payload = ScreenPreviewMetadata.apply(
             payload = ScreenReadPayload(
                 packageName = "com.example",
@@ -394,14 +394,31 @@ class StateCoordinatorScreenPayloadTest {
                 usedOcrFallback = false
             ),
             screenshotUsableNow = true,
-            previewToken = "preview:snap",
             previewWidth = 240,
             previewHeight = 240
         )
 
         assertEquals(true, payload.visualAvailable)
         assertEquals(true, payload.previewAvailable)
-        assertEquals("preview:snap", payload.previewToken)
+        assertEquals("/screenshot?width=240&height=240", payload.previewPath)
+    }
+
+    @Test
+    fun screenPreviewContractUsesExplicitScreenshotPathInsteadOfInlineThumbs() {
+        val routeHandlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenRouteHandlers.kt"
+        )
+        val catalogRoutes = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalogRoutes.kt",
+            "src/main/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalogRoutes.kt"
+        )
+
+        assertFalse(routeHandlers.contains("includePreview"))
+        assertFalse(routeHandlers.contains("previewImage"))
+        assertFalse(catalogRoutes.contains("includePreview"))
+        assertTrue(catalogRoutes.contains("previewPath"))
+        assertTrue(catalogRoutes.contains("/screenshot?width={previewWidth}&height={previewHeight}"))
     }
 
     @Test
