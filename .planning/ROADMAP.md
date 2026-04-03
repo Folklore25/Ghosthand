@@ -19,7 +19,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [x] **Phase 24.1: Maintainability Convergence Review Fix Pass** - Finish the failed 1.3.1 maintainability convergence work by materially thinning `LocalApiServer` and `StateCoordinator`, enforcing real layer ownership, introducing real package/domain structure, converging test ownership, and strengthening the non-root to future-root seam without adding features. (completed 2026-04-03)
 - [ ] **Phase 24.2: Maintainability Convergence Fix 02** - Finish the still-unresolved 1.3.1 convergence work by thinning `StateCoordinator` further, breaking up the new large handler/payload monoliths, and establishing canonical ownership of shared state-legibility concepts without adding features.
 - [ ] **Phase 24.3: Final StateCoordinator Thinning For Maintainability Convergence** - Resolve the last strict-review blocker by turning `StateCoordinator` into a true orchestration shell while preserving the already-passing LocalApiServer/package/test/canonical-ownership gains.
-- [ ] **Phase 24.4: 1.3.1 Clean Closeout** - Finish the 1.3.x line cleanly by making preview actually usable, reducing hint/field noise, cleaning transitional code, and aligning the final runtime/catalog contract without adding features.
+- [x] **Phase 24.4: 1.3.1 Clean Closeout** - Finish the 1.3.x line cleanly by making preview actually usable, reducing hint/field noise, cleaning transitional code, and aligning the final runtime/catalog contract without adding features. (completed 2026-04-03)
 
 ## Phase Details
 
@@ -194,4 +194,4 @@ Plans:
 - [x] 24.4-01: Preview mechanism cleanup and explicit retrieval-path alignment
 - [x] 24.4-02: Field and hint convergence with noise reduction
 - [x] 24.4-03: Project-structure and code cleanup for the 1.3.x line
-- [ ] 24.4-04: Final contract/catalog/docs alignment and closeout verification
+- [x] 24.4-04: Final contract/catalog/docs alignment and closeout verification

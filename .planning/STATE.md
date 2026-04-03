@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-04-03T19:28:12.259Z"
+status: verifying
+last_updated: "2026-04-03T19:36:13.088Z"
 progress:
   total_phases: 9
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 40
-  completed_plans: 31
+  completed_plans: 32
 ---
 
 # STATE.md — Ghosthand Project
@@ -27,7 +27,7 @@ Plan: 4 of 4
 - **Phase:** 24.4
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Ready to execute
+- **Status:** Phase complete — ready for verification
 
 ## Progress
 
@@ -68,6 +68,9 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 - [Phase 24.4]: The /screen fallback contract now emits only suggestedSource and fallbackReason when a recommendation exists.
 - [Phase 24.4]: Runtime owners now import their direct payload family instead of depending on GhosthandApiPayloads at runtime.
 - [Phase 24.4]: Screen fallback payload helpers no longer carry the dead includeRetryHint closeout parameter.
+- [Phase 24.4]: Publish /commands from a catalog-owned serializer so runtime and tests share one closeout surface.
+- [Phase 24.4]: Keep explicit interaction defaults only where they communicate action semantics; drop null, empty, and not-applicable command metadata elsewhere.
+- [Phase 24.4]: Because docs/API.md is absent locally, finalize closeout contract alignment in the runtime/catalog only instead of creating new docs.
 
 ## Blockers / Concerns
 
@@ -77,8 +80,8 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:28:12.257Z
-Next action: execute Phase 24.4 plan 04 for final closeout alignment.
+Last session: 2026-04-03T19:35:58.806Z
+Next action: verify Phase 24.4 clean closeout completion and prepare the next milestone step.
 
 ## Performance Metrics
 
@@ -93,3 +96,4 @@ Next action: execute Phase 24.4 plan 04 for final closeout alignment.
 | 24.4 | 01 | 9 min | 1 | 14 |
 | 24.4 | 02 | 3 min | 1 | 6 |
 | 24.4 | 03 | 3 min | 1 | 13 |
+| 24.4 | 04 | 1 min | 2 | 3 |
