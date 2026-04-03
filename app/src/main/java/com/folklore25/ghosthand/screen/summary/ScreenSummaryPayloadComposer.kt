@@ -8,16 +8,17 @@ package com.folklore25.ghosthand.screen.summary
 
 import com.folklore25.ghosthand.screen.read.ScreenReadPayloadFields
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
+import com.folklore25.ghosthand.screen.read.ScreenStateLegibilityProjector
 
 object ScreenSummaryPayloadComposer {
     fun summaryFields(payload: ScreenReadPayload): Map<String, Any?> {
+        val legibility = ScreenStateLegibilityProjector.fromPayload(payload)
         return linkedMapOf<String, Any?>().apply {
             putAll(ScreenReadPayloadFields.surfaceContextFields(payload))
-            putAll(ScreenReadPayloadFields.surfaceObservationFields(payload))
+            putAll(ScreenReadPayloadFields.surfaceObservationFields(payload, legibility))
             putAll(ScreenReadPayloadFields.surfaceFallbackFields(payload, includeRetryHint = false))
-            putAll(ScreenReadPayloadFields.surfacePreviewFields(payload, includeImage = false))
+            putAll(ScreenReadPayloadFields.surfacePreviewFields(payload, legibility, includeImage = false))
             put("omittedSummary", payload.omittedSummary)
-            put("focusedEditablePresent", payload.elements.any { it.editable && it.focused })
         }
     }
 }

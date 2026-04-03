@@ -8,11 +8,12 @@ package com.folklore25.ghosthand.screen.read
 
 object ScreenReadPayloadFields {
     fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
+        val legibility = ScreenStateLegibilityProjector.fromPayload(payload)
         return linkedMapOf<String, Any?>().apply {
             putAll(surfaceContextFields(payload))
-            putAll(surfaceObservationFields(payload))
+            putAll(surfaceObservationFields(payload, legibility))
             putAll(surfaceFallbackFields(payload, includeRetryHint = true))
-            putAll(surfacePreviewFields(payload, includeImage = true))
+            putAll(surfacePreviewFields(payload, legibility, includeImage = true))
             putAll(
                 linkedMapOf(
                     "omittedInvalidBoundsCount" to payload.omittedInvalidBoundsCount,
@@ -54,15 +55,24 @@ object ScreenReadPayloadFields {
     }
 
     fun surfaceObservationFields(payload: ScreenReadPayload): Map<String, Any?> {
+        val legibility = ScreenStateLegibilityProjector.fromPayload(payload)
+        return surfaceObservationFields(payload, legibility)
+    }
+
+    fun surfaceObservationFields(
+        payload: ScreenReadPayload,
+        legibility: ScreenStateLegibility
+    ): Map<String, Any?> {
         return linkedMapOf(
             "partialOutput" to payload.partialOutput,
             "candidateNodeCount" to payload.candidateNodeCount,
             "returnedElementCount" to payload.returnedElementCount,
             "warnings" to payload.warnings,
             "source" to payload.source,
-            "renderMode" to payload.renderMode(),
-            "surfaceReadability" to payload.surfaceReadability(),
-            "visualAvailable" to payload.visualAvailable,
+            "focusedEditablePresent" to legibility.focusedEditablePresent,
+            "renderMode" to legibility.renderMode.wireValue,
+            "surfaceReadability" to legibility.surfaceReadability.wireValue,
+            "visualAvailable" to legibility.visualAvailable,
             "accessibilityElementCount" to payload.accessibilityElementCount,
             "ocrElementCount" to payload.ocrElementCount,
             "usedOcrFallback" to payload.usedOcrFallback
@@ -91,10 +101,11 @@ object ScreenReadPayloadFields {
 
     fun surfacePreviewFields(
         payload: ScreenReadPayload,
+        legibility: ScreenStateLegibility = ScreenStateLegibilityProjector.fromPayload(payload),
         includeImage: Boolean
     ): Map<String, Any?> {
         return linkedMapOf<String, Any?>(
-            "previewAvailable" to payload.previewAvailable,
+            "previewAvailable" to legibility.previewAvailable,
             "previewToken" to payload.previewToken,
             "previewWidth" to payload.previewWidth,
             "previewHeight" to payload.previewHeight

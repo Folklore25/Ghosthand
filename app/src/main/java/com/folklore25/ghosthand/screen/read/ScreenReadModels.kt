@@ -68,6 +68,7 @@ data class ScreenReadPayload(
     val accessibilityElementCount: Int,
     val ocrElementCount: Int,
     val usedOcrFallback: Boolean,
+    val focusedEditablePresent: Boolean? = null,
     val visualAvailable: Boolean? = null,
     val previewAvailable: Boolean? = null,
     val previewToken: String? = null,
@@ -77,30 +78,15 @@ data class ScreenReadPayload(
     val retryHint: ScreenReadRetryHint? = null
 ) {
     fun accessibilityTreeIsOperationallyInsufficient(): Boolean {
-        if (returnedElementCount == 0) {
-            return true
-        }
-        if (!partialOutput) {
-            return false
-        }
-        if (returnedElementCount <= 1) {
-            return true
-        }
-        val omittedRatio = if (candidateNodeCount <= 0) {
-            0.0
-        } else {
-            omittedNodeCount.toDouble() / candidateNodeCount.toDouble()
-        }
-        return candidateNodeCount >= 20 && omittedNodeCount >= 20 && omittedRatio >= 0.40
+        return deriveAccessibilityRetryHint(
+            candidateNodeCount = candidateNodeCount,
+            returnedElementCount = returnedElementCount,
+            omittedNodeCount = omittedNodeCount
+        )?.reason == "accessibility_operationally_insufficient"
     }
 
     fun renderModeKind(): GhosthandRenderMode {
-        return when {
-            source == ScreenReadMode.HYBRID.wireValue -> GhosthandRenderMode.HYBRID
-            source == ScreenReadMode.OCR.wireValue -> GhosthandRenderMode.OCR
-            retryHint != null -> GhosthandRenderMode.LIMITED_ACCESSIBILITY
-            else -> GhosthandRenderMode.ACCESSIBILITY
-        }
+        return ScreenStateLegibilityProjector.fromPayload(this).renderMode
     }
 
     fun renderMode(): String {
@@ -108,11 +94,7 @@ data class ScreenReadPayload(
     }
 
     fun surfaceReadabilityKind(): GhosthandSurfaceReadability {
-        return when {
-            retryHint?.source == ScreenReadMode.OCR.wireValue -> GhosthandSurfaceReadability.POOR
-            retryHint != null || partialOutput -> GhosthandSurfaceReadability.LIMITED
-            else -> GhosthandSurfaceReadability.GOOD
-        }
+        return ScreenStateLegibilityProjector.fromPayload(this).surfaceReadability
     }
 
     fun surfaceReadability(): String {
