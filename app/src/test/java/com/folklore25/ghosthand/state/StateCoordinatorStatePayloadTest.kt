@@ -127,16 +127,15 @@ class StateCoordinatorStatePayloadTest {
 
     @Test
     fun permissionsPayloadSeparatesGovernedCapabilitiesFromSystemPermissionDiagnostics() {
-        val coordinator = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
-            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+        val stateReadCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/read/StateReadCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/read/StateReadCoordinator.kt"
         )
 
-        assertTrue(coordinator.contains("private val statePayloadComposer = StatePayloadComposer"))
-        assertTrue(coordinator.contains("statePayloadComposer.createStatePayload("))
-        assertFalse(coordinator.contains("fun permissionsPayload("))
-        assertFalse(coordinator.contains("fun systemPermissionsPayload(permissionSnapshot: PermissionSnapshot): Map<String, Any?>"))
-        assertFalse(coordinator.contains(".put(\"permissions\", JSONObject()\n                .put(\"implemented\", true)\n                .put(\"usageAccess\""))
+        assertTrue(stateReadCoordinator.contains("StatePayloadComposer.createStatePayload("))
+        assertFalse(stateReadCoordinator.contains("fun permissionsPayload("))
+        assertFalse(stateReadCoordinator.contains("fun systemPermissionsPayload(permissionSnapshot: PermissionSnapshot): Map<String, Any?>"))
+        assertFalse(stateReadCoordinator.contains(".put(\"permissions\", JSONObject()\n                .put(\"implemented\", true)\n                .put(\"usageAccess\""))
     }
 
     @Test
@@ -295,12 +294,18 @@ class StateCoordinatorStatePayloadTest {
             "app/src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandScreenshotAccess.kt",
             "src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandScreenshotAccess.kt"
         )
+        val previewCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCoordinator.kt"
+        )
 
         assertTrue(coordinator.contains("private val inputOperationPerformer = InputOperationPerformer"))
         assertTrue(coordinator.contains("private val screenshotAccess: GhosthandScreenshotAccess = AccessibilityScreenshotAccess"))
         assertTrue(coordinator.contains("inputOperationPerformer.perform("))
-        assertTrue(coordinator.contains("screenshotAccess.captureBestAvailable("))
+        assertTrue(coordinator.contains("private val screenPreviewCoordinator = ScreenPreviewCoordinator("))
+        assertTrue(coordinator.contains("screenPreviewCoordinator.captureBestScreenshot("))
         assertTrue(inputPerformer.contains("fun perform("))
         assertTrue(screenshotAccess.contains("fun captureBestAvailable("))
+        assertTrue(previewCoordinator.contains("fun captureBestScreenshot("))
     }
 }

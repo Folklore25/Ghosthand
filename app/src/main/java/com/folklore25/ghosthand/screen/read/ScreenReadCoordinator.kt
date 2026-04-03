@@ -15,7 +15,7 @@ import com.folklore25.ghosthand.preview.ScreenPreviewCaptureSupport
 
 internal class ScreenReadCoordinator(
     private val capabilityAccessSnapshotProvider: () -> CapabilityAccessSnapshot,
-    private val captureBestScreenshot: (Int, Int) -> ScreenshotDispatchResult,
+    private val captureScreenshot: (Int, Int) -> ScreenshotDispatchResult,
     private val foregroundSnapshotProvider: () -> ForegroundAppSnapshot,
     private val screenOcrProvider: ScreenOcrProvider,
     private val previewWidth: Int,
@@ -44,7 +44,7 @@ internal class ScreenReadCoordinator(
     }
 
     fun createOcrPayload(): ScreenReadPayload {
-        val screenshotResult = captureBestScreenshot(0, 0)
+        val screenshotResult = captureScreenshot(0, 0)
         val foregroundSnapshot = foregroundSnapshotProvider()
         val ocrResult = screenOcrProvider.read(screenshotResult)
 

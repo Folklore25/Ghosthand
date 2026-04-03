@@ -18,10 +18,13 @@ import com.folklore25.ghosthand.interaction.execution.InputOperationPerformer
 import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.GhosthandInputRequest
 import com.folklore25.ghosthand.payload.PostActionState
+import com.folklore25.ghosthand.preview.ScreenPreviewCoordinator
 import com.folklore25.ghosthand.screen.find.FocusedNodeResult
-import com.folklore25.ghosthand.screen.find.ScreenFindPayloads
+import com.folklore25.ghosthand.screen.find.ScreenFindCoordinator
 import com.folklore25.ghosthand.screen.read.ScreenReadCoordinator
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
+import com.folklore25.ghosthand.screen.read.ScreenSnapshotCoordinator
+import com.folklore25.ghosthand.state.read.StateReadCoordinator
 import com.folklore25.ghosthand.state.health.StateHealthPayloads
 import com.folklore25.ghosthand.wait.UiStateSnapshot
 import com.folklore25.ghosthand.wait.GhosthandWaitLogic
@@ -54,15 +57,32 @@ class StateCoordinator(
         capabilityPolicyStore = capabilityPolicyStore
     )
     private val stateHealthPayloads = StateHealthPayloads
-    private val screenFindPayloads = ScreenFindPayloads
     private val inputOperationPerformer = InputOperationPerformer
     private val screenshotAccess: GhosthandScreenshotAccess = AccessibilityScreenshotAccess
     private val notificationDispatcher = NotificationDispatcher(appContext)
     private val screenOcrProvider = ScreenOcrProvider()
-    private val statePayloadComposer = StatePayloadComposer
+    private val screenPreviewCoordinator = ScreenPreviewCoordinator(
+        screenshotAccess = screenshotAccess,
+        mediaProjectionProvider = mediaProjectionProvider
+    )
+    private val screenSnapshotCoordinator = ScreenSnapshotCoordinator(accessibilityTreeSnapshotProvider)
+    private val screenFindCoordinator = ScreenFindCoordinator(
+        treeSnapshotProvider = accessibilityTreeSnapshotProvider,
+        nodeFinder = accessibilityNodeFinder
+    )
+    private val stateReadCoordinator = StateReadCoordinator(
+        runtimeStateProvider = runtimeStateProvider,
+        treeSnapshotProvider = screenSnapshotCoordinator::getTreeSnapshotResult,
+        homeDiagnosticsProvider = homeDiagnosticsProvider,
+        deviceSnapshotProvider = deviceSnapshotProvider,
+        foregroundAppProvider = foregroundAppProvider,
+        permissionSnapshotProvider = permissionSnapshotProvider,
+        accessibilityStatusProvider = accessibilityStatusProvider,
+        capabilityAccessResolver = capabilityAccessResolver
+    )
     private val screenReadCoordinator = ScreenReadCoordinator(
-        capabilityAccessSnapshotProvider = ::capabilityAccessSnapshot,
-        captureBestScreenshot = ::captureBestScreenshot,
+        capabilityAccessSnapshotProvider = stateReadCoordinator::capabilityAccessSnapshot,
+        captureScreenshot = screenPreviewCoordinator::captureBestScreenshot,
         foregroundSnapshotProvider = foregroundAppProvider::snapshot,
         screenOcrProvider = screenOcrProvider,
         previewWidth = SCREEN_PREVIEW_WIDTH,
@@ -81,58 +101,27 @@ class StateCoordinator(
     }
 
     fun createStatePayload(): JSONObject {
-        val runtimeState = runtimeStateProvider()
-        val diagnosticsSnapshot = homeDiagnosticsProvider.snapshot()
-        val deviceSnapshot = deviceSnapshotProvider.snapshot()
-        val foregroundSnapshot = foregroundAppProvider.snapshot()
-        val permissionSnapshot = permissionSnapshotProvider.snapshot()
-        val accessibilitySnapshot = capabilityAccessResolver.accessibilityStatusSnapshot()
-        val capabilityAccess = capabilityAccessResolver.capabilityAccessSnapshot(accessibilitySnapshot)
-        val runtimeUptimeMs = runtimeState.appStartedAtElapsedRealtimeMs?.let {
-            (SystemClock.elapsedRealtime() - it).coerceAtLeast(0L)
-        }
-
-        return statePayloadComposer.createStatePayload(
-            runtimeState = runtimeState,
-            runtimeReady = stateHealthPayloads.runtimeReady(runtimeState),
-            runtimeUptimeMs = runtimeUptimeMs,
-            diagnosticsSnapshot = diagnosticsSnapshot,
-            deviceSnapshot = deviceSnapshot,
-            foregroundSnapshot = foregroundSnapshot,
-            accessibilitySnapshot = accessibilitySnapshot,
-            capabilityAccess = capabilityAccess,
-            permissionSnapshot = permissionSnapshot
-        )
+        return stateReadCoordinator.createStatePayload()
     }
 
     fun capabilityAccessSnapshot(): CapabilityAccessSnapshot {
-        return capabilityAccessResolver.capabilityAccessSnapshot()
+        return stateReadCoordinator.capabilityAccessSnapshot()
     }
 
     fun createForegroundPayload(): JSONObject {
-        return stateHealthPayloads.createForegroundPayload(
-            foregroundSnapshot = foregroundAppProvider.snapshot(),
-            toJson = foregroundAppProvider::toJson
-        )
+        return stateReadCoordinator.createForegroundPayload()
     }
 
     fun createDevicePayload(): JSONObject {
-        return stateHealthPayloads.createDevicePayload(
-            deviceSnapshot = deviceSnapshotProvider.snapshot(),
-            foregroundSnapshot = foregroundAppProvider.snapshot()
-        )
+        return stateReadCoordinator.createDevicePayload()
     }
 
     fun getTreeSnapshotResult(): AccessibilityTreeSnapshotResult {
-        return accessibilityTreeSnapshotProvider.snapshot()
+        return screenSnapshotCoordinator.getTreeSnapshotResult()
     }
 
     fun createTreePayload(snapshot: AccessibilityTreeSnapshot, mode: String): JSONObject {
-        return if (mode == "raw") {
-            accessibilityTreeSnapshotProvider.toRawJson(snapshot)
-        } else {
-            accessibilityTreeSnapshotProvider.toJson(snapshot)
-        }
+        return screenSnapshotCoordinator.createTreePayload(snapshot, mode)
     }
 
     fun createScreenPayload(
@@ -142,7 +131,7 @@ class StateCoordinator(
         packageFilter: String?,
         clickableOnly: Boolean
     ): JSONObject {
-        return accessibilityTreeSnapshotProvider.toScreenJson(
+        return screenSnapshotCoordinator.createScreenPayload(
             snapshot = snapshot,
             editableOnly = editableOnly,
             scrollableOnly = scrollableOnly,
@@ -188,13 +177,12 @@ class StateCoordinator(
         clickableOnly: Boolean = false,
         index: Int = 0
     ): JSONObject {
-        return screenFindPayloads.findPayload(
+        return screenFindCoordinator.createFindPayload(
             snapshot = snapshot,
             strategy = strategy,
             query = query,
             clickableOnly = clickableOnly,
-            index = index,
-            nodeFinder = accessibilityNodeFinder
+            index = index
         )
     }
 
@@ -205,13 +193,12 @@ class StateCoordinator(
         clickableOnly: Boolean = false,
         index: Int = 0
     ): FindNodeResult {
-        return screenFindPayloads.findResult(
+        return screenFindCoordinator.findResult(
             snapshot = snapshot,
             strategy = strategy,
             query = query,
             clickableOnly = clickableOnly,
-            index = index,
-            nodeFinder = accessibilityNodeFinder
+            index = index
         )
     }
 
@@ -238,25 +225,15 @@ class StateCoordinator(
     }
 
     fun createInfoPayload(): JSONObject {
-        return stateHealthPayloads.createInfoPayload(
-            treeResult = accessibilityTreeSnapshotProvider.snapshot(),
-            deviceSnapshot = deviceSnapshotProvider.snapshot(),
-            foregroundSnapshot = foregroundAppProvider.snapshot()
-        )
+        return stateReadCoordinator.createInfoPayload()
     }
 
     fun getFocusedNodeResult(): FocusedNodeResult {
-        return screenFindPayloads.focusedNodeResult(
-            treeResult = accessibilityTreeSnapshotProvider.snapshot(),
-            nodeFinder = accessibilityNodeFinder
-        )
+        return screenFindCoordinator.getFocusedNodeResult()
     }
 
     fun createFocusedNodePayload(result: FocusedNodeResult): JSONObject {
-        return screenFindPayloads.focusedNodePayload(
-            result = result,
-            nodeToJson = accessibilityTreeSnapshotProvider::toJson
-        )
+        return screenFindCoordinator.createFocusedNodePayload(result)
     }
 
     fun clickNode(nodeId: String): ClickAttemptResult {
@@ -443,17 +420,13 @@ class StateCoordinator(
     }
 
     fun setMediaProjection(projection: android.media.projection.MediaProjection) {
-        mediaProjectionProvider.setProjection(projection)
+        screenPreviewCoordinator.setMediaProjection(projection)
     }
 
-    fun hasMediaProjection(): Boolean = mediaProjectionProvider.hasProjection()
+    fun hasMediaProjection(): Boolean = screenPreviewCoordinator.hasMediaProjection()
 
     fun captureBestScreenshot(width: Int, height: Int): ScreenshotDispatchResult {
-        return screenshotAccess.captureBestAvailable(
-            width = width,
-            height = height,
-            captureProjection = mediaProjectionProvider::captureScreenshot
-        )
+        return screenPreviewCoordinator.captureBestScreenshot(width, height)
     }
 
     fun postNotification(title: String, text: String): NotificationPostResult {
