@@ -6,6 +6,7 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.screen.read.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -7,12 +7,10 @@
 package com.folklore25.ghosthand.server
 
 import android.util.Log
-import com.folklore25.ghosthand.GhosthandApiPayloads
-import com.folklore25.ghosthand.GhosthandDisclosure
 import com.folklore25.ghosthand.GhosthandHttp
-import com.folklore25.ghosthand.LocalApiServer
-import com.folklore25.ghosthand.LocalApiServerRequestException
-import com.folklore25.ghosthand.RoutePolicy
+import com.folklore25.ghosthand.payload.GhosthandApiPayloads
+import com.folklore25.ghosthand.payload.GhosthandDisclosure
+import com.folklore25.ghosthand.routes.RoutePolicy
 import org.json.JSONObject
 import java.net.ServerSocket
 import java.net.Socket

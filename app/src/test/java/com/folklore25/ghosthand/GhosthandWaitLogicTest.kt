@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.wait.GhosthandWaitLogic
+import com.folklore25.ghosthand.wait.UiStateSnapshot
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

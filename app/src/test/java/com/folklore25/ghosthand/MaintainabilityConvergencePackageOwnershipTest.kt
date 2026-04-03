@@ -13,25 +13,32 @@ class MaintainabilityConvergencePackageOwnershipTest {
     @Test
     fun runtimeOwnershipLivesInDomainPackages() {
         val server = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/server/LocalApiServer.kt"
+            "app/src/main/java/com/folklore25/ghosthand/server/LocalApiServer.kt",
+            "src/main/java/com/folklore25/ghosthand/server/LocalApiServer.kt"
         )
         val stateCoordinator = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
         val payloads = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandApiPayloads.kt"
+            "app/src/main/java/com/folklore25/ghosthand/payload/GhosthandApiPayloads.kt",
+            "src/main/java/com/folklore25/ghosthand/payload/GhosthandApiPayloads.kt"
         )
         val routePolicies = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/routes/GhosthandRoutePolicies.kt"
+            "app/src/main/java/com/folklore25/ghosthand/routes/GhosthandRoutePolicies.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/GhosthandRoutePolicies.kt"
         )
         val commandCatalog = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalog.kt"
+            "app/src/main/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalog.kt",
+            "src/main/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalog.kt"
         )
         val waitLogic = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitLogic.kt"
+            "app/src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitLogic.kt",
+            "src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitLogic.kt"
         )
         val interactionPlane = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandInteractionPlane.kt"
+            "app/src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandInteractionPlane.kt",
+            "src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandInteractionPlane.kt"
         )
 
         assertTrue(server.contains("package com.folklore25.ghosthand.server"))

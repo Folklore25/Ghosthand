@@ -6,15 +6,11 @@
 
 package com.folklore25.ghosthand.screen.read
 
-import com.folklore25.ghosthand.ForegroundAppSnapshot
-import com.folklore25.ghosthand.GhosthandApiPayloads
-import com.folklore25.ghosthand.ScreenOcrResult
-import com.folklore25.ghosthand.ScreenReadMode
-import com.folklore25.ghosthand.ScreenReadPayload
-import com.folklore25.ghosthand.ScreenshotDispatchResult
-import com.folklore25.ghosthand.preview.ScreenPreviewMetadata
 import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-
+import com.folklore25.ghosthand.ForegroundAppSnapshot
+import com.folklore25.ghosthand.ScreenshotDispatchResult
+import com.folklore25.ghosthand.payload.GhosthandApiPayloads
+import com.folklore25.ghosthand.preview.ScreenPreviewMetadata
 object ScreenReadPayloadComposer {
     fun createAccessibilityPayload(
         snapshot: AccessibilityTreeSnapshot,

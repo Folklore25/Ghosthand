@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.catalog.*
+import com.folklore25.ghosthand.routes.GhosthandRoutePolicies
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

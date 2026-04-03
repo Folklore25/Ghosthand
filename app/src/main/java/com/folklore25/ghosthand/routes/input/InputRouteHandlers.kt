@@ -7,12 +7,10 @@
 package com.folklore25.ghosthand.routes.input
 
 import android.util.Log
-import com.folklore25.ghosthand.GhosthandApiPayloads
 import com.folklore25.ghosthand.InputKeyFailureReason
-import com.folklore25.ghosthand.InputOperationResult
 import com.folklore25.ghosthand.SetTextFailureReason
-import com.folklore25.ghosthand.StateCoordinator
 import com.folklore25.ghosthand.TypeFailureReason
+import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.routes.action.putPostActionState
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
@@ -21,6 +19,8 @@ import com.folklore25.ghosthand.routes.optIntOrNull
 import com.folklore25.ghosthand.routes.parseJsonBodyOrNull
 import com.folklore25.ghosthand.routes.successEnvelope
 import com.folklore25.ghosthand.server.LocalApiServerRoute
+import com.folklore25.ghosthand.state.InputOperationResult
+import com.folklore25.ghosthand.state.StateCoordinator
 import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONObject
 

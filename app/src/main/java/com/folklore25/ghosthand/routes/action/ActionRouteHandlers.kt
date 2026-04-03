@@ -14,18 +14,15 @@ import com.folklore25.ghosthand.ClickAttemptResult
 import com.folklore25.ghosthand.ClickFailureReason
 import com.folklore25.ghosthand.GesturePoint
 import com.folklore25.ghosthand.GestureStroke
-import com.folklore25.ghosthand.GhosthandApiPayloads
-import com.folklore25.ghosthand.GhosthandDisclosure
-import com.folklore25.ghosthand.PostActionState
-import com.folklore25.ghosthand.ScrollBatchResult
+import com.folklore25.ghosthand.payload.GhosthandApiPayloads
+import com.folklore25.ghosthand.payload.GhosthandDisclosure
+import com.folklore25.ghosthand.payload.PostActionState
 import com.folklore25.ghosthand.ScrollFailureReason
 import com.folklore25.ghosthand.SelectorQuery
 import com.folklore25.ghosthand.SetTextFailureReason
-import com.folklore25.ghosthand.StateCoordinator
 import com.folklore25.ghosthand.SwipeFailureReason
 import com.folklore25.ghosthand.TapFailureReason
 import com.folklore25.ghosthand.TypeFailureReason
-import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -35,6 +32,9 @@ import com.folklore25.ghosthand.routes.parseJsonBodyOrNull
 import com.folklore25.ghosthand.routes.parseSelector
 import com.folklore25.ghosthand.routes.successEnvelope
 import com.folklore25.ghosthand.server.LocalApiServerRoute
+import com.folklore25.ghosthand.state.ScrollBatchResult
+import com.folklore25.ghosthand.state.StateCoordinator
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONObject
 
 internal class ActionRouteHandlers(

@@ -6,6 +6,7 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.server.CapabilityRoutePolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

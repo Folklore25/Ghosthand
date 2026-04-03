@@ -8,9 +8,9 @@ package com.folklore25.ghosthand.state.summary
 
 import com.folklore25.ghosthand.AccessibilityTreeSnapshot
 import com.folklore25.ghosthand.ActionEffectObservation
-import com.folklore25.ghosthand.PostActionState
-import com.folklore25.ghosthand.ScreenReadMode
-import com.folklore25.ghosthand.ScreenReadRetryHint
+import com.folklore25.ghosthand.payload.PostActionState
+import com.folklore25.ghosthand.screen.read.ScreenReadMode
+import com.folklore25.ghosthand.screen.read.ScreenReadRetryHint
 
 object PostActionStateComposer {
     fun fromObservedEffect(

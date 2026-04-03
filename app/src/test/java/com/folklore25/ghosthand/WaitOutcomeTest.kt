@@ -6,6 +6,7 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.wait.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

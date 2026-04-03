@@ -6,8 +6,7 @@
 
 package com.folklore25.ghosthand.routes.system
 
-import com.folklore25.ghosthand.GhosthandCommandCatalog
-import com.folklore25.ghosthand.StateCoordinator
+import com.folklore25.ghosthand.catalog.GhosthandCommandCatalog
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -16,6 +15,7 @@ import com.folklore25.ghosthand.routes.parseJsonBodyOrNull
 import com.folklore25.ghosthand.routes.successEnvelope
 import com.folklore25.ghosthand.routes.toJsonValue
 import com.folklore25.ghosthand.server.LocalApiServerRoute
+import com.folklore25.ghosthand.state.StateCoordinator
 import org.json.JSONArray
 import org.json.JSONObject
 

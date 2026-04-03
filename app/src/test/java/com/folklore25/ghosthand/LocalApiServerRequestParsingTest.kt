@@ -6,12 +6,14 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.payload.*
 import com.folklore25.ghosthand.routes.read.screenPreviewThumbRequested
 import com.folklore25.ghosthand.routes.read.screenSummaryOnlyRequested
 import com.folklore25.ghosthand.server.LocalApiServerProtocol
 import com.folklore25.ghosthand.server.LocalApiServerResources
 import com.folklore25.ghosthand.server.LocalApiServerRoute
 import com.folklore25.ghosthand.server.LocalApiServerRouteRegistry
+import com.folklore25.ghosthand.server.LocalApiServerRequestException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

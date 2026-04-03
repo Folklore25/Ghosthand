@@ -6,8 +6,8 @@
 
 package com.folklore25.ghosthand.screen.summary
 
-import com.folklore25.ghosthand.ScreenReadPayload
 import com.folklore25.ghosthand.screen.read.ScreenReadPayloadFields
+import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 
 object ScreenSummaryPayloadComposer {
     fun summaryFields(payload: ScreenReadPayload): Map<String, Any?> {

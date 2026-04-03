@@ -7,8 +7,7 @@
 package com.folklore25.ghosthand.routes.wait
 
 import com.folklore25.ghosthand.FlatAccessibilityNode
-import com.folklore25.ghosthand.GhosthandDisclosure
-import com.folklore25.ghosthand.StateCoordinator
+import com.folklore25.ghosthand.payload.GhosthandDisclosure
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -17,6 +16,7 @@ import com.folklore25.ghosthand.routes.parseJsonBodyOrNull
 import com.folklore25.ghosthand.routes.parseSelector
 import com.folklore25.ghosthand.routes.successEnvelope
 import com.folklore25.ghosthand.server.LocalApiServerRoute
+import com.folklore25.ghosthand.state.StateCoordinator
 import org.json.JSONObject
 
 internal class WaitRouteHandlers(

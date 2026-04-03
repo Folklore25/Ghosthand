@@ -6,7 +6,7 @@
 
 package com.folklore25.ghosthand.preview
 
-import com.folklore25.ghosthand.ScreenReadPayload
+import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 
 object ScreenPreviewMetadata {
     fun apply(

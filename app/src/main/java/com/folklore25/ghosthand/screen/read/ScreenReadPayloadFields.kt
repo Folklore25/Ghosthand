@@ -6,8 +6,6 @@
 
 package com.folklore25.ghosthand.screen.read
 
-import com.folklore25.ghosthand.ScreenReadPayload
-
 object ScreenReadPayloadFields {
     fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
         return linkedMapOf<String, Any?>().apply {
