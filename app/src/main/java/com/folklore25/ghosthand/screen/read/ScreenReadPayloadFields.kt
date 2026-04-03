@@ -13,7 +13,7 @@ object ScreenReadPayloadFields {
             putAll(surfaceContextFields(payload))
             putAll(surfaceObservationFields(payload, legibility))
             putAll(surfaceFallbackFields(payload, includeRetryHint = true))
-            putAll(surfacePreviewFields(payload, legibility, includeImage = true))
+            putAll(surfacePreviewFields(payload, legibility))
             putAll(
                 linkedMapOf(
                     "omittedInvalidBoundsCount" to payload.omittedInvalidBoundsCount,
@@ -101,18 +101,13 @@ object ScreenReadPayloadFields {
 
     fun surfacePreviewFields(
         payload: ScreenReadPayload,
-        legibility: ScreenStateLegibility = ScreenStateLegibilityProjector.fromPayload(payload),
-        includeImage: Boolean
+        legibility: ScreenStateLegibility = ScreenStateLegibilityProjector.fromPayload(payload)
     ): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
+        return linkedMapOf(
             "previewAvailable" to legibility.previewAvailable,
-            "previewToken" to payload.previewToken,
+            "previewPath" to payload.previewPath,
             "previewWidth" to payload.previewWidth,
             "previewHeight" to payload.previewHeight
-        ).apply {
-            if (includeImage) {
-                put("previewImage", payload.previewImage)
-            }
-        }
+        )
     }
 }

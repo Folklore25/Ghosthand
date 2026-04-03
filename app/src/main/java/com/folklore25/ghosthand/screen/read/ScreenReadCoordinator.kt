@@ -37,7 +37,6 @@ internal class ScreenReadCoordinator(
                 clickableOnly = clickableOnly
             ),
             screenshotUsableNow = capabilityAccessSnapshotProvider().screenshot.effective.usableNow,
-            previewToken = ScreenPreviewCaptureSupport.previewTokenForSnapshot(snapshot),
             previewWidth = previewWidth,
             previewHeight = previewHeight
         )
@@ -54,8 +53,6 @@ internal class ScreenReadCoordinator(
             ocrResult = ocrResult,
             previewWidth = previewWidth,
             previewHeight = previewHeight
-        ).copy(
-            previewToken = ScreenPreviewCaptureSupport.previewTokenForForeground(foregroundSnapshot)
         )
     }
 

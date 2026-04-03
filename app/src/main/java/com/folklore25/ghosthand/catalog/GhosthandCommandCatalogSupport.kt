@@ -28,8 +28,8 @@ internal object GhosthandSelectorCatalog {
         "omittedInvalidBoundsCount", "omittedLowSignalCount", "omittedNodeCount",
         "omittedCategories", "omittedSummary", "invalidBoundsPresent", "lowSignalPresent",
         "source", "renderMode", "surfaceReadability", "visualAvailable", "previewAvailable",
-        "previewToken", "previewWidth", "previewHeight", "accessibilityElementCount",
+        "previewPath", "previewWidth", "previewHeight", "accessibilityElementCount",
         "ocrElementCount", "usedOcrFallback", "focusedEditablePresent", "suggestedFallback",
-        "suggestedSource", "fallbackReason", "retryHint", "previewImage", "elements", "disclosure"
+        "suggestedSource", "fallbackReason", "retryHint", "elements", "disclosure"
     )
 }

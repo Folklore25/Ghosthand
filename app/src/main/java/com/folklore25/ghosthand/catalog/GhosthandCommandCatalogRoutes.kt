@@ -32,7 +32,7 @@ internal object GhosthandReadCommandCatalog {
             category = "read",
             method = "GET",
             path = "/screen",
-            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. `summaryOnly=true` returns a compact orientation summary instead of the full element payload. `includePreview=thumb` adds an explicit lightweight preview thumbnail. Responses publish explicit render mode, surface readability, visual availability, preview availability, and bounded retry hint / fallback signals without auto-switching observation modes. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
+            description = "Current actionable surface snapshot. `source=accessibility` keeps the default structured tree-first read, while explicit `ocr` or bounded `hybrid` modes expose OCR-derived elements with source provenance when accessibility output is operationally insufficient. `summaryOnly=true` returns a compact orientation summary instead of the full element payload. When `previewAvailable=true`, the response publishes `previewPath` as an explicit lightweight retrieval path using `/screenshot?width={previewWidth}&height={previewHeight}` instead of embedding image bytes in `/screen`. Responses publish explicit render mode, surface readability, visual availability, preview availability, and bounded retry hint / fallback signals without auto-switching observation modes. During modal transitions, accessibility availability can briefly dip, so a short wait-and-retry is often the right next move before treating the read as terminally unavailable.",
             responseFields = GhosthandSelectorCatalog.screenResponseFields,
             stateTruth = "structured_actionable_surface_snapshot",
             operatorUses = listOf("structured_actionable_surface_snapshot", "selector_planning"),
@@ -42,7 +42,6 @@ internal object GhosthandReadCommandCatalog {
             params = listOf(
                 GhosthandCommandParam("source", "string", "query", false, "Read source mode", listOf("accessibility", "ocr", "hybrid")),
                 GhosthandCommandParam("summaryOnly", "boolean", "query", false, "Return compact orientation summary instead of full elements"),
-                GhosthandCommandParam("includePreview", "string", "query", false, "Opt-in lightweight preview mode", listOf("thumb")),
                 GhosthandCommandParam("editable", "boolean", "query", false, "Filter to editable elements only"),
                 GhosthandCommandParam("scrollable", "boolean", "query", false, "Filter to scrollable elements only"),
                 GhosthandCommandParam("clickable", "boolean", "query", false, "Filter to clickable elements only"),
@@ -254,7 +253,7 @@ internal object GhosthandSensingCommandCatalog {
     val commands: List<GhosthandCommandDescriptor> = listOf(
         GhosthandCommandDescriptor(
             id = "screenshot", category = "sensing", method = "GET", path = "/screenshot",
-            description = "Return current screenshot as base64 PNG; primary visual truth for debugging and verification when structured surface output is stale, invalid, or ambiguous",
+            description = "Return current screenshot as base64 PNG; primary visual truth for debugging and verification when structured surface output is stale, invalid, or ambiguous. `/screen` preview metadata points back to this route through `previewPath`.",
             responseFields = listOf("image", "width", "height"),
             stateTruth = "visual_truth",
             operatorUses = listOf("visual_truth", "debugging", "verification")

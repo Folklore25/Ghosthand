@@ -9,7 +9,6 @@ package com.folklore25.ghosthand.routes.read
 import com.folklore25.ghosthand.TreeUnavailableReason
 import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
-import com.folklore25.ghosthand.preview.ScreenPreviewCaptureSupport
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.buildTreeUnavailableResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -25,7 +24,6 @@ internal class ReadScreenRouteHandlers(
     fun buildScreenResponse(queryParameters: Map<String, String>): String {
         val mode = ScreenReadMode.fromWireValue(queryParameters["source"]) ?: ScreenReadMode.ACCESSIBILITY
         val summaryOnly = screenSummaryOnlyRequested(queryParameters)
-        val includePreviewThumb = screenPreviewThumbRequested(queryParameters)
         val editableOnly = queryParameters["editable"] == "true"
         val scrollableOnly = queryParameters["scrollable"] == "true"
         val clickableOnly = queryParameters["clickable"] == "true"
@@ -71,27 +69,17 @@ internal class ReadScreenRouteHandlers(
             }
         }
 
-        val payloadWithPreview = if (includePreviewThumb && payload.previewAvailable == true) {
-            val preview = stateCoordinator.captureBestScreenshot(
-                StateCoordinator.SCREEN_PREVIEW_WIDTH,
-                StateCoordinator.SCREEN_PREVIEW_HEIGHT
-            )
-            ScreenPreviewCaptureSupport.withPreviewImage(payload, preview)
-        } else {
-            payload
-        }
-
         val bodyPayload = if (summaryOnly) {
-            GhosthandApiPayloads.screenSummaryPayload(payloadWithPreview)
+            GhosthandApiPayloads.screenSummaryPayload(payload)
         } else {
-            GhosthandApiPayloads.screenReadPayload(payloadWithPreview)
+            GhosthandApiPayloads.screenReadPayload(payload)
         }
 
         return buildJsonResponse(
             statusCode = 200,
             body = successEnvelope(
                 data = bodyPayload,
-                disclosure = buildScreenDisclosure(payloadWithPreview)
+                disclosure = buildScreenDisclosure(payload)
             )
         )
     }
@@ -99,10 +87,6 @@ internal class ReadScreenRouteHandlers(
 
 internal fun screenSummaryOnlyRequested(queryParameters: Map<String, String>): Boolean {
     return queryParameters["summaryOnly"] == "true"
-}
-
-internal fun screenPreviewThumbRequested(queryParameters: Map<String, String>): Boolean {
-    return queryParameters["includePreview"] == "thumb"
 }
 
 internal fun buildScreenDisclosure(payload: JSONObject): GhosthandDisclosure? {

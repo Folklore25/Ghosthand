@@ -71,10 +71,9 @@ data class ScreenReadPayload(
     val focusedEditablePresent: Boolean? = null,
     val visualAvailable: Boolean? = null,
     val previewAvailable: Boolean? = null,
-    val previewToken: String? = null,
+    val previewPath: String? = null,
     val previewWidth: Int? = null,
     val previewHeight: Int? = null,
-    val previewImage: String? = null,
     val retryHint: ScreenReadRetryHint? = null
 ) {
     fun accessibilityTreeIsOperationallyInsufficient(): Boolean {

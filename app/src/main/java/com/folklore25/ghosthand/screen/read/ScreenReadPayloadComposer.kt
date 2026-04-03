@@ -11,6 +11,7 @@ import com.folklore25.ghosthand.ForegroundAppSnapshot
 import com.folklore25.ghosthand.ScreenshotDispatchResult
 import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.preview.ScreenPreviewMetadata
+
 object ScreenReadPayloadComposer {
     fun createAccessibilityPayload(
         snapshot: AccessibilityTreeSnapshot,
@@ -31,14 +32,12 @@ object ScreenReadPayloadComposer {
     fun attachPreviewMetadata(
         payload: ScreenReadPayload,
         screenshotUsableNow: Boolean,
-        previewToken: String?,
         previewWidth: Int,
         previewHeight: Int
     ): ScreenReadPayload {
         return ScreenPreviewMetadata.apply(
             payload = payload,
             screenshotUsableNow = screenshotUsableNow,
-            previewToken = previewToken,
             previewWidth = previewWidth,
             previewHeight = previewHeight
         )
@@ -76,9 +75,11 @@ object ScreenReadPayloadComposer {
             focusedEditablePresent = null,
             visualAvailable = screenshotResult.available,
             previewAvailable = screenshotResult.available,
-            previewToken = foregroundSnapshot.packageName?.let {
-                "preview:$it:${foregroundSnapshot.activity ?: "unknown"}"
-            },
+            previewPath = ScreenPreviewMetadata.previewPath(
+                screenshotUsableNow = screenshotResult.available,
+                previewWidth = previewWidth,
+                previewHeight = previewHeight
+            ),
             previewWidth = previewWidth,
             previewHeight = previewHeight
         )
@@ -111,7 +112,7 @@ object ScreenReadPayloadComposer {
             focusedEditablePresent = accessibilityPayload.focusedEditablePresent ?: ocrPayload.focusedEditablePresent,
             visualAvailable = ocrPayload.visualAvailable ?: accessibilityPayload.visualAvailable,
             previewAvailable = ocrPayload.previewAvailable ?: accessibilityPayload.previewAvailable,
-            previewToken = accessibilityPayload.previewToken ?: ocrPayload.previewToken,
+            previewPath = accessibilityPayload.previewPath ?: ocrPayload.previewPath,
             previewWidth = accessibilityPayload.previewWidth ?: ocrPayload.previewWidth,
             previewHeight = accessibilityPayload.previewHeight ?: ocrPayload.previewHeight
         )

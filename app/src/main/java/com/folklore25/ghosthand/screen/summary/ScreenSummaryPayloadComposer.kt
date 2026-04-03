@@ -17,7 +17,7 @@ object ScreenSummaryPayloadComposer {
             putAll(ScreenReadPayloadFields.surfaceContextFields(payload))
             putAll(ScreenReadPayloadFields.surfaceObservationFields(payload, legibility))
             putAll(ScreenReadPayloadFields.surfaceFallbackFields(payload, includeRetryHint = false))
-            putAll(ScreenReadPayloadFields.surfacePreviewFields(payload, legibility, includeImage = false))
+            putAll(ScreenReadPayloadFields.surfacePreviewFields(payload, legibility))
             put("omittedSummary", payload.omittedSummary)
         }
     }
