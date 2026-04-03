@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand
 
+import java.io.File
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -56,5 +58,42 @@ class MaintainabilityConvergencePackageOwnershipTest {
         assertTrue(commandCatalog.contains("package com.folklore25.ghosthand.catalog"))
         assertTrue(waitLogic.contains("package com.folklore25.ghosthand.wait"))
         assertTrue(interactionPlane.contains("package com.folklore25.ghosthand.interaction.execution"))
+    }
+
+    @Test
+    fun runtimeDomainTestsLiveUnderMatchingBehaviorPackages() {
+        val expectedPaths = listOf(
+            "app/src/test/java/com/folklore25/ghosthand/server/LocalApiServerCapabilityPolicyTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/server/LocalApiServerRequestParsingTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/routes/GhosthandRoutePoliciesTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/routes/RouteDisclosureBuildersTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/payload/GhosthandApiPayloadsTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/state/StateCoordinatorStatePayloadTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/screen/AccessibilityTreeSnapshotProviderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/screen/ScreenOcrProviderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/screen/StateCoordinatorScreenPayloadTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/wait/GhosthandWaitLogicTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/wait/WaitOutcomeTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalogTest.kt"
+        )
+        val retiredFlatPaths = listOf(
+            "app/src/test/java/com/folklore25/ghosthand/LocalApiServerCapabilityPolicyTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/LocalApiServerRequestParsingTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/GhosthandRoutePoliciesTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/LocalApiServerDisclosureTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/GhosthandApiPayloadsTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/AccessibilityTreeSnapshotProviderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ScreenOcrProviderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/GhosthandWaitLogicTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/WaitOutcomeTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/GhosthandCommandCatalogTest.kt"
+        )
+
+        expectedPaths.forEach { path ->
+            assertTrue("Expected runtime-domain test at $path", File(path).exists())
+        }
+        retiredFlatPaths.forEach { path ->
+            assertFalse("Flat runtime-domain test should be retired at $path", File(path).exists())
+        }
     }
 }
