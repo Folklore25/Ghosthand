@@ -13,6 +13,58 @@ import org.junit.Test
 
 class StateCoordinatorStatePayloadTest {
     @Test
+    fun statePayloadSupportSeparatesPermissionsAndSystemDiagnostics() {
+        val capabilityAccess = CapabilityAccessSnapshot(
+            accessibility = GovernedCapabilitySnapshot(
+                system = AccessibilitySystemAuthorizationState(
+                    enabled = true,
+                    connected = true,
+                    dispatchCapable = true,
+                    healthy = true,
+                    status = "enabled_connected"
+                ),
+                policy = AppCapabilityPolicyState(allowed = true),
+                effective = CapabilityEffectiveState(
+                    usableNow = true,
+                    reason = "accessibility_connected"
+                )
+            ),
+            screenshot = GovernedCapabilitySnapshot(
+                system = ScreenshotSystemAuthorizationState(
+                    accessibilityCaptureReady = true,
+                    mediaProjectionGranted = false
+                ),
+                policy = AppCapabilityPolicyState(allowed = true),
+                effective = CapabilityEffectiveState(
+                    usableNow = true,
+                    reason = "accessibility_capture_ready"
+                )
+            )
+        )
+
+        val permissions = StateCoordinatorStatePayloadSupport.permissionsPayload(
+            accessibilityEnabled = true,
+            capabilityAccess = capabilityAccess
+        )
+        val systemPermissions = StateCoordinatorStatePayloadSupport.systemPermissionsPayload(
+            PermissionSnapshot(
+                usageAccess = true,
+                notifications = false,
+                overlay = null,
+                writeSecureSettings = false
+            )
+        )
+
+        val capabilitySummary = permissions["capabilitySummary"] as Map<*, *>
+        val capabilities = permissions["capabilities"] as Map<*, *>
+        assertTrue(capabilitySummary.containsKey("accessibility"))
+        assertTrue(capabilities.containsKey("screenshot"))
+        assertEquals(true, systemPermissions["usageAccess"])
+        assertEquals(false, systemPermissions["notifications"])
+        assertEquals(false, systemPermissions["writeSecureSettings"])
+    }
+
+    @Test
     fun accessibilityPayloadContainsSeparateSystemPolicyAndEffectiveObjects() {
         val fields = GovernedCapabilityPayloads.accessibilityFields(
             GovernedCapabilitySnapshot(
@@ -70,11 +122,12 @@ class StateCoordinatorStatePayloadTest {
             "src/main/java/com/folklore25/ghosthand/StateCoordinator.kt"
         )
 
-        assertTrue(coordinator.contains(".put(\"permissions\", JSONObject()"))
-        assertTrue(coordinator.contains(".put(\"capabilitySummary\", JSONObject()"))
-        assertTrue(coordinator.contains(".put(\"capabilities\", JSONObject()"))
+        assertTrue(coordinator.contains("JSONObject(\n                    permissionsPayload("))
+        assertTrue(coordinator.contains("fun permissionsPayload("))
+        assertTrue(coordinator.contains("\"capabilitySummary\" to linkedMapOf("))
+        assertTrue(coordinator.contains("\"capabilities\" to linkedMapOf("))
         assertFalse(coordinator.contains(".put(\"permissions\", JSONObject()\n                .put(\"implemented\", true)\n                .put(\"usageAccess\""))
-        assertTrue(coordinator.contains(".put(\"systemPermissions\", JSONObject()"))
-        assertTrue(coordinator.contains(".put(\"usageAccess\", permissionSnapshot.usageAccess"))
+        assertTrue(coordinator.contains("JSONObject(systemPermissionsPayload(permissionSnapshot))"))
+        assertTrue(coordinator.contains("fun systemPermissionsPayload(permissionSnapshot: PermissionSnapshot): Map<String, Any?>"))
     }
 }

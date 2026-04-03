@@ -85,77 +85,17 @@ class StateCoordinator(
             (SystemClock.elapsedRealtime() - it).coerceAtLeast(0L)
         }
 
-        return JSONObject()
-            .put("runtime", JSONObject()
-                .put("ready", isRuntimeReady(runtimeState))
-                .put("runtimeUptimeMs", runtimeUptimeMs ?: JSONObject.NULL)
-                .put("appStartedAt", runtimeState.appStartedAtIso ?: JSONObject.NULL)
-                .put("buildVersion", diagnosticsSnapshot.buildVersion)
-                .put("installIdentity", diagnosticsSnapshot.installIdentity)
-                .put("tapProbeUiBuildState", diagnosticsSnapshot.tapProbeUiBuildState)
-                .put("foregroundServiceRunning", runtimeState.foregroundServiceRunning)
-                .put("appStarted", runtimeState.appStarted)
-                .put("lastServiceAction", runtimeState.lastServiceAction)
-                .put("statusText", runtimeState.statusText)
-            )
-            .put("accessibility", JSONObject()
-                .put("implemented", accessibilitySnapshot.implemented)
-                .put("enabled", accessibilitySnapshot.enabled)
-                .put("connected", accessibilitySnapshot.connected)
-                .put("dispatchCapable", accessibilitySnapshot.dispatchCapable)
-                .put("healthy", accessibilitySnapshot.healthy ?: JSONObject.NULL)
-                .put("status", accessibilitySnapshot.status)
-            )
-            .put("device", JSONObject()
-                .put("screenOn", deviceSnapshot.screenOn)
-                .put("locked", deviceSnapshot.locked ?: JSONObject.NULL)
-                .put("rotation", deviceSnapshot.rotation)
-                .put("batteryPercent", deviceSnapshot.batteryPercent)
-                .put("charging", deviceSnapshot.charging)
-                .put("foregroundPackage", foregroundSnapshot.packageName ?: JSONObject.NULL)
-            )
-            .put("openclaw", JSONObject()
-                .put("apiServerReady", runtimeState.localApiServerRunning)
-                .put("port", LocalApiServer.PORT)
-            )
-            .put("recovery", JSONObject()
-                .put("implemented", false)
-                .put("lastAction", JSONObject.NULL)
-                .put("lastResult", JSONObject.NULL)
-                .put("status", "not_implemented")
-            )
-            .put("permissions", JSONObject()
-                .put("implemented", true)
-                .put("accessibility", accessibilitySnapshot.enabled)
-                .put("capabilitySummary", JSONObject()
-                    .put("accessibility", JSONObject()
-                        .put("allowed", capabilityAccess.accessibility.policy.allowed)
-                        .put("usableNow", capabilityAccess.accessibility.effective.usableNow)
-                        .put("reason", capabilityAccess.accessibility.effective.reason)
-                    )
-                    .put("screenshot", JSONObject()
-                        .put("allowed", capabilityAccess.screenshot.policy.allowed)
-                        .put("usableNow", capabilityAccess.screenshot.effective.usableNow)
-                        .put("reason", capabilityAccess.screenshot.effective.reason)
-                    )
-                )
-                .put("capabilities", JSONObject()
-                    .put(
-                        "accessibility",
-                        GovernedCapabilityPayloads.accessibilityToJson(capabilityAccess.accessibility)
-                    )
-                    .put(
-                        "screenshot",
-                        GovernedCapabilityPayloads.screenshotToJson(capabilityAccess.screenshot)
-                    )
-                )
-            )
-            .put("systemPermissions", JSONObject()
-                .put("usageAccess", permissionSnapshot.usageAccess ?: JSONObject.NULL)
-                .put("notifications", permissionSnapshot.notifications ?: JSONObject.NULL)
-                .put("overlay", permissionSnapshot.overlay ?: JSONObject.NULL)
-                .put("writeSecureSettings", permissionSnapshot.writeSecureSettings ?: JSONObject.NULL)
-            )
+        return StateCoordinatorStatePayloadSupport.createStatePayload(
+            runtimeState = runtimeState,
+            runtimeReady = isRuntimeReady(runtimeState),
+            runtimeUptimeMs = runtimeUptimeMs,
+            diagnosticsSnapshot = diagnosticsSnapshot,
+            deviceSnapshot = deviceSnapshot,
+            foregroundSnapshot = foregroundSnapshot,
+            accessibilitySnapshot = accessibilitySnapshot,
+            capabilityAccess = capabilityAccess,
+            permissionSnapshot = permissionSnapshot
+        )
     }
 
     fun capabilityAccessSnapshot(): CapabilityAccessSnapshot {
@@ -223,15 +163,16 @@ class StateCoordinator(
         packageFilter: String?,
         clickableOnly: Boolean
     ): ScreenReadPayload {
-        return GhosthandApiPayloads.accessibilityScreenRead(
-            snapshot = snapshot,
-            editableOnly = editableOnly,
-            scrollableOnly = scrollableOnly,
-            packageFilter = packageFilter,
-            clickableOnly = clickableOnly
-        ).copy(
-            visualAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow,
-            previewAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow,
+        val screenshotUsableNow = capabilityAccessSnapshot().screenshot.effective.usableNow
+        return StateCoordinatorScreenPayloadSupport.applyPreviewMetadata(
+            payload = GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = editableOnly,
+                scrollableOnly = scrollableOnly,
+                packageFilter = packageFilter,
+                clickableOnly = clickableOnly
+            ),
+            screenshotUsableNow = screenshotUsableNow,
             previewToken = snapshot.snapshotToken?.let { "preview:$it" },
             previewWidth = SCREEN_PREVIEW_WIDTH,
             previewHeight = SCREEN_PREVIEW_HEIGHT
@@ -277,38 +218,27 @@ class StateCoordinator(
         snapshot: AccessibilityTreeSnapshot,
         packageFilter: String?
     ): ScreenReadPayload {
-        val accessibilityPayload = GhosthandApiPayloads.accessibilityScreenRead(
-            snapshot = snapshot,
-            editableOnly = false,
-            scrollableOnly = false,
-            packageFilter = packageFilter,
-            clickableOnly = false
-        ).copy(
-            visualAvailable = capabilityAccessSnapshot().screenshot.effective.usableNow
+        val accessibilityPayload = StateCoordinatorScreenPayloadSupport.applyPreviewMetadata(
+            payload = GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot,
+                editableOnly = false,
+                scrollableOnly = false,
+                packageFilter = packageFilter,
+                clickableOnly = false
+            ),
+            screenshotUsableNow = capabilityAccessSnapshot().screenshot.effective.usableNow,
+            previewToken = snapshot.snapshotToken?.let { "preview:$it" },
+            previewWidth = SCREEN_PREVIEW_WIDTH,
+            previewHeight = SCREEN_PREVIEW_HEIGHT
         )
         if (!accessibilityPayload.accessibilityTreeIsOperationallyInsufficient()) {
             return accessibilityPayload
         }
 
         val ocrPayload = createOcrScreenPayload()
-        if (ocrPayload.elements.isEmpty()) {
-            return accessibilityPayload.copy(
-                warnings = (accessibilityPayload.warnings + ocrPayload.warnings).distinct()
-            )
-        }
-
-        return accessibilityPayload.copy(
-            returnedElementCount = accessibilityPayload.elements.size + ocrPayload.elements.size,
-            warnings = (accessibilityPayload.warnings + listOf("ocr_fallback_used") + ocrPayload.warnings).distinct(),
-            elements = accessibilityPayload.elements + ocrPayload.elements,
-            source = ScreenReadMode.HYBRID.wireValue,
-            ocrElementCount = ocrPayload.ocrElementCount,
-            usedOcrFallback = true,
-            visualAvailable = ocrPayload.visualAvailable ?: accessibilityPayload.visualAvailable,
-            previewAvailable = ocrPayload.previewAvailable ?: accessibilityPayload.previewAvailable,
-            previewToken = accessibilityPayload.previewToken ?: ocrPayload.previewToken,
-            previewWidth = accessibilityPayload.previewWidth ?: ocrPayload.previewWidth,
-            previewHeight = accessibilityPayload.previewHeight ?: ocrPayload.previewHeight
+        return StateCoordinatorScreenPayloadSupport.mergeHybridPayloads(
+            accessibilityPayload = accessibilityPayload,
+            ocrPayload = ocrPayload
         )
     }
 
@@ -722,11 +652,7 @@ class StateCoordinator(
     ): WaitConditionResult {
         val initialTree = getTreeSnapshotResult().snapshot
         val initialForeground = foregroundAppProvider.snapshot()
-        val initialState = UiStateSnapshot(
-            snapshotToken = initialTree?.snapshotToken,
-            packageName = initialForeground.packageName,
-            activity = initialForeground.activity
-        )
+        val initialState = StateCoordinatorObservationSupport.captureUiState(initialTree, initialForeground)
         val startTime = System.currentTimeMillis()
         val deadline = startTime + timeoutMs.coerceAtLeast(0L)
 
@@ -740,22 +666,12 @@ class StateCoordinator(
                 )
                 if (found.found && found.node != null) {
                     val currentForeground = foregroundAppProvider.snapshot()
-                    val finalState = UiStateSnapshot(
-                        snapshotToken = treeResult.snapshot.snapshotToken,
-                        packageName = currentForeground.packageName,
-                        activity = currentForeground.activity
-                    )
-                    return WaitConditionResult(
-                        satisfied = true,
-                        outcome = WaitOutcome.forCondition(
-                            conditionMet = true,
-                            initialState = initialState,
-                            finalState = finalState,
-                            timedOut = false
-                        ),
+                    val finalState = StateCoordinatorObservationSupport.captureUiState(treeResult.snapshot, currentForeground)
+                    return StateCoordinatorObservationSupport.conditionMatched(
+                        initialState = initialState,
+                        finalState = finalState,
                         node = found.node,
                         elapsedMs = System.currentTimeMillis() - startTime,
-                        polledCount = 0, // approximate
                         attemptedPath = "condition_met"
                     )
                 }
@@ -768,22 +684,10 @@ class StateCoordinator(
 
         val finalTree = getTreeSnapshotResult().snapshot
         val finalForeground = foregroundAppProvider.snapshot()
-        val finalState = UiStateSnapshot(
-            snapshotToken = finalTree?.snapshotToken,
-            packageName = finalForeground.packageName,
-            activity = finalForeground.activity
-        )
-        return WaitConditionResult(
-            satisfied = false,
-            outcome = WaitOutcome.forCondition(
-                conditionMet = false,
-                initialState = initialState,
-                finalState = finalState,
-                timedOut = true
-            ),
-            node = null,
+        return StateCoordinatorObservationSupport.conditionTimedOut(
+            initialState = initialState,
+            finalState = StateCoordinatorObservationSupport.captureUiState(finalTree, finalForeground),
             elapsedMs = timeoutMs,
-            polledCount = 0,
             attemptedPath = "timeout"
         )
     }
@@ -791,32 +695,20 @@ class StateCoordinator(
     fun waitForUiChange(timeoutMs: Long, intervalMs: Long): WaitUiChangeResult {
         val initialTree = getTreeSnapshotResult().snapshot
         val initialForeground = foregroundAppProvider.snapshot()
-        val initialState = UiStateSnapshot(
-            snapshotToken = initialTree?.snapshotToken,
-            packageName = initialForeground.packageName,
-            activity = initialForeground.activity
-        )
+        val initialState = StateCoordinatorObservationSupport.captureUiState(initialTree, initialForeground)
         val startTime = System.currentTimeMillis()
         val deadline = startTime + timeoutMs.coerceAtLeast(0L)
 
         while (System.currentTimeMillis() < deadline) {
             val currentTree = getTreeSnapshotResult().snapshot
             val currentForeground = foregroundAppProvider.snapshot()
-            val currentState = UiStateSnapshot(
-                snapshotToken = currentTree?.snapshotToken,
-                packageName = currentForeground.packageName,
-                activity = currentForeground.activity
-            )
+            val currentState = StateCoordinatorObservationSupport.captureUiState(currentTree, currentForeground)
 
             if (GhosthandWaitLogic.hasUiChanged(initialState, currentState)) {
-                return WaitUiChangeResult(
-                    changed = true,
-                    outcome = WaitOutcome.forUiChange(
-                        stateChanged = true,
-                        timedOut = false
-                    ),
+                return StateCoordinatorObservationSupport.uiChangeDetected(
+                    initialState = initialState,
+                    currentState = currentState,
                     elapsedMs = System.currentTimeMillis() - startTime,
-                    snapshotToken = currentState.snapshotToken ?: initialState.snapshotToken,
                     packageName = currentForeground.packageName,
                     activity = currentForeground.activity
                 )
@@ -829,34 +721,22 @@ class StateCoordinator(
 
         val finalTree = getTreeSnapshotResult().snapshot
         val finalForeground = foregroundAppProvider.snapshot()
-        val finalState = UiStateSnapshot(
-            snapshotToken = finalTree?.snapshotToken,
-            packageName = finalForeground.packageName,
-            activity = finalForeground.activity
-        )
+        val finalState = StateCoordinatorObservationSupport.captureUiState(finalTree, finalForeground)
 
         if (GhosthandWaitLogic.hasUiChanged(initialState, finalState)) {
-            return WaitUiChangeResult(
-                changed = true,
-                outcome = WaitOutcome.forUiChange(
-                    stateChanged = true,
-                    timedOut = false
-                ),
+            return StateCoordinatorObservationSupport.uiChangeDetected(
+                initialState = initialState,
+                currentState = finalState,
                 elapsedMs = System.currentTimeMillis() - startTime,
-                snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
                 packageName = finalForeground.packageName,
                 activity = finalForeground.activity
             )
         }
 
-        return WaitUiChangeResult(
-            changed = false,
-            outcome = WaitOutcome.forUiChange(
-                stateChanged = false,
-                timedOut = true
-            ),
+        return StateCoordinatorObservationSupport.uiChangeTimedOut(
+            initialState = initialState,
+            finalState = finalState,
             elapsedMs = System.currentTimeMillis() - startTime,
-            snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
             packageName = finalForeground.packageName ?: initialState.packageName,
             activity = finalForeground.activity ?: initialState.activity
         )
@@ -895,6 +775,244 @@ class StateCoordinator(
         val packageName: String?,
         val activity: String?
     )
+}
+
+internal object StateCoordinatorScreenPayloadSupport {
+    fun applyPreviewMetadata(
+        payload: ScreenReadPayload,
+        screenshotUsableNow: Boolean,
+        previewToken: String?,
+        previewWidth: Int,
+        previewHeight: Int
+    ): ScreenReadPayload {
+        return payload.copy(
+            visualAvailable = screenshotUsableNow,
+            previewAvailable = screenshotUsableNow,
+            previewToken = previewToken,
+            previewWidth = previewWidth,
+            previewHeight = previewHeight
+        )
+    }
+
+    fun mergeHybridPayloads(
+        accessibilityPayload: ScreenReadPayload,
+        ocrPayload: ScreenReadPayload
+    ): ScreenReadPayload {
+        if (ocrPayload.elements.isEmpty()) {
+            return accessibilityPayload.copy(
+                warnings = (accessibilityPayload.warnings + ocrPayload.warnings).distinct()
+            )
+        }
+
+        return accessibilityPayload.copy(
+            returnedElementCount = accessibilityPayload.elements.size + ocrPayload.elements.size,
+            warnings = (accessibilityPayload.warnings + listOf("ocr_fallback_used") + ocrPayload.warnings).distinct(),
+            elements = accessibilityPayload.elements + ocrPayload.elements,
+            source = ScreenReadMode.HYBRID.wireValue,
+            ocrElementCount = ocrPayload.ocrElementCount,
+            usedOcrFallback = true,
+            visualAvailable = ocrPayload.visualAvailable ?: accessibilityPayload.visualAvailable,
+            previewAvailable = ocrPayload.previewAvailable ?: accessibilityPayload.previewAvailable,
+            previewToken = accessibilityPayload.previewToken ?: ocrPayload.previewToken,
+            previewWidth = accessibilityPayload.previewWidth ?: ocrPayload.previewWidth,
+            previewHeight = accessibilityPayload.previewHeight ?: ocrPayload.previewHeight
+        )
+    }
+}
+
+internal object StateCoordinatorObservationSupport {
+    fun captureUiState(
+        treeSnapshot: AccessibilityTreeSnapshot?,
+        foregroundSnapshot: ForegroundAppSnapshot
+    ): UiStateSnapshot {
+        return UiStateSnapshot(
+            snapshotToken = treeSnapshot?.snapshotToken,
+            packageName = foregroundSnapshot.packageName,
+            activity = foregroundSnapshot.activity
+        )
+    }
+
+    fun conditionMatched(
+        initialState: UiStateSnapshot,
+        finalState: UiStateSnapshot,
+        node: FlatAccessibilityNode,
+        elapsedMs: Long,
+        attemptedPath: String
+    ): StateCoordinator.WaitConditionResult {
+        return StateCoordinator.WaitConditionResult(
+            satisfied = true,
+            outcome = WaitOutcome.forCondition(
+                conditionMet = true,
+                initialState = initialState,
+                finalState = finalState,
+                timedOut = false
+            ),
+            node = node,
+            elapsedMs = elapsedMs,
+            polledCount = 0,
+            attemptedPath = attemptedPath
+        )
+    }
+
+    fun conditionTimedOut(
+        initialState: UiStateSnapshot,
+        finalState: UiStateSnapshot,
+        elapsedMs: Long,
+        attemptedPath: String
+    ): StateCoordinator.WaitConditionResult {
+        return StateCoordinator.WaitConditionResult(
+            satisfied = false,
+            outcome = WaitOutcome.forCondition(
+                conditionMet = false,
+                initialState = initialState,
+                finalState = finalState,
+                timedOut = true
+            ),
+            node = null,
+            elapsedMs = elapsedMs,
+            polledCount = 0,
+            attemptedPath = attemptedPath
+        )
+    }
+
+    fun uiChangeDetected(
+        initialState: UiStateSnapshot,
+        currentState: UiStateSnapshot,
+        elapsedMs: Long,
+        packageName: String?,
+        activity: String?
+    ): StateCoordinator.WaitUiChangeResult {
+        return StateCoordinator.WaitUiChangeResult(
+            changed = true,
+            outcome = WaitOutcome.forUiChange(
+                stateChanged = GhosthandWaitLogic.hasUiChanged(initialState, currentState),
+                timedOut = false
+            ),
+            elapsedMs = elapsedMs,
+            snapshotToken = currentState.snapshotToken ?: initialState.snapshotToken,
+            packageName = packageName,
+            activity = activity
+        )
+    }
+
+    fun uiChangeTimedOut(
+        initialState: UiStateSnapshot,
+        finalState: UiStateSnapshot,
+        elapsedMs: Long,
+        packageName: String?,
+        activity: String?
+    ): StateCoordinator.WaitUiChangeResult {
+        return StateCoordinator.WaitUiChangeResult(
+            changed = false,
+            outcome = WaitOutcome.forUiChange(
+                stateChanged = false,
+                timedOut = true
+            ),
+            elapsedMs = elapsedMs,
+            snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
+            packageName = packageName,
+            activity = activity
+        )
+    }
+}
+
+internal object StateCoordinatorStatePayloadSupport {
+    fun createStatePayload(
+        runtimeState: RuntimeState,
+        runtimeReady: Boolean,
+        runtimeUptimeMs: Long?,
+        diagnosticsSnapshot: HomeDiagnosticsSnapshot,
+        deviceSnapshot: DeviceSnapshot,
+        foregroundSnapshot: ForegroundAppSnapshot,
+        accessibilitySnapshot: AccessibilityStatusSnapshot,
+        capabilityAccess: CapabilityAccessSnapshot,
+        permissionSnapshot: PermissionSnapshot
+    ): JSONObject {
+        return JSONObject()
+            .put("runtime", JSONObject()
+                .put("ready", runtimeReady)
+                .put("runtimeUptimeMs", runtimeUptimeMs ?: JSONObject.NULL)
+                .put("appStartedAt", runtimeState.appStartedAtIso ?: JSONObject.NULL)
+                .put("buildVersion", diagnosticsSnapshot.buildVersion)
+                .put("installIdentity", diagnosticsSnapshot.installIdentity)
+                .put("tapProbeUiBuildState", diagnosticsSnapshot.tapProbeUiBuildState)
+                .put("foregroundServiceRunning", runtimeState.foregroundServiceRunning)
+                .put("appStarted", runtimeState.appStarted)
+                .put("lastServiceAction", runtimeState.lastServiceAction)
+                .put("statusText", runtimeState.statusText)
+            )
+            .put("accessibility", JSONObject()
+                .put("implemented", accessibilitySnapshot.implemented)
+                .put("enabled", accessibilitySnapshot.enabled)
+                .put("connected", accessibilitySnapshot.connected)
+                .put("dispatchCapable", accessibilitySnapshot.dispatchCapable)
+                .put("healthy", accessibilitySnapshot.healthy ?: JSONObject.NULL)
+                .put("status", accessibilitySnapshot.status)
+            )
+            .put("device", JSONObject()
+                .put("screenOn", deviceSnapshot.screenOn)
+                .put("locked", deviceSnapshot.locked ?: JSONObject.NULL)
+                .put("rotation", deviceSnapshot.rotation)
+                .put("batteryPercent", deviceSnapshot.batteryPercent)
+                .put("charging", deviceSnapshot.charging)
+                .put("foregroundPackage", foregroundSnapshot.packageName ?: JSONObject.NULL)
+            )
+            .put("openclaw", JSONObject()
+                .put("apiServerReady", runtimeState.localApiServerRunning)
+                .put("port", LocalApiServer.PORT)
+            )
+            .put("recovery", JSONObject()
+                .put("implemented", false)
+                .put("lastAction", JSONObject.NULL)
+                .put("lastResult", JSONObject.NULL)
+                .put("status", "not_implemented")
+            )
+            .put(
+                "permissions",
+                JSONObject(
+                    permissionsPayload(
+                        accessibilityEnabled = accessibilitySnapshot.enabled,
+                        capabilityAccess = capabilityAccess
+                    )
+                )
+            )
+            .put("systemPermissions", JSONObject(systemPermissionsPayload(permissionSnapshot)))
+    }
+
+    fun permissionsPayload(
+        accessibilityEnabled: Boolean,
+        capabilityAccess: CapabilityAccessSnapshot
+    ): Map<String, Any?> {
+        return linkedMapOf(
+            "implemented" to true,
+            "accessibility" to accessibilityEnabled,
+            "capabilitySummary" to linkedMapOf(
+                "accessibility" to linkedMapOf(
+                    "allowed" to capabilityAccess.accessibility.policy.allowed,
+                    "usableNow" to capabilityAccess.accessibility.effective.usableNow,
+                    "reason" to capabilityAccess.accessibility.effective.reason
+                ),
+                "screenshot" to linkedMapOf(
+                    "allowed" to capabilityAccess.screenshot.policy.allowed,
+                    "usableNow" to capabilityAccess.screenshot.effective.usableNow,
+                    "reason" to capabilityAccess.screenshot.effective.reason
+                )
+            ),
+            "capabilities" to linkedMapOf(
+                "accessibility" to GovernedCapabilityPayloads.accessibilityToJson(capabilityAccess.accessibility),
+                "screenshot" to GovernedCapabilityPayloads.screenshotToJson(capabilityAccess.screenshot)
+            )
+        )
+    }
+
+    fun systemPermissionsPayload(permissionSnapshot: PermissionSnapshot): Map<String, Any?> {
+        return linkedMapOf(
+            "usageAccess" to permissionSnapshot.usageAccess,
+            "notifications" to permissionSnapshot.notifications,
+            "overlay" to permissionSnapshot.overlay,
+            "writeSecureSettings" to permissionSnapshot.writeSecureSettings
+        )
+    }
 }
 
 internal object GovernedCapabilityPayloads {

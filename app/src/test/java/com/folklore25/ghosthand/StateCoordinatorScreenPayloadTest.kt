@@ -13,6 +13,98 @@ import org.junit.Test
 
 class StateCoordinatorScreenPayloadTest {
     @Test
+    fun hybridSupportMergesOcrFallbackWarningsAndPreviewMetadata() {
+        val accessibilityPayload = ScreenReadPayload(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = "snap",
+            capturedAt = "2026-04-01T00:00:00Z",
+            foregroundStableDuringCapture = true,
+            partialOutput = true,
+            candidateNodeCount = 3,
+            returnedElementCount = 1,
+            warnings = listOf("partial_output"),
+            omittedInvalidBoundsCount = 0,
+            omittedLowSignalCount = 1,
+            omittedNodeCount = 1,
+            omittedCategories = listOf("low_signal"),
+            omittedSummary = "Omitted 1 low-signal node.",
+            invalidBoundsPresent = false,
+            lowSignalPresent = true,
+            elements = listOf(
+                ScreenReadElement(
+                    nodeId = "p0.0@tsnap",
+                    text = "Accessibility node",
+                    bounds = "[0,0][20,20]",
+                    centerX = 10,
+                    centerY = 10,
+                    source = ScreenReadMode.ACCESSIBILITY.wireValue
+                )
+            ),
+            source = ScreenReadMode.ACCESSIBILITY.wireValue,
+            accessibilityElementCount = 1,
+            ocrElementCount = 0,
+            usedOcrFallback = false,
+            visualAvailable = false,
+            previewAvailable = false,
+            previewToken = null,
+            previewWidth = null,
+            previewHeight = null,
+            retryHint = null
+        )
+        val ocrPayload = ScreenReadPayload(
+            packageName = "com.example",
+            activity = "ExampleActivity",
+            snapshotToken = null,
+            capturedAt = null,
+            foregroundStableDuringCapture = true,
+            partialOutput = false,
+            candidateNodeCount = 0,
+            returnedElementCount = 1,
+            warnings = listOf("ocr_warning"),
+            omittedInvalidBoundsCount = 0,
+            omittedLowSignalCount = 0,
+            omittedNodeCount = 0,
+            omittedCategories = emptyList(),
+            omittedSummary = null,
+            invalidBoundsPresent = false,
+            lowSignalPresent = false,
+            elements = listOf(
+                ScreenReadElement(
+                    text = "OCR node",
+                    bounds = "[20,20][60,40]",
+                    centerX = 40,
+                    centerY = 30,
+                    source = ScreenReadMode.OCR.wireValue
+                )
+            ),
+            source = ScreenReadMode.OCR.wireValue,
+            accessibilityElementCount = 0,
+            ocrElementCount = 1,
+            usedOcrFallback = false,
+            visualAvailable = true,
+            previewAvailable = true,
+            previewToken = "preview:ocr",
+            previewWidth = 240,
+            previewHeight = 240,
+            retryHint = null
+        )
+
+        val merged = StateCoordinatorScreenPayloadSupport.mergeHybridPayloads(
+            accessibilityPayload = accessibilityPayload,
+            ocrPayload = ocrPayload
+        )
+
+        assertEquals(ScreenReadMode.HYBRID.wireValue, merged.source)
+        assertEquals(2, merged.returnedElementCount)
+        assertEquals(1, merged.ocrElementCount)
+        assertEquals(true, merged.usedOcrFallback)
+        assertEquals("preview:ocr", merged.previewToken)
+        assertTrue(merged.warnings.contains("ocr_fallback_used"))
+        assertTrue(merged.warnings.contains("ocr_warning"))
+    }
+
+    @Test
     fun screenReadFieldsExposeSourceAwareHybridPayload() {
         val payload = GhosthandApiPayloads.screenReadFields(
             ScreenReadPayload(
