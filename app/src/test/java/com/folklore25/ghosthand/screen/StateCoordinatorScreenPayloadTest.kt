@@ -383,4 +383,46 @@ class StateCoordinatorScreenPayloadTest {
         assertTrue(payloadSupport.contains("ScreenSummaryPayloadComposer.summaryFields(payload)"))
         assertFalse(payloadSupport.contains("putAll(surfaceContextFields(payload))"))
     }
+
+    @Test
+    fun coordinatorDelegatesFindAndFocusedPayloadOwnershipToScreenFindModule() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+        )
+        val screenFindPayloads = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/screen/find/ScreenFindPayloads.kt",
+            "src/main/java/com/folklore25/ghosthand/screen/find/ScreenFindPayloads.kt"
+        )
+
+        assertTrue(coordinator.contains("private val screenFindPayloads = ScreenFindPayloads"))
+        assertTrue(coordinator.contains("screenFindPayloads.findResult("))
+        assertTrue(coordinator.contains("screenFindPayloads.focusedNodeResult("))
+        assertTrue(coordinator.contains("screenFindPayloads.focusedNodePayload("))
+        assertTrue(screenFindPayloads.contains("fun findPayload("))
+        assertTrue(screenFindPayloads.contains("fun focusedNodePayload("))
+    }
+
+    @Test
+    fun coordinatorDelegatesReadAndPreviewAssemblyToDedicatedModules() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+        )
+        val readCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/screen/read/ScreenReadCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/screen/read/ScreenReadCoordinator.kt"
+        )
+        val previewSupport = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCaptureSupport.kt",
+            "src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCaptureSupport.kt"
+        )
+
+        assertTrue(coordinator.contains("private val screenReadCoordinator = ScreenReadCoordinator("))
+        assertTrue(coordinator.contains("screenReadCoordinator.createAccessibilityPayload("))
+        assertTrue(coordinator.contains("screenReadCoordinator.createOcrPayload("))
+        assertTrue(coordinator.contains("screenReadCoordinator.createHybridPayload("))
+        assertTrue(readCoordinator.contains("ScreenPreviewCaptureSupport"))
+        assertTrue(previewSupport.contains("fun withPreviewImage("))
+    }
 }

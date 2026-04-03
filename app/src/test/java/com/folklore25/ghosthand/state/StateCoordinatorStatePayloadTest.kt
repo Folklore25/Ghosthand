@@ -178,4 +178,48 @@ class StateCoordinatorStatePayloadTest {
         assertTrue(handlers.contains("PostActionStateComposer.fromObservedEffect("))
         assertFalse(handlers.contains("internal fun buildPostActionState("))
     }
+
+    @Test
+    fun coordinatorDelegatesRuntimePayloadAssemblyToStateHealthModule() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+        )
+        val healthPayloads = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/health/StateHealthPayloads.kt",
+            "src/main/java/com/folklore25/ghosthand/state/health/StateHealthPayloads.kt"
+        )
+
+        assertTrue(coordinator.contains("private val stateHealthPayloads = StateHealthPayloads"))
+        assertTrue(coordinator.contains("stateHealthPayloads.createHealthPayload("))
+        assertTrue(coordinator.contains("stateHealthPayloads.createDevicePayload("))
+        assertTrue(coordinator.contains("stateHealthPayloads.createForegroundPayload("))
+        assertTrue(coordinator.contains("stateHealthPayloads.createInfoPayload("))
+        assertFalse(coordinator.contains("fun createHealthPayload(): JSONObject {\n        val runtimeState = runtimeStateProvider()"))
+        assertTrue(healthPayloads.contains("fun createHealthPayload("))
+        assertTrue(healthPayloads.contains("fun createInfoPayload("))
+    }
+
+    @Test
+    fun coordinatorUsesDedicatedExecutionCollaboratorsForInputAndScreenshotAccess() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
+        )
+        val inputPerformer = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/interaction/execution/InputOperationPerformer.kt",
+            "src/main/java/com/folklore25/ghosthand/interaction/execution/InputOperationPerformer.kt"
+        )
+        val screenshotAccess = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandScreenshotAccess.kt",
+            "src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandScreenshotAccess.kt"
+        )
+
+        assertTrue(coordinator.contains("private val inputOperationPerformer = InputOperationPerformer"))
+        assertTrue(coordinator.contains("private val screenshotAccess: GhosthandScreenshotAccess = AccessibilityScreenshotAccess"))
+        assertTrue(coordinator.contains("inputOperationPerformer.perform("))
+        assertTrue(coordinator.contains("screenshotAccess.captureBestAvailable("))
+        assertTrue(inputPerformer.contains("fun perform("))
+        assertTrue(screenshotAccess.contains("fun captureBestAvailable("))
+    }
 }
