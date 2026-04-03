@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-03T19:18:44.504Z"
+last_updated: "2026-04-03T19:28:12.259Z"
 progress:
   total_phases: 9
   completed_phases: 5
   total_plans: 40
-  completed_plans: 30
+  completed_plans: 31
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,7 +22,7 @@ Current focus: **1.3.1 clean closeout** — Phase 24.4 is now planned as a bound
 ## Current Position
 
 Phase: 24.4 (1-3-1-clean-closeout) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 - **Phase:** 24.4
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
@@ -66,6 +66,8 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 - [Phase 24.4]: Preview metadata now publishes previewPath on /screen and routes retrieval through /screenshot instead of opaque preview tokens.
 - [Phase 24.4]: Inline preview thumbnail embedding and includePreview opt-in were removed so advertised preview access stays lightweight and truthful.
 - [Phase 24.4]: The /screen fallback contract now emits only suggestedSource and fallbackReason when a recommendation exists.
+- [Phase 24.4]: Runtime owners now import their direct payload family instead of depending on GhosthandApiPayloads at runtime.
+- [Phase 24.4]: Screen fallback payload helpers no longer carry the dead includeRetryHint closeout parameter.
 
 ## Blockers / Concerns
 
@@ -75,8 +77,8 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:18:44.501Z
-Next action: execute Phase 24.4 plan 03 for project-structure and code cleanup.
+Last session: 2026-04-03T19:28:12.257Z
+Next action: execute Phase 24.4 plan 04 for final closeout alignment.
 
 ## Performance Metrics
 
@@ -90,3 +92,4 @@ Next action: execute Phase 24.4 plan 03 for project-structure and code cleanup.
 | 24.3 | 02 | 4m | 1 | 8 |
 | 24.4 | 01 | 9 min | 1 | 14 |
 | 24.4 | 02 | 3 min | 1 | 6 |
+| 24.4 | 03 | 3 min | 1 | 13 |
