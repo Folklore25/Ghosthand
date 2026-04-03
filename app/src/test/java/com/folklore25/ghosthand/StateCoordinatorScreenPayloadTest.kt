@@ -241,6 +241,7 @@ class StateCoordinatorScreenPayloadTest {
                         nodeId = "p0.0@tsnap",
                         text = "Editor",
                         editable = true,
+                        focused = true,
                         bounds = "[0,0][20,20]",
                         centerX = 10,
                         centerY = 10,

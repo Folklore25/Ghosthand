@@ -322,7 +322,7 @@ class GhosthandApiPayloadsTest {
         val snapshot = snapshot(
             nodes = listOf(
                 node("p0@tsnap"),
-                node("p0.0@tsnap", text = "Editor", editable = true, centerX = 30, centerY = 40),
+                node("p0.0@tsnap", text = "Editor", editable = true, focused = true, centerX = 30, centerY = 40),
                 node("p0.1@tsnap", text = "Submit", clickable = true, centerX = 50, centerY = 60)
             )
         )
@@ -944,6 +944,7 @@ class GhosthandApiPayloadsTest {
         className: String = "android.widget.TextView",
         clickable: Boolean = false,
         editable: Boolean = false,
+        focused: Boolean = false,
         scrollable: Boolean = false,
         centerX: Int = 0,
         centerY: Int = 0,
@@ -958,7 +959,7 @@ class GhosthandApiPayloadsTest {
             clickable = clickable,
             editable = editable,
             enabled = true,
-            focused = false,
+            focused = focused,
             scrollable = scrollable,
             centerX = centerX,
             centerY = centerY,

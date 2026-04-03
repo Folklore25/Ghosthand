@@ -25,6 +25,7 @@ data class ScreenReadElement(
     val id: String = "",
     val clickable: Boolean = false,
     val editable: Boolean = false,
+    val focused: Boolean = false,
     val scrollable: Boolean = false,
     val bounds: String,
     val centerX: Int,
