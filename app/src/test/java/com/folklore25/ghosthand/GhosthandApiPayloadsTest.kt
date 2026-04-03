@@ -380,6 +380,58 @@ class GhosthandApiPayloadsTest {
     }
 
     @Test
+    fun screenSummaryFocusedEditablePresentRequiresFocusedEditable() {
+        val summary = GhosthandApiPayloads.screenSummaryFields(
+            GhosthandApiPayloads.accessibilityScreenRead(
+                snapshot = snapshot(
+                    nodes = listOf(
+                        node("p0@tsnap"),
+                        node("p0.0@tsnap", text = "Editor", editable = true, focused = false, centerX = 10, centerY = 20)
+                    )
+                ),
+                editableOnly = false,
+                scrollableOnly = false,
+                packageFilter = null,
+                clickableOnly = false
+            )
+        )
+
+        assertEquals(false, summary["focusedEditablePresent"])
+    }
+
+    @Test
+    fun renderModeAndSurfaceReadabilityExposeCanonicalWireValues() {
+        val payload = GhosthandApiPayloads.accessibilityScreenRead(
+            snapshot = snapshot(
+                nodes = listOf(
+                    node("p0@tsnap"),
+                    node("p0.0@tsnap", text = "Only visible node", centerX = 10, centerY = 20)
+                )
+            ),
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        ).copy(
+            partialOutput = true,
+            candidateNodeCount = 30,
+            returnedElementCount = 1,
+            omittedNodeCount = 20,
+            omittedLowSignalCount = 20,
+            warnings = listOf("partial_output"),
+            retryHint = ScreenReadRetryHint(
+                source = ScreenReadMode.HYBRID.wireValue,
+                reason = "accessibility_operationally_insufficient"
+            )
+        )
+
+        assertEquals(GhosthandRenderMode.LIMITED_ACCESSIBILITY, payload.renderModeKind())
+        assertEquals(GhosthandRenderMode.LIMITED_ACCESSIBILITY.wireValue, payload.renderMode())
+        assertEquals(GhosthandSurfaceReadability.LIMITED, payload.surfaceReadabilityKind())
+        assertEquals(GhosthandSurfaceReadability.LIMITED.wireValue, payload.surfaceReadability())
+    }
+
+    @Test
     fun screenPayloadIncludesRenderModeReadabilityAndVisualAvailability() {
         val snapshot = snapshot(
             nodes = listOf(
