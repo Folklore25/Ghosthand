@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.preview.ScreenPreviewMetadata
+import com.folklore25.ghosthand.screen.read.ScreenReadPayloadComposer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -90,7 +92,7 @@ class StateCoordinatorScreenPayloadTest {
             retryHint = null
         )
 
-        val merged = StateCoordinatorScreenPayloadSupport.mergeHybridPayloads(
+        val merged = ScreenReadPayloadComposer.mergeHybridPayloads(
             accessibilityPayload = accessibilityPayload,
             ocrPayload = ocrPayload
         )
@@ -309,5 +311,57 @@ class StateCoordinatorScreenPayloadTest {
         assertEquals(240, payload["previewWidth"])
         assertEquals(240, payload["previewHeight"])
         assertEquals("data:image/png;base64,thumb", payload["previewImage"])
+    }
+
+    @Test
+    fun previewMetadataSupportExposesPreviewAvailabilityInDedicatedPreviewModule() {
+        val payload = ScreenPreviewMetadata.apply(
+            payload = ScreenReadPayload(
+                packageName = "com.example",
+                activity = "ExampleActivity",
+                snapshotToken = "snap",
+                capturedAt = "2026-04-01T00:00:00Z",
+                foregroundStableDuringCapture = true,
+                partialOutput = false,
+                candidateNodeCount = 1,
+                returnedElementCount = 1,
+                warnings = emptyList(),
+                omittedInvalidBoundsCount = 0,
+                omittedLowSignalCount = 0,
+                omittedNodeCount = 0,
+                omittedCategories = emptyList(),
+                omittedSummary = null,
+                invalidBoundsPresent = false,
+                lowSignalPresent = false,
+                elements = emptyList(),
+                source = ScreenReadMode.ACCESSIBILITY.wireValue,
+                accessibilityElementCount = 1,
+                ocrElementCount = 0,
+                usedOcrFallback = false
+            ),
+            screenshotUsableNow = true,
+            previewToken = "preview:snap",
+            previewWidth = 240,
+            previewHeight = 240
+        )
+
+        assertEquals(true, payload.visualAvailable)
+        assertEquals(true, payload.previewAvailable)
+        assertEquals("preview:snap", payload.previewToken)
+    }
+
+    @Test
+    fun coordinatorDelegatesScreenReadCompositionToDomainModules() {
+        val coordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/StateCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/StateCoordinator.kt"
+        )
+
+        assertTrue(coordinator.contains("private val screenReadPayloadComposer = ScreenReadPayloadComposer"))
+        assertTrue(coordinator.contains("private val screenPreviewMetadata = ScreenPreviewMetadata"))
+        assertTrue(coordinator.contains("screenPreviewMetadata.apply("))
+        assertTrue(coordinator.contains("screenReadPayloadComposer.createOcrPayload("))
+        assertTrue(coordinator.contains("screenReadPayloadComposer.createHybridPayload("))
+        assertTrue(coordinator.contains("screenReadPayloadComposer.createAccessibilityPayload("))
     }
 }

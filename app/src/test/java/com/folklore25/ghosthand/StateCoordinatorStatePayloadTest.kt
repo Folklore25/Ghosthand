@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.capability.GovernedCapabilityPayloads
+import com.folklore25.ghosthand.state.StatePayloadComposer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -42,11 +44,11 @@ class StateCoordinatorStatePayloadTest {
             )
         )
 
-        val permissions = StateCoordinatorStatePayloadSupport.permissionsPayload(
+        val permissions = StatePayloadComposer.permissionsPayload(
             accessibilityEnabled = true,
             capabilityAccess = capabilityAccess
         )
-        val systemPermissions = StateCoordinatorStatePayloadSupport.systemPermissionsPayload(
+        val systemPermissions = StatePayloadComposer.systemPermissionsPayload(
             PermissionSnapshot(
                 usageAccess = true,
                 notifications = false,
@@ -122,12 +124,20 @@ class StateCoordinatorStatePayloadTest {
             "src/main/java/com/folklore25/ghosthand/StateCoordinator.kt"
         )
 
-        assertTrue(coordinator.contains("JSONObject(\n                    permissionsPayload("))
-        assertTrue(coordinator.contains("fun permissionsPayload("))
-        assertTrue(coordinator.contains("\"capabilitySummary\" to linkedMapOf("))
-        assertTrue(coordinator.contains("\"capabilities\" to linkedMapOf("))
+        assertTrue(coordinator.contains("private val statePayloadComposer = StatePayloadComposer"))
+        assertTrue(coordinator.contains("statePayloadComposer.createStatePayload("))
+        assertFalse(coordinator.contains("fun permissionsPayload("))
+        assertFalse(coordinator.contains("fun systemPermissionsPayload(permissionSnapshot: PermissionSnapshot): Map<String, Any?>"))
         assertFalse(coordinator.contains(".put(\"permissions\", JSONObject()\n                .put(\"implemented\", true)\n                .put(\"usageAccess\""))
-        assertTrue(coordinator.contains("JSONObject(systemPermissionsPayload(permissionSnapshot))"))
-        assertTrue(coordinator.contains("fun systemPermissionsPayload(permissionSnapshot: PermissionSnapshot): Map<String, Any?>"))
+    }
+
+    @Test
+    fun capabilityPayloadsLiveInDedicatedCapabilityModule() {
+        val statePayloadSupport = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/StatePayloadComposer.kt"
+        )
+
+        assertTrue(statePayloadSupport.contains("GovernedCapabilityPayloads.accessibilityToJson"))
+        assertTrue(statePayloadSupport.contains("GovernedCapabilityPayloads.screenshotToJson"))
     }
 }
