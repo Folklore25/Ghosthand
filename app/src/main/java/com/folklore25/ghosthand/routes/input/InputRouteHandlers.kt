@@ -13,7 +13,6 @@ import com.folklore25.ghosthand.InputOperationResult
 import com.folklore25.ghosthand.SetTextFailureReason
 import com.folklore25.ghosthand.StateCoordinator
 import com.folklore25.ghosthand.TypeFailureReason
-import com.folklore25.ghosthand.routes.action.buildPostActionState
 import com.folklore25.ghosthand.routes.action.putPostActionState
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
@@ -22,6 +21,7 @@ import com.folklore25.ghosthand.routes.optIntOrNull
 import com.folklore25.ghosthand.routes.parseJsonBodyOrNull
 import com.folklore25.ghosthand.routes.successEnvelope
 import com.folklore25.ghosthand.server.LocalApiServerRoute
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONObject
 
 internal class InputRouteHandlers(
@@ -81,7 +81,7 @@ internal class InputRouteHandlers(
         }
         val typeResult = stateCoordinator.performInput(parsedRequest.request)
         val payloadResult = typeResult.copy(
-            postActionState = buildPostActionState(
+            postActionState = PostActionStateComposer.fromObservedEffect(
                 actionEffect = null,
                 fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
             )
@@ -119,7 +119,12 @@ internal class InputRouteHandlers(
                         JSONObject()
                             .put("performed", true)
                             .put("backendUsed", setTextResult.backendUsed)
-                            .putPostActionState(buildPostActionState(null, stateCoordinator.getTreeSnapshotResult().snapshot))
+                            .putPostActionState(
+                                PostActionStateComposer.fromObservedEffect(
+                                    actionEffect = null,
+                                    fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                                )
+                            )
                     )
                 )
             setTextResult.failureReason == SetTextFailureReason.ACCESSIBILITY_UNAVAILABLE ->

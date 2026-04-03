@@ -378,6 +378,6 @@ class StateCoordinatorScreenPayloadTest {
         )
 
         assertTrue(payloadSupport.contains("ScreenSummaryPayloadComposer.summaryFields(payload)"))
-        assertFalse(payloadSupport.contains("fun summaryFields(payload: ScreenReadPayload): Map<String, Any?> {"))
+        assertFalse(payloadSupport.contains("putAll(surfaceContextFields(payload))"))
     }
 }

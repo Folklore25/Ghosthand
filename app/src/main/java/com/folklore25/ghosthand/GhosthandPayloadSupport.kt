@@ -6,6 +6,10 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.interaction.effects.ActionEffectPayloads
+import com.folklore25.ghosthand.screen.read.ScreenReadPayloadFields
+import com.folklore25.ghosthand.screen.summary.ScreenSummaryPayloadComposer
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -97,6 +101,10 @@ internal object GhosthandInteractionPayloads {
             "attemptedPath" to result.attemptedPath
         )
         result.effect?.let { effect -> payload.putAll(actionEffectFields(effect)) }
+        PostActionStateComposer.fromObservedEffect(
+            actionEffect = result.effect,
+            fallbackSnapshot = null
+        )?.let(PostActionStateComposer::fields)?.takeIf { it.isNotEmpty() }?.let { payload["postActionState"] = it }
         result.selectorResolution?.let { resolution ->
             payload["resolution"] = clickResolutionFields(resolution)
         }
@@ -108,7 +116,11 @@ internal object GhosthandInteractionPayloads {
             "performed" to result.performed,
             "attemptedPath" to result.attemptedPath
         ).apply {
-            result.effect?.let { effect -> putAll(actionEffectFields(effect)) }
+            result.effect?.let { effect -> putAll(ActionEffectPayloads.fields(effect)) }
+            PostActionStateComposer.fromObservedEffect(
+                actionEffect = result.effect,
+                fallbackSnapshot = null
+            )?.let(PostActionStateComposer::fields)?.takeIf { it.isNotEmpty() }?.let { put("postActionState", it) }
         }
     }
 
@@ -131,33 +143,11 @@ internal object GhosthandInteractionPayloads {
     }
 
     fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "stateChanged" to effect.stateChanged,
-            "beforeSnapshotToken" to effect.beforeSnapshotToken,
-            "afterSnapshotToken" to effect.afterSnapshotToken,
-            "finalPackageName" to effect.finalPackageName,
-            "finalActivity" to effect.finalActivity
-        ).apply {
-            postActionStateFields(
-                PostActionState(
-                    packageName = effect.finalPackageName,
-                    activity = effect.finalActivity,
-                    snapshotToken = effect.afterSnapshotToken
-                )
-            ).takeIf { it.isNotEmpty() }?.let { put("postActionState", it) }
-        }
+        return ActionEffectPayloads.fields(effect)
     }
 
     fun postActionStateFields(state: PostActionState): Map<String, Any?> {
-        return linkedMapOf<String, Any?>().apply {
-            state.packageName?.let { put("packageName", it) }
-            state.activity?.let { put("activity", it) }
-            state.snapshotToken?.let { put("snapshotToken", it) }
-            state.focusedEditablePresent?.let { put("focusedEditablePresent", it) }
-            state.renderMode?.let { put("renderMode", it) }
-            state.surfaceReadability?.let { put("surfaceReadability", it) }
-            state.visualAvailable?.let { put("visualAvailable", it) }
-        }
+        return PostActionStateComposer.fields(state)
     }
 
     fun clickFailureFields(hint: FindMissHint): Map<String, Any?> {
@@ -210,7 +200,7 @@ internal object GhosthandInteractionPayloads {
             }
         ).apply {
             result.postActionState
-                ?.let(::postActionStateFields)
+                ?.let(PostActionStateComposer::fields)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { put("postActionState", it) }
         }
@@ -348,50 +338,11 @@ internal object GhosthandScreenPayloads {
     }
 
     fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
-        return linkedMapOf<String, Any?>().apply {
-            putAll(surfaceContextFields(payload))
-            putAll(surfaceObservationFields(payload))
-            putAll(surfaceFallbackFields(payload, includeRetryHint = true))
-            putAll(surfacePreviewFields(payload, includeImage = true))
-            putAll(
-                linkedMapOf(
-                    "omittedInvalidBoundsCount" to payload.omittedInvalidBoundsCount,
-                    "omittedLowSignalCount" to payload.omittedLowSignalCount,
-                    "omittedNodeCount" to payload.omittedNodeCount,
-                    "omittedCategories" to payload.omittedCategories,
-                    "omittedSummary" to payload.omittedSummary,
-                    "invalidBoundsPresent" to payload.invalidBoundsPresent,
-                    "lowSignalPresent" to payload.lowSignalPresent,
-                    "elements" to payload.elements.map { element ->
-                        linkedMapOf(
-                            "nodeId" to element.nodeId,
-                            "text" to element.text,
-                            "desc" to element.desc,
-                            "id" to element.id,
-                            "clickable" to element.clickable,
-                            "editable" to element.editable,
-                            "focused" to element.focused,
-                            "scrollable" to element.scrollable,
-                            "bounds" to element.bounds,
-                            "centerX" to element.centerX,
-                            "centerY" to element.centerY,
-                            "source" to element.source
-                        )
-                    }
-                )
-            )
-        }
+        return ScreenReadPayloadFields.screenReadFields(payload)
     }
 
     fun summaryFields(payload: ScreenReadPayload): Map<String, Any?> {
-        return linkedMapOf<String, Any?>().apply {
-            putAll(surfaceContextFields(payload))
-            putAll(surfaceObservationFields(payload))
-            putAll(surfaceFallbackFields(payload, includeRetryHint = false))
-            putAll(surfacePreviewFields(payload, includeImage = false))
-            put("omittedSummary", payload.omittedSummary)
-            put("focusedEditablePresent", payload.elements.any { it.editable && it.focused })
-        }
+        return ScreenSummaryPayloadComposer.summaryFields(payload)
     }
 
     fun nodeFields(node: FlatAccessibilityNode): Map<String, Any?> {
@@ -542,68 +493,6 @@ internal object GhosthandScreenPayloads {
 
     private fun warningsForPartialOutput(partialOutput: Boolean): List<String> {
         return if (partialOutput) listOf("partial_output") else emptyList()
-    }
-
-    private fun surfaceContextFields(payload: ScreenReadPayload): Map<String, Any?> {
-        return linkedMapOf(
-            "packageName" to payload.packageName,
-            "activity" to payload.activity,
-            "snapshotToken" to payload.snapshotToken,
-            "capturedAt" to payload.capturedAt,
-            "foregroundStableDuringCapture" to payload.foregroundStableDuringCapture
-        )
-    }
-
-    private fun surfaceObservationFields(payload: ScreenReadPayload): Map<String, Any?> {
-        return linkedMapOf(
-            "partialOutput" to payload.partialOutput,
-            "candidateNodeCount" to payload.candidateNodeCount,
-            "returnedElementCount" to payload.returnedElementCount,
-            "warnings" to payload.warnings,
-            "source" to payload.source,
-            "renderMode" to payload.renderMode(),
-            "surfaceReadability" to payload.surfaceReadability(),
-            "visualAvailable" to payload.visualAvailable,
-            "accessibilityElementCount" to payload.accessibilityElementCount,
-            "ocrElementCount" to payload.ocrElementCount,
-            "usedOcrFallback" to payload.usedOcrFallback
-        )
-    }
-
-    private fun surfaceFallbackFields(
-        payload: ScreenReadPayload,
-        includeRetryHint: Boolean
-    ): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "suggestedFallback" to payload.retryHint?.source,
-            "suggestedSource" to payload.retryHint?.source,
-            "fallbackReason" to payload.retryHint?.reason
-        ).apply {
-            if (includeRetryHint) {
-                put(
-                    "retryHint",
-                    payload.retryHint?.let { hint ->
-                        linkedMapOf("source" to hint.source, "reason" to hint.reason)
-                    }
-                )
-            }
-        }
-    }
-
-    private fun surfacePreviewFields(
-        payload: ScreenReadPayload,
-        includeImage: Boolean
-    ): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "previewAvailable" to payload.previewAvailable,
-            "previewToken" to payload.previewToken,
-            "previewWidth" to payload.previewWidth,
-            "previewHeight" to payload.previewHeight
-        ).apply {
-            if (includeImage) {
-                put("previewImage", payload.previewImage)
-            }
-        }
     }
 }
 

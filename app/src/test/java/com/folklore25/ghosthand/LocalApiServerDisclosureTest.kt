@@ -11,13 +11,13 @@ import com.folklore25.ghosthand.routes.action.buildClickDisclosure
 import com.folklore25.ghosthand.routes.action.clickFailureErrorCode
 import com.folklore25.ghosthand.routes.action.clickFailureMessage
 import com.folklore25.ghosthand.routes.action.buildMotionDisclosure
-import com.folklore25.ghosthand.routes.action.buildPostActionState
 import com.folklore25.ghosthand.routes.read.buildFindDisclosure
 import com.folklore25.ghosthand.routes.read.buildScreenDisclosure
 import com.folklore25.ghosthand.routes.wait.NormalizedWaitConditionResult
 import com.folklore25.ghosthand.routes.wait.buildWaitConditionDisclosure
 import com.folklore25.ghosthand.routes.wait.buildWaitUiChangeDisclosure
 import com.folklore25.ghosthand.routes.wait.normalizeWaitConditionResult
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -247,7 +247,7 @@ class LocalApiServerDisclosureTest {
 
     @Test
     fun postActionStatePrefersObservedSnapshotWhenAvailable() {
-        val state = buildPostActionState(
+        val state = PostActionStateComposer.fromObservedEffect(
             actionEffect = ActionEffectObservation(
                 stateChanged = true,
                 beforeSnapshotToken = "before",
@@ -272,7 +272,7 @@ class LocalApiServerDisclosureTest {
 
     @Test
     fun postActionStateFallsBackToCurrentSnapshotSubset() {
-        val state = buildPostActionState(
+        val state = PostActionStateComposer.fromObservedEffect(
             actionEffect = null,
             fallbackSnapshot = AccessibilityTreeSnapshot(
                 packageName = "com.example.target",

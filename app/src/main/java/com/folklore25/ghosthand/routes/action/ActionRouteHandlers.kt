@@ -25,6 +25,7 @@ import com.folklore25.ghosthand.StateCoordinator
 import com.folklore25.ghosthand.SwipeFailureReason
 import com.folklore25.ghosthand.TapFailureReason
 import com.folklore25.ghosthand.TypeFailureReason
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -102,7 +103,12 @@ internal class ActionRouteHandlers(
                     JSONObject()
                         .put("performed", true)
                         .put("backendUsed", tapResult.backendUsed)
-                        .putPostActionState(buildPostActionState(null, stateCoordinator.getTreeSnapshotResult().snapshot))
+                        .putPostActionState(
+                            PostActionStateComposer.fromObservedEffect(
+                                actionEffect = null,
+                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                            )
+                        )
                 )
             )
 
@@ -160,7 +166,12 @@ internal class ActionRouteHandlers(
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
                         .put("finalActivity", observation.finalActivity)
-                        .putPostActionState(buildPostActionState(observation.toActionEffectObservation(), null)),
+                        .putPostActionState(
+                            PostActionStateComposer.fromObservedEffect(
+                                actionEffect = observation.toActionEffectObservation(),
+                                fallbackSnapshot = null
+                            )
+                        ),
                     disclosure = buildMotionDisclosure("/swipe", swipeResult.performed, observation.surfaceChanged)
                 )
             )
@@ -268,7 +279,12 @@ internal class ActionRouteHandlers(
                         .put("afterSnapshotToken", observation.afterSnapshotToken)
                         .put("finalPackageName", observation.finalPackageName)
                         .put("finalActivity", observation.finalActivity)
-                        .putPostActionState(buildPostActionState(observation.toActionEffectObservation(), null)),
+                        .putPostActionState(
+                            PostActionStateComposer.fromObservedEffect(
+                                actionEffect = observation.toActionEffectObservation(),
+                                fallbackSnapshot = null
+                            )
+                        ),
                     disclosure = buildMotionDisclosure("/scroll", result.performed, observation.surfaceChanged)
                 )
             )
@@ -297,7 +313,17 @@ internal class ActionRouteHandlers(
         }
         val performed = stateCoordinator.performLongPressGesture(x, y, durationMs)
         return if (performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true).putPostActionState(buildPostActionState(null, stateCoordinator.getTreeSnapshotResult().snapshot))))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject().put("performed", true).putPostActionState(
+                        PostActionStateComposer.fromObservedEffect(
+                            actionEffect = null,
+                            fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                        )
+                    )
+                )
+            )
         } else {
             buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Long-press gesture failed."))
         }
@@ -352,7 +378,17 @@ internal class ActionRouteHandlers(
 
     private fun gestureResponse(performed: Boolean): String {
         return if (performed) {
-            buildJsonResponse(200, successEnvelope(JSONObject().put("performed", true).putPostActionState(buildPostActionState(null, stateCoordinator.getTreeSnapshotResult().snapshot))))
+            buildJsonResponse(
+                200,
+                successEnvelope(
+                    JSONObject().put("performed", true).putPostActionState(
+                        PostActionStateComposer.fromObservedEffect(
+                            actionEffect = null,
+                            fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                        )
+                    )
+                )
+            )
         } else {
             buildJsonResponse(422, errorEnvelope("ACCESSIBILITY_ACTION_FAILED", "Gesture dispatch failed."))
         }
@@ -474,33 +510,11 @@ internal fun ScrollSurfaceObservation.toActionEffectObservation(): ActionEffectO
     return ActionEffectObservation(surfaceChanged, beforeSnapshotToken, afterSnapshotToken, finalPackageName, finalActivity)
 }
 
-internal fun buildPostActionState(
-    actionEffect: ActionEffectObservation?,
-    fallbackSnapshot: AccessibilityTreeSnapshot?
-): PostActionState? {
-    val packageName = actionEffect?.finalPackageName ?: fallbackSnapshot?.packageName
-    val activity = actionEffect?.finalActivity ?: fallbackSnapshot?.activity
-    val snapshotToken = actionEffect?.afterSnapshotToken ?: fallbackSnapshot?.snapshotToken
-    val focusedEditablePresent = fallbackSnapshot?.nodes?.any { it.focused && it.editable }
-    val derivedScreenPayload = fallbackSnapshot?.let {
-        GhosthandApiPayloads.accessibilityScreenRead(it, false, false, null, false)
-    }
-    if (packageName == null && activity == null && snapshotToken == null && focusedEditablePresent == null && derivedScreenPayload == null) {
-        return null
-    }
-    return PostActionState(
-        packageName = packageName,
-        activity = activity,
-        snapshotToken = snapshotToken,
-        focusedEditablePresent = focusedEditablePresent,
-        renderMode = derivedScreenPayload?.renderMode(),
-        surfaceReadability = derivedScreenPayload?.surfaceReadability(),
-        visualAvailable = derivedScreenPayload?.visualAvailable
-    )
-}
-
 internal fun JSONObject.putPostActionState(state: PostActionState?): JSONObject {
-    state?.let(GhosthandApiPayloads::postActionStateFields)?.takeIf { it.isNotEmpty() }?.let { put("postActionState", JSONObject(it)) }
+    state
+        ?.let(GhosthandApiPayloads::postActionStateFields)
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { put("postActionState", JSONObject(it)) }
     return this
 }
 
