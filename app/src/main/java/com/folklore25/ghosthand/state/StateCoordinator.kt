@@ -7,15 +7,14 @@
 package com.folklore25.ghosthand.state
 
 import android.content.Context
-import android.os.SystemClock
 import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.interaction.execution.AccessibilityScreenshotAccess
 import com.folklore25.ghosthand.capability.CapabilityAccessResolver
 import com.folklore25.ghosthand.interaction.execution.AccessibilityInteractionPlane
 import com.folklore25.ghosthand.interaction.execution.GhosthandScreenshotAccess
 import com.folklore25.ghosthand.interaction.execution.GhosthandInteractionPlane
+import com.folklore25.ghosthand.interaction.execution.InteractionExecutionCoordinator
 import com.folklore25.ghosthand.interaction.execution.InputOperationPerformer
-import com.folklore25.ghosthand.payload.GhosthandApiPayloads
 import com.folklore25.ghosthand.payload.GhosthandInputRequest
 import com.folklore25.ghosthand.payload.PostActionState
 import com.folklore25.ghosthand.preview.ScreenPreviewCoordinator
@@ -26,8 +25,7 @@ import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 import com.folklore25.ghosthand.screen.read.ScreenSnapshotCoordinator
 import com.folklore25.ghosthand.state.read.StateReadCoordinator
 import com.folklore25.ghosthand.state.health.StateHealthPayloads
-import com.folklore25.ghosthand.wait.UiStateSnapshot
-import com.folklore25.ghosthand.wait.GhosthandWaitLogic
+import com.folklore25.ghosthand.wait.GhosthandWaitCoordinator
 import com.folklore25.ghosthand.wait.WaitOutcome
 import org.json.JSONObject
 
@@ -70,6 +68,13 @@ class StateCoordinator(
         treeSnapshotProvider = accessibilityTreeSnapshotProvider,
         nodeFinder = accessibilityNodeFinder
     )
+    private val interactionExecutionCoordinator = InteractionExecutionCoordinator(
+        treeSnapshotProvider = screenSnapshotCoordinator::getTreeSnapshotResult,
+        nodeFinder = accessibilityNodeFinder,
+        interactionPlane = interactionPlane,
+        focusedNodeResultProvider = screenFindCoordinator::getFocusedNodeResult,
+        inputOperationPerformer = inputOperationPerformer
+    )
     private val stateReadCoordinator = StateReadCoordinator(
         runtimeStateProvider = runtimeStateProvider,
         treeSnapshotProvider = screenSnapshotCoordinator::getTreeSnapshotResult,
@@ -87,6 +92,11 @@ class StateCoordinator(
         screenOcrProvider = screenOcrProvider,
         previewWidth = SCREEN_PREVIEW_WIDTH,
         previewHeight = SCREEN_PREVIEW_HEIGHT
+    )
+    private val waitCoordinator = GhosthandWaitCoordinator(
+        treeSnapshotProvider = screenSnapshotCoordinator::getTreeSnapshotResult,
+        foregroundSnapshotProvider = foregroundAppProvider::snapshot,
+        nodeFinder = accessibilityNodeFinder
     )
 
     fun createPingPayload(): JSONObject {
@@ -247,24 +257,13 @@ class StateCoordinator(
         clickableOnly: Boolean = false,
         index: Int = 0
     ): ClickAttemptResult {
-        val found = accessibilityNodeFinder.findNodesForClick(
+        return interactionExecutionCoordinator.clickFirstMatch(
             snapshot = snapshot,
             strategy = strategy,
             query = query,
             clickableOnly = clickableOnly,
             index = index
         )
-
-        val nodeId = found.node?.nodeId
-            ?: return ClickAttemptResult.failure(
-                reason = ClickFailureReason.NODE_NOT_FOUND,
-                attemptedPath = "selector_lookup",
-                selectorResolution = found.clickResolution,
-                selectorMissHint = found.missHint
-            )
-
-        val clickResult = clickNode(nodeId)
-        return clickResult.copy(selectorResolution = found.clickResolution)
     }
 
     fun clickFirstMatchFresh(
@@ -275,40 +274,14 @@ class StateCoordinator(
         attempts: Int = 4,
         retryDelayMs: Long = 250L
     ): ClickAttemptResult {
-        var lastResult = ClickAttemptResult.failure(
-            reason = ClickFailureReason.ACCESSIBILITY_UNAVAILABLE,
-            attemptedPath = "tree_unavailable"
+        return interactionExecutionCoordinator.clickFirstMatchFresh(
+            strategy = strategy,
+            query = query,
+            clickableOnly = clickableOnly,
+            index = index,
+            attempts = attempts,
+            retryDelayMs = retryDelayMs
         )
-
-        repeat(attempts.coerceAtLeast(1)) { attempt ->
-            val treeSnapshotResult = accessibilityTreeSnapshotProvider.snapshot()
-            val snapshot = treeSnapshotResult.snapshot
-
-            lastResult = if (!treeSnapshotResult.available || snapshot == null) {
-                ClickAttemptResult.failure(
-                    reason = ClickFailureReason.ACCESSIBILITY_UNAVAILABLE,
-                    attemptedPath = "tree_unavailable"
-                )
-            } else {
-                clickFirstMatch(
-                    snapshot = snapshot,
-                    strategy = strategy,
-                    query = query,
-                    clickableOnly = clickableOnly,
-                    index = index
-                )
-            }
-
-            if (lastResult.performed || lastResult.failureReason != ClickFailureReason.NODE_NOT_FOUND) {
-                return lastResult
-            }
-
-            if (attempt < attempts - 1) {
-                SystemClock.sleep(retryDelayMs)
-            }
-        }
-
-        return lastResult
     }
 
     fun inputText(text: String): TypeAttemptResult {
@@ -316,11 +289,7 @@ class StateCoordinator(
     }
 
     fun performInput(request: GhosthandInputRequest): InputOperationResult {
-        return inputOperationPerformer.perform(
-            request = request,
-            focusedTextProvider = { getFocusedNodeResult().node?.text ?: "" },
-            interactionPlane = interactionPlane
-        )
+        return interactionExecutionCoordinator.performInput(request)
     }
 
     fun setTextOnNode(nodeId: String, text: String): SetTextAttemptResult {
@@ -328,14 +297,7 @@ class StateCoordinator(
     }
 
     fun scrollNode(nodeId: String, direction: String): ScrollAttemptResult {
-        val treeResult = accessibilityTreeSnapshotProvider.snapshot()
-        if (!treeResult.available || treeResult.snapshot == null) {
-            return ScrollAttemptResult.failure(
-                reason = ScrollFailureReason.ACCESSIBILITY_UNAVAILABLE,
-                attemptedPath = "tree_unavailable"
-            )
-        }
-        return interactionPlane.scrollNode(treeResult.snapshot, nodeId, direction)
+        return interactionExecutionCoordinator.scrollNode(nodeId, direction)
     }
 
     fun scroll(
@@ -343,59 +305,10 @@ class StateCoordinator(
         target: String?,
         count: Int
     ): ScrollBatchResult {
-        val treeResult = accessibilityTreeSnapshotProvider.snapshot()
-        if (!treeResult.available || treeResult.snapshot == null) {
-            return ScrollBatchResult(
-                performed = false,
-                performedCount = 0,
-                failureReason = ScrollFailureReason.ACCESSIBILITY_UNAVAILABLE,
-                attemptedPath = "tree_unavailable"
-            )
-        }
-
-        val nodeId = target?.takeIf { it.isNotBlank() }?.let { query ->
-            val findResult = accessibilityNodeFinder.findNodes(
-                snapshot = treeResult.snapshot,
-                strategy = "textContains",
-                query = query,
-                clickableOnly = false,
-                index = 0
-            )
-            findResult.node?.nodeId
-        } ?: treeResult.snapshot.nodes.firstOrNull { it.scrollable }?.nodeId
-            ?: treeResult.snapshot.nodes.firstOrNull()?.nodeId
-
-        if (nodeId == null) {
-            return ScrollBatchResult(
-                performed = false,
-                performedCount = 0,
-                failureReason = ScrollFailureReason.NODE_NOT_FOUND,
-                attemptedPath = "scroll_target_missing"
-            )
-        }
-
-        var performedCount = 0
-        repeat(count.coerceAtLeast(1)) {
-            val result = scrollNode(nodeId, direction)
-            if (!result.performed) {
-                return ScrollBatchResult(
-                    performed = performedCount > 0,
-                    performedCount = performedCount,
-                    failureReason = result.failureReason,
-                    attemptedPath = result.attemptedPath
-                )
-            }
-            performedCount += 1
-            if (it < count - 1) {
-                Thread.sleep(300L)
-            }
-        }
-
-        return ScrollBatchResult(
-            performed = true,
-            performedCount = performedCount,
-            failureReason = null,
-            attemptedPath = "repeated_scroll"
+        return interactionExecutionCoordinator.scroll(
+            direction = direction,
+            target = target,
+            count = count
         )
     }
 
@@ -404,11 +317,11 @@ class StateCoordinator(
     }
 
     fun performLongPressGesture(x: Int, y: Int, durationMs: Long): Boolean {
-        return interactionPlane.performLongPressGesture(x, y, durationMs)
+        return interactionExecutionCoordinator.performLongPressGesture(x, y, durationMs)
     }
 
     fun performGesture(strokes: List<GestureStroke>): Boolean {
-        return interactionPlane.performGesture(strokes)
+        return interactionExecutionCoordinator.performGesture(strokes)
     }
 
     fun readClipboard(): ClipboardReadResult {
@@ -447,96 +360,16 @@ class StateCoordinator(
         timeoutMs: Long,
         intervalMs: Long
     ): WaitConditionResult {
-        val initialTree = getTreeSnapshotResult().snapshot
-        val initialForeground = foregroundAppProvider.snapshot()
-        val initialState = StateCoordinatorObservationSupport.captureUiState(initialTree, initialForeground)
-        val startTime = System.currentTimeMillis()
-        val deadline = startTime + timeoutMs.coerceAtLeast(0L)
-
-        while (System.currentTimeMillis() < deadline) {
-            val treeResult = accessibilityTreeSnapshotProvider.snapshot()
-            if (treeResult.available && treeResult.snapshot != null) {
-                val found = accessibilityNodeFinder.findNode(
-                    snapshot = treeResult.snapshot,
-                    strategy = strategy,
-                    query = query
-                )
-                if (found.found && found.node != null) {
-                    val currentForeground = foregroundAppProvider.snapshot()
-                    val finalState = StateCoordinatorObservationSupport.captureUiState(treeResult.snapshot, currentForeground)
-                    return StateCoordinatorObservationSupport.conditionMatched(
-                        initialState = initialState,
-                        finalState = finalState,
-                        node = found.node,
-                        elapsedMs = System.currentTimeMillis() - startTime,
-                        attemptedPath = "condition_met"
-                    )
-                }
-            }
-            val remaining = deadline - System.currentTimeMillis()
-            if (remaining > 0) {
-                Thread.sleep(intervalMs.coerceAtLeast(50L).coerceAtMost(remaining))
-            }
-        }
-
-        val finalTree = getTreeSnapshotResult().snapshot
-        val finalForeground = foregroundAppProvider.snapshot()
-        return StateCoordinatorObservationSupport.conditionTimedOut(
-            initialState = initialState,
-            finalState = StateCoordinatorObservationSupport.captureUiState(finalTree, finalForeground),
-            elapsedMs = timeoutMs,
-            attemptedPath = "timeout"
+        return waitCoordinator.waitForCondition(
+            strategy = strategy,
+            query = query,
+            timeoutMs = timeoutMs,
+            intervalMs = intervalMs
         )
     }
 
     fun waitForUiChange(timeoutMs: Long, intervalMs: Long): WaitUiChangeResult {
-        val initialTree = getTreeSnapshotResult().snapshot
-        val initialForeground = foregroundAppProvider.snapshot()
-        val initialState = StateCoordinatorObservationSupport.captureUiState(initialTree, initialForeground)
-        val startTime = System.currentTimeMillis()
-        val deadline = startTime + timeoutMs.coerceAtLeast(0L)
-
-        while (System.currentTimeMillis() < deadline) {
-            val currentTree = getTreeSnapshotResult().snapshot
-            val currentForeground = foregroundAppProvider.snapshot()
-            val currentState = StateCoordinatorObservationSupport.captureUiState(currentTree, currentForeground)
-
-            if (GhosthandWaitLogic.hasUiChanged(initialState, currentState)) {
-                return StateCoordinatorObservationSupport.uiChangeDetected(
-                    initialState = initialState,
-                    currentState = currentState,
-                    elapsedMs = System.currentTimeMillis() - startTime,
-                    packageName = currentForeground.packageName,
-                    activity = currentForeground.activity
-                )
-            }
-            val remaining = deadline - System.currentTimeMillis()
-            if (remaining > 0) {
-                Thread.sleep(intervalMs.coerceAtLeast(50L).coerceAtMost(remaining))
-            }
-        }
-
-        val finalTree = getTreeSnapshotResult().snapshot
-        val finalForeground = foregroundAppProvider.snapshot()
-        val finalState = StateCoordinatorObservationSupport.captureUiState(finalTree, finalForeground)
-
-        if (GhosthandWaitLogic.hasUiChanged(initialState, finalState)) {
-            return StateCoordinatorObservationSupport.uiChangeDetected(
-                initialState = initialState,
-                currentState = finalState,
-                elapsedMs = System.currentTimeMillis() - startTime,
-                packageName = finalForeground.packageName,
-                activity = finalForeground.activity
-            )
-        }
-
-        return StateCoordinatorObservationSupport.uiChangeTimedOut(
-            initialState = initialState,
-            finalState = finalState,
-            elapsedMs = System.currentTimeMillis() - startTime,
-            packageName = finalForeground.packageName ?: initialState.packageName,
-            activity = finalForeground.activity ?: initialState.activity
-        )
+        return waitCoordinator.waitForUiChange(timeoutMs, intervalMs)
     }
 
     data class WaitConditionResult(
@@ -560,102 +393,6 @@ class StateCoordinator(
         val packageName: String?,
         val activity: String?
     )
-}
-
-internal object StateCoordinatorObservationSupport {
-    fun captureUiState(
-        treeSnapshot: AccessibilityTreeSnapshot?,
-        foregroundSnapshot: ForegroundAppSnapshot
-    ): UiStateSnapshot {
-        return UiStateSnapshot(
-            snapshotToken = treeSnapshot?.snapshotToken,
-            packageName = foregroundSnapshot.packageName,
-            activity = foregroundSnapshot.activity
-        )
-    }
-
-    fun conditionMatched(
-        initialState: UiStateSnapshot,
-        finalState: UiStateSnapshot,
-        node: FlatAccessibilityNode,
-        elapsedMs: Long,
-        attemptedPath: String
-    ): StateCoordinator.WaitConditionResult {
-        return StateCoordinator.WaitConditionResult(
-            satisfied = true,
-            outcome = WaitOutcome.forCondition(
-                conditionMet = true,
-                initialState = initialState,
-                finalState = finalState,
-                timedOut = false
-            ),
-            node = node,
-            elapsedMs = elapsedMs,
-            polledCount = 0,
-            attemptedPath = attemptedPath
-        )
-    }
-
-    fun conditionTimedOut(
-        initialState: UiStateSnapshot,
-        finalState: UiStateSnapshot,
-        elapsedMs: Long,
-        attemptedPath: String
-    ): StateCoordinator.WaitConditionResult {
-        return StateCoordinator.WaitConditionResult(
-            satisfied = false,
-            outcome = WaitOutcome.forCondition(
-                conditionMet = false,
-                initialState = initialState,
-                finalState = finalState,
-                timedOut = true
-            ),
-            node = null,
-            elapsedMs = elapsedMs,
-            polledCount = 0,
-            attemptedPath = attemptedPath
-        )
-    }
-
-    fun uiChangeDetected(
-        initialState: UiStateSnapshot,
-        currentState: UiStateSnapshot,
-        elapsedMs: Long,
-        packageName: String?,
-        activity: String?
-    ): StateCoordinator.WaitUiChangeResult {
-        return StateCoordinator.WaitUiChangeResult(
-            changed = true,
-            outcome = WaitOutcome.forUiChange(
-                stateChanged = GhosthandWaitLogic.hasUiChanged(initialState, currentState),
-                timedOut = false
-            ),
-            elapsedMs = elapsedMs,
-            snapshotToken = currentState.snapshotToken ?: initialState.snapshotToken,
-            packageName = packageName,
-            activity = activity
-        )
-    }
-
-    fun uiChangeTimedOut(
-        initialState: UiStateSnapshot,
-        finalState: UiStateSnapshot,
-        elapsedMs: Long,
-        packageName: String?,
-        activity: String?
-    ): StateCoordinator.WaitUiChangeResult {
-        return StateCoordinator.WaitUiChangeResult(
-            changed = false,
-            outcome = WaitOutcome.forUiChange(
-                stateChanged = false,
-                timedOut = true
-            ),
-            elapsedMs = elapsedMs,
-            snapshotToken = finalState.snapshotToken ?: initialState.snapshotToken,
-            packageName = packageName,
-            activity = activity
-        )
-    }
 }
 
 data class InputOperationResult(

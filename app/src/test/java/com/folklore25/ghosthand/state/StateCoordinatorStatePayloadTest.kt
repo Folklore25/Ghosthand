@@ -286,6 +286,10 @@ class StateCoordinatorStatePayloadTest {
             "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
             "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
+        val executionCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/interaction/execution/InteractionExecutionCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/interaction/execution/InteractionExecutionCoordinator.kt"
+        )
         val inputPerformer = TestFileSupport.readProjectFile(
             "app/src/main/java/com/folklore25/ghosthand/interaction/execution/InputOperationPerformer.kt",
             "src/main/java/com/folklore25/ghosthand/interaction/execution/InputOperationPerformer.kt"
@@ -301,9 +305,11 @@ class StateCoordinatorStatePayloadTest {
 
         assertTrue(coordinator.contains("private val inputOperationPerformer = InputOperationPerformer"))
         assertTrue(coordinator.contains("private val screenshotAccess: GhosthandScreenshotAccess = AccessibilityScreenshotAccess"))
-        assertTrue(coordinator.contains("inputOperationPerformer.perform("))
+        assertTrue(coordinator.contains("private val interactionExecutionCoordinator = InteractionExecutionCoordinator("))
+        assertTrue(coordinator.contains("inputOperationPerformer = inputOperationPerformer"))
         assertTrue(coordinator.contains("private val screenPreviewCoordinator = ScreenPreviewCoordinator("))
         assertTrue(coordinator.contains("screenPreviewCoordinator.captureBestScreenshot("))
+        assertTrue(executionCoordinator.contains("inputOperationPerformer.perform("))
         assertTrue(inputPerformer.contains("fun perform("))
         assertTrue(screenshotAccess.contains("fun captureBestAvailable("))
         assertTrue(previewCoordinator.contains("fun captureBestScreenshot("))

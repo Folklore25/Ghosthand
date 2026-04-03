@@ -38,6 +38,10 @@ class MaintainabilityConvergencePackageOwnershipTest {
             "app/src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitLogic.kt",
             "src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitLogic.kt"
         )
+        val waitCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/wait/GhosthandWaitCoordinator.kt"
+        )
         val interactionPlane = TestFileSupport.readProjectFile(
             "app/src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandInteractionPlane.kt",
             "src/main/java/com/folklore25/ghosthand/interaction/execution/GhosthandInteractionPlane.kt"
@@ -50,13 +54,13 @@ class MaintainabilityConvergencePackageOwnershipTest {
         assertTrue(stateCoordinator.contains("package com.folklore25.ghosthand.state"))
         assertTrue(stateCoordinator.contains("import com.folklore25.ghosthand.interaction.execution.AccessibilityInteractionPlane"))
         assertTrue(stateCoordinator.contains("import com.folklore25.ghosthand.interaction.execution.GhosthandInteractionPlane"))
-        assertTrue(stateCoordinator.contains("import com.folklore25.ghosthand.payload.GhosthandApiPayloads"))
-        assertTrue(stateCoordinator.contains("import com.folklore25.ghosthand.wait.GhosthandWaitLogic"))
+        assertTrue(stateCoordinator.contains("import com.folklore25.ghosthand.wait.GhosthandWaitCoordinator"))
 
         assertTrue(payloads.contains("package com.folklore25.ghosthand.payload"))
         assertTrue(routePolicies.contains("package com.folklore25.ghosthand.routes"))
         assertTrue(commandCatalog.contains("package com.folklore25.ghosthand.catalog"))
         assertTrue(waitLogic.contains("package com.folklore25.ghosthand.wait"))
+        assertTrue(waitCoordinator.contains("package com.folklore25.ghosthand.wait"))
         assertTrue(interactionPlane.contains("package com.folklore25.ghosthand.interaction.execution"))
     }
 
