@@ -106,4 +106,37 @@ class MaintainabilityConvergencePackageOwnershipTest {
             )
         }
     }
+
+    @Test
+    fun runtimeOwnersDoNotDependOnTheTransitionalPayloadFacade() {
+        val runtimeOwnerPaths = listOf(
+            "app/src/main/java/com/folklore25/ghosthand/AccessibilityTreeSnapshotProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionNavigationRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteSupport.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionTapClickRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/input/InputRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadFindRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenRouteHandlers.kt",
+            "app/src/main/java/com/folklore25/ghosthand/screen/find/ScreenFindPayloads.kt",
+            "app/src/main/java/com/folklore25/ghosthand/screen/read/ScreenReadPayloadComposer.kt",
+            "app/src/main/java/com/folklore25/ghosthand/server/LocalApiServerCore.kt"
+        )
+
+        runtimeOwnerPaths.forEach { path ->
+            val source = TestFileSupport.readProjectFile(path, path.removePrefix("app/"))
+            assertFalse(
+                "Runtime owner should not depend on GhosthandApiPayloads: $path",
+                source.contains("GhosthandApiPayloads")
+            )
+        }
+
+        val screenReadPayloadFields = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/screen/read/ScreenReadPayloadFields.kt",
+            "src/main/java/com/folklore25/ghosthand/screen/read/ScreenReadPayloadFields.kt"
+        )
+        assertFalse(
+            "Screen fallback fields should not carry a dead includeRetryHint parameter",
+            screenReadPayloadFields.contains("includeRetryHint")
+        )
+    }
 }
