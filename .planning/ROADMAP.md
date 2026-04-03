@@ -172,6 +172,6 @@ Plans:
 
 Plans:
 - [x] 24.3-01: Final architecture-fix note for StateCoordinator thinning only
-- [ ] 24.3-02: Move remaining state/read/preview collaborators fully out of StateCoordinator
+- [x] 24.3-02: Move remaining state/read/preview collaborators fully out of StateCoordinator
 - [ ] 24.3-03: Move remaining execution, clipboard, notification, and wait or utility delegations out of StateCoordinator
 - [ ] 24.3-04: Preserve passing areas and run final verification gates

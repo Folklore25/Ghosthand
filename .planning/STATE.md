@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-03T17:30:20.099Z"
+last_updated: "2026-04-03T17:41:28.173Z"
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 36
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,7 +22,7 @@ Current focus: **1.3.1 final StateCoordinator thinning** — Phase 24.3 is now p
 ## Current Position
 
 Phase: 24.3 (final-statecoordinator-thinning-for-maintainability-convergence) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 - **Phase:** 24.3
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
@@ -61,17 +61,19 @@ Overall: Ghosthand’s maintainability convergence now largely passes review exc
 - [Phase 24.2]: StateCoordinator now delegates health, find, read, preview, and execution composition to domain collaborators.
 - [Phase 24.2]: Screenshot fallback selection stays in an explicit non-root execution seam instead of living in StateCoordinator.
 - [Phase 24.3]: The final follow-up is now bound to a strict plan split: 24.3-02 only moves state/read/preview ownership, 24.3-03 only moves execution and utility ownership, and 24.3-04 only preserves the already-passing areas and verifies them.
+- [Phase 24.3]: Plan 24.3-02 moved state, tree/find, and preview read composition behind StateReadCoordinator, ScreenSnapshotCoordinator, ScreenFindCoordinator, and ScreenPreviewCoordinator.
+- [Phase 24.3]: StateCoordinator remains a route-facing facade, but read-facing ownership now lives in bounded collaborators so plan 24.3-03 can focus only on execution and utility thinning.
 
 ## Blockers / Concerns
 
 - `.planning/` and `docs/` are now local-only and intentionally untracked, so planning truth is local workspace state rather than repo-shared state.
-- The last remaining strict-review blocker is the still-too-central 720-line `state/StateCoordinator.kt` shell and its broad public/delegation surface.
+- The remaining strict-review blocker is the still-too-central 693-line `state/StateCoordinator.kt` shell and its remaining execution, utility, and wait-facing surface.
 - OpenClaw and other external agent validation remain user-driven rather than directly invokable from this workspace.
 
 ## Session Continuity
 
-Last session: 2026-04-03T17:30:20.097Z
-Next action: execute Phase 24.3-02 to move the remaining state/read/preview ownership out of StateCoordinator without reopening already-passing convergence areas.
+Last session: 2026-04-03T17:41:28.171Z
+Next action: execute Phase 24.3-03 to move the remaining execution, clipboard, notification, and wait or utility delegations out of StateCoordinator without reopening the read/state/preview ownership moved in 24.3-02.
 
 ## Performance Metrics
 
@@ -82,3 +84,4 @@ Next action: execute Phase 24.3-02 to move the remaining state/read/preview owne
 | 24.2 | 01 | 4m | 1 | 4 |
 | 24.2 | 02 | 8 min | 1 | 11 |
 | 24.3 | 01 | 0 min | 1 | 4 |
+| 24.3 | 02 | 4m | 1 | 8 |
