@@ -6,6 +6,18 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.routes.action.buildActionEffectDisclosure
+import com.folklore25.ghosthand.routes.action.buildClickDisclosure
+import com.folklore25.ghosthand.routes.action.clickFailureErrorCode
+import com.folklore25.ghosthand.routes.action.clickFailureMessage
+import com.folklore25.ghosthand.routes.action.buildMotionDisclosure
+import com.folklore25.ghosthand.routes.action.buildPostActionState
+import com.folklore25.ghosthand.routes.read.buildFindDisclosure
+import com.folklore25.ghosthand.routes.read.buildScreenDisclosure
+import com.folklore25.ghosthand.routes.wait.NormalizedWaitConditionResult
+import com.folklore25.ghosthand.routes.wait.buildWaitConditionDisclosure
+import com.folklore25.ghosthand.routes.wait.buildWaitUiChangeDisclosure
+import com.folklore25.ghosthand.routes.wait.normalizeWaitConditionResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
