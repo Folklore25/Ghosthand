@@ -253,24 +253,32 @@ class StateCoordinatorStatePayloadTest {
     }
 
     @Test
-    fun coordinatorDelegatesRuntimePayloadAssemblyToStateHealthModule() {
+    fun coordinatorDelegatesStateReadCompositionToDedicatedStateReadCoordinator() {
         val coordinator = TestFileSupport.readProjectFile(
             "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
             "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
-        val healthPayloads = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/state/health/StateHealthPayloads.kt",
-            "src/main/java/com/folklore25/ghosthand/state/health/StateHealthPayloads.kt"
+        val stateReadCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/state/read/StateReadCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/state/read/StateReadCoordinator.kt"
         )
 
+        assertTrue(coordinator.contains("private val stateReadCoordinator = StateReadCoordinator("))
         assertTrue(coordinator.contains("private val stateHealthPayloads = StateHealthPayloads"))
         assertTrue(coordinator.contains("stateHealthPayloads.createHealthPayload("))
-        assertTrue(coordinator.contains("stateHealthPayloads.createDevicePayload("))
-        assertTrue(coordinator.contains("stateHealthPayloads.createForegroundPayload("))
-        assertTrue(coordinator.contains("stateHealthPayloads.createInfoPayload("))
-        assertFalse(coordinator.contains("fun createHealthPayload(): JSONObject {\n        val runtimeState = runtimeStateProvider()"))
-        assertTrue(healthPayloads.contains("fun createHealthPayload("))
-        assertTrue(healthPayloads.contains("fun createInfoPayload("))
+        assertTrue(coordinator.contains("stateReadCoordinator.createStatePayload()"))
+        assertTrue(coordinator.contains("stateReadCoordinator.createForegroundPayload()"))
+        assertTrue(coordinator.contains("stateReadCoordinator.createDevicePayload()"))
+        assertTrue(coordinator.contains("stateReadCoordinator.createInfoPayload()"))
+        assertFalse(coordinator.contains("stateHealthPayloads.createDevicePayload("))
+        assertFalse(coordinator.contains("stateHealthPayloads.createForegroundPayload("))
+        assertFalse(coordinator.contains("stateHealthPayloads.createInfoPayload("))
+        assertTrue(stateReadCoordinator.contains("fun createStatePayload(): JSONObject"))
+        assertTrue(stateReadCoordinator.contains("fun createForegroundPayload(): JSONObject"))
+        assertTrue(stateReadCoordinator.contains("fun createDevicePayload(): JSONObject"))
+        assertTrue(stateReadCoordinator.contains("fun createInfoPayload(): JSONObject"))
+        assertTrue(stateReadCoordinator.contains("StatePayloadComposer"))
+        assertTrue(stateReadCoordinator.contains("StateHealthPayloads"))
     }
 
     @Test

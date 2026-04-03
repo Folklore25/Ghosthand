@@ -434,17 +434,18 @@ class StateCoordinatorScreenPayloadTest {
             "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
             "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
-        val screenFindPayloads = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/screen/find/ScreenFindPayloads.kt",
-            "src/main/java/com/folklore25/ghosthand/screen/find/ScreenFindPayloads.kt"
+        val screenFindCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/screen/find/ScreenFindCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/screen/find/ScreenFindCoordinator.kt"
         )
 
-        assertTrue(coordinator.contains("private val screenFindPayloads = ScreenFindPayloads"))
-        assertTrue(coordinator.contains("screenFindPayloads.findResult("))
-        assertTrue(coordinator.contains("screenFindPayloads.focusedNodeResult("))
-        assertTrue(coordinator.contains("screenFindPayloads.focusedNodePayload("))
-        assertTrue(screenFindPayloads.contains("fun findPayload("))
-        assertTrue(screenFindPayloads.contains("fun focusedNodePayload("))
+        assertTrue(coordinator.contains("private val screenFindCoordinator = ScreenFindCoordinator("))
+        assertTrue(coordinator.contains("screenFindCoordinator.createFindPayload("))
+        assertTrue(coordinator.contains("screenFindCoordinator.findResult("))
+        assertTrue(coordinator.contains("screenFindCoordinator.getFocusedNodeResult()"))
+        assertTrue(coordinator.contains("screenFindCoordinator.createFocusedNodePayload("))
+        assertTrue(screenFindCoordinator.contains("fun createFindPayload("))
+        assertTrue(screenFindCoordinator.contains("fun getFocusedNodeResult(): FocusedNodeResult"))
     }
 
     @Test
@@ -453,20 +454,35 @@ class StateCoordinatorScreenPayloadTest {
             "app/src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt",
             "src/main/java/com/folklore25/ghosthand/state/StateCoordinator.kt"
         )
+        val snapshotCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/screen/read/ScreenSnapshotCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/screen/read/ScreenSnapshotCoordinator.kt"
+        )
         val readCoordinator = TestFileSupport.readProjectFile(
             "app/src/main/java/com/folklore25/ghosthand/screen/read/ScreenReadCoordinator.kt",
             "src/main/java/com/folklore25/ghosthand/screen/read/ScreenReadCoordinator.kt"
         )
-        val previewSupport = TestFileSupport.readProjectFile(
-            "app/src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCaptureSupport.kt",
-            "src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCaptureSupport.kt"
+        val previewCoordinator = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCoordinator.kt",
+            "src/main/java/com/folklore25/ghosthand/preview/ScreenPreviewCoordinator.kt"
         )
 
+        assertTrue(coordinator.contains("private val screenSnapshotCoordinator = ScreenSnapshotCoordinator("))
+        assertTrue(coordinator.contains("private val screenPreviewCoordinator = ScreenPreviewCoordinator("))
+        assertTrue(coordinator.contains("screenSnapshotCoordinator.getTreeSnapshotResult()"))
+        assertTrue(coordinator.contains("screenSnapshotCoordinator.createTreePayload("))
+        assertTrue(coordinator.contains("screenSnapshotCoordinator.createScreenPayload("))
         assertTrue(coordinator.contains("private val screenReadCoordinator = ScreenReadCoordinator("))
         assertTrue(coordinator.contains("screenReadCoordinator.createAccessibilityPayload("))
         assertTrue(coordinator.contains("screenReadCoordinator.createOcrPayload("))
         assertTrue(coordinator.contains("screenReadCoordinator.createHybridPayload("))
-        assertTrue(readCoordinator.contains("ScreenPreviewCaptureSupport"))
-        assertTrue(previewSupport.contains("fun withPreviewImage("))
+        assertTrue(coordinator.contains("captureScreenshot = screenPreviewCoordinator::captureBestScreenshot"))
+        assertTrue(coordinator.contains("screenPreviewCoordinator.captureBestScreenshot("))
+        assertTrue(snapshotCoordinator.contains("fun getTreeSnapshotResult(): AccessibilityTreeSnapshotResult"))
+        assertTrue(snapshotCoordinator.contains("fun createTreePayload("))
+        assertTrue(snapshotCoordinator.contains("fun createScreenPayload("))
+        assertTrue(readCoordinator.contains("captureScreenshot"))
+        assertTrue(previewCoordinator.contains("fun captureBestScreenshot("))
+        assertTrue(previewCoordinator.contains("fun hasMediaProjection(): Boolean"))
     }
 }
