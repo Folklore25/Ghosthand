@@ -18,6 +18,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 24: Maintainability Convergence For 1.3.1** - Refactor the 1.x runtime into cleaner maintainable modules, converge state and contract layers, normalize vocabulary, strengthen test ownership, and prepare a clean future 2.0 root-plane seam without implementing root functionality.
 - [x] **Phase 24.1: Maintainability Convergence Review Fix Pass** - Finish the failed 1.3.1 maintainability convergence work by materially thinning `LocalApiServer` and `StateCoordinator`, enforcing real layer ownership, introducing real package/domain structure, converging test ownership, and strengthening the non-root to future-root seam without adding features. (completed 2026-04-03)
 - [ ] **Phase 24.2: Maintainability Convergence Fix 02** - Finish the still-unresolved 1.3.1 convergence work by thinning `StateCoordinator` further, breaking up the new large handler/payload monoliths, and establishing canonical ownership of shared state-legibility concepts without adding features.
+- [ ] **Phase 24.3: Final StateCoordinator Thinning For Maintainability Convergence** - Resolve the last strict-review blocker by turning `StateCoordinator` into a true orchestration shell while preserving the already-passing LocalApiServer/package/test/canonical-ownership gains.
 
 ## Phase Details
 
@@ -156,3 +157,21 @@ Plans:
 - [ ] 24.2-03: Reduce the new large route and payload monoliths by stable behavior family
 - [ ] 24.2-04: Establish canonical ownership of render/readability and related state-legibility concepts
 - [ ] 24.2-05: Preserve package/test convergence and run final verification gates
+
+### Phase 24.3: Final StateCoordinator Thinning For Maintainability Convergence
+**Goal**: Finish the last strict maintainability-convergence blocker by materially thinning `StateCoordinator` until it reads as a wiring and delegation shell instead of a mega-coordinator.
+**Depends on**: Phase 24.2
+**Success Criteria** (what must be TRUE):
+  1. [FIX3-01] `StateCoordinator` is no longer reasonably describable as a mega-coordinator and is materially smaller than its current 720-line form.
+  2. [FIX3-02] Concrete state/health/info/device/foreground, screen/tree/find/focused-node, screenshot/preview, and interaction or utility delegations move to clearer collaborator-owned modules.
+  3. [FIX3-03] Clipboard, notification, wait, and gesture-related accessors are reduced so the coordinator no longer acts as the default home for unrelated domain behavior.
+  4. [FIX3-04] The already-passing LocalApiServer, package layout, test structure, canonical render/readability ownership, and current non-root seam remain intact.
+  5. [FIX3-05] No new runtime capabilities, root/libsu work, workflow steering, or unrelated scope is introduced.
+  6. [FIX3-06] The Android project still compiles after the pass lands.
+**Plans**: TBD
+
+Plans:
+- [x] 24.3-01: Final architecture-fix note for StateCoordinator thinning only
+- [ ] 24.3-02: Move remaining state/read/preview collaborators fully out of StateCoordinator
+- [ ] 24.3-03: Move remaining execution, clipboard, notification, and wait or utility delegations out of StateCoordinator
+- [ ] 24.3-04: Preserve passing areas and run final verification gates
