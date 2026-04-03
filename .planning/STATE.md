@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-03T16:39:22.386Z"
+last_updated: "2026-04-03T17:25:30.275Z"
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 3
-  total_plans: 32
-  completed_plans: 21
+  total_plans: 36
+  completed_plans: 23
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.3.1 maintainability convergence fix 02** — Phase 24.2 is now planned as a strict second corrective pass to resolve the still-open coordinator, monolith, and canonical-ownership failures without broadening scope or adding features.
+Current focus: **1.3.1 final StateCoordinator thinning** — Phase 24.3 is now planned as a strict final follow-up pass to resolve the last maintainability-convergence blocker without reopening already-passing areas.
 
 ## Current Position
 
-Phase: 24.2 (maintainability-convergence-fix-02) — EXECUTING
-Plan: 3 of 5
+Phase: 24.3 (final-statecoordinator-thinning-for-maintainability-convergence) — EXECUTING
+Plan: 1 of 4
 
-- **Phase:** 24.2
+- **Phase:** 24.3
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Ready to execute
+- **Status:** Executing Phase 24.3
 
 ## Progress
 
@@ -38,18 +38,18 @@ Plan: 3 of 5
 - Phase 24: **PLANNED FOR V1.3.1** — maintainability convergence, state or contract layering cleanup, vocabulary normalization, test ownership cleanup, and future 2.0 seam preparation
 - Phase 24.1: **PLANNED FOR V1.3.1 FIX PASS** — strict follow-up for LocalApiServer and StateCoordinator thinning, real package/domain decomposition, real layer convergence, real test ownership convergence, and stronger execution/observation seams
 - Phase 24.2: **PLANNED FOR V1.3.1 FIX PASS 02** — strict follow-up for the still-large coordinator, new handler/payload mini-monoliths, and missing canonical ownership of render/readability/state-legibility concepts
+- Phase 24.3: **PLANNED FOR V1.3.1 FIX PASS 03** — strict final follow-up for the last remaining blocker: a still-too-large StateCoordinator
 
-Overall: Ghosthand has made meaningful structural progress, but strict review still rejects the maintainability convergence target until the remaining coordinator size, replacement-monolith, and canonical-ownership problems are actually removed.
+Overall: Ghosthand’s maintainability convergence now largely passes review except for one remaining blocker: `StateCoordinator` still acting as a too-central coordination surface. The final follow-up is therefore intentionally narrow.
 
 ## Recent Decisions
 
 | Decision | Rationale |
 |---|---|
-| The second strict follow-up exists because 24.1 still did not satisfy maintainability convergence review | Structural progress is not enough if the remaining change points are still oversized and drift-prone |
-| Phase 24.2 now has a binding architecture-fix note before more code movement | The corrective pass needs an explicit acceptance gate that maps every remaining review failure to required ownership moves |
-| `StateCoordinator` is still too central at roughly 867 lines | The coordinator still mixes too many unrelated screen/state/input/preview responsibilities |
-| New large handler/payload files replaced the old monoliths | `ActionRouteHandlers`, `ReadRouteHandlers`, and `GhosthandPayloadSupport` are still too large to count as converged ownership |
-| Canonical ownership of render/readability/state-legibility concepts is still missing | Review explicitly called out duplicated derivation paths as a remaining failure |
+| The final strict follow-up exists because one blocker still remains after the previous passes | The coordinator is still too central for strict acceptance |
+| Already-passing areas should not be reopened | LocalApiServer, package layout, test structure, and canonical render/readability ownership are no longer the review blockers |
+| This pass should only finish StateCoordinator thinning | The remaining work is coordinator-centric, not another broad architecture wave |
+| Phase 24.3 is now bound to a plan-by-plan coordinator-only split | Plan 24.3-02 owns state/read/preview moves, 24.3-03 owns execution and utility moves, and 24.3-04 only preserves and verifies |
 
 ## Decisions
 
@@ -60,17 +60,18 @@ Overall: Ghosthand has made meaningful structural progress, but strict review st
 - [Phase 24.2]: Phase 24.2 now executes against a binding architecture-fix note that maps each remaining review failure to a required ownership move.
 - [Phase 24.2]: StateCoordinator now delegates health, find, read, preview, and execution composition to domain collaborators.
 - [Phase 24.2]: Screenshot fallback selection stays in an explicit non-root execution seam instead of living in StateCoordinator.
+- [Phase 24.3]: The final follow-up is now bound to a strict plan split: 24.3-02 only moves state/read/preview ownership, 24.3-03 only moves execution and utility ownership, and 24.3-04 only preserves the already-passing areas and verifies them.
 
 ## Blockers / Concerns
 
 - `.planning/` and `docs/` are now local-only and intentionally untracked, so planning truth is local workspace state rather than repo-shared state.
-- Remaining strict-review failures are now concentrated in `routes/action/ActionRouteHandlers.kt` (657), `payload/GhosthandPayloadSupport.kt` (543), `routes/read/ReadRouteHandlers.kt` (468), and the remaining 720-line `state/StateCoordinator.kt` shell.
+- The last remaining strict-review blocker is the still-too-central 720-line `state/StateCoordinator.kt` shell and its broad public/delegation surface.
 - OpenClaw and other external agent validation remain user-driven rather than directly invokable from this workspace.
 
 ## Session Continuity
 
-Last session: 2026-04-03T16:39:15.278Z
-Next action: execute Phase 24.2-03 to split the remaining large route and payload files by stable behavior family while preserving the new coordinator and execution seams.
+Last session: 2026-04-04
+Next action: execute Phase 24.3 starting with a binding architecture note, then finish the last remaining coordinator thinning work without reopening already-passing convergence areas.
 
 ## Performance Metrics
 
