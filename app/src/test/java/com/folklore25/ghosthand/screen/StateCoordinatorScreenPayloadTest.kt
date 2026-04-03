@@ -217,11 +217,11 @@ class StateCoordinatorScreenPayloadTest {
             )
         )
 
-        val retryHint = payload["retryHint"] as Map<*, *>
         assertEquals("limited_accessibility", payload["renderMode"])
         assertEquals("limited", payload["surfaceReadability"])
-        assertEquals(ScreenReadMode.HYBRID.wireValue, retryHint["source"])
-        assertEquals("accessibility_operationally_insufficient", retryHint["reason"])
+        assertEquals(ScreenReadMode.HYBRID.wireValue, payload["suggestedSource"])
+        assertEquals("accessibility_operationally_insufficient", payload["fallbackReason"])
+        assertFalse(payload.containsKey("retryHint"))
     }
 
     @Test

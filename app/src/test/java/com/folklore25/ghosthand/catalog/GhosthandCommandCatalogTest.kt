@@ -235,10 +235,10 @@ class GhosthandCommandCatalogTest {
         assertTrue(screenRoute.responseFields.contains("ocrElementCount"))
         assertTrue(screenRoute.responseFields.contains("usedOcrFallback"))
         assertTrue(screenRoute.responseFields.contains("focusedEditablePresent"))
-        assertTrue(screenRoute.responseFields.contains("suggestedFallback"))
         assertTrue(screenRoute.responseFields.contains("suggestedSource"))
         assertTrue(screenRoute.responseFields.contains("fallbackReason"))
-        assertTrue(screenRoute.responseFields.contains("retryHint"))
+        assertFalse(screenRoute.responseFields.contains("suggestedFallback"))
+        assertFalse(screenRoute.responseFields.contains("retryHint"))
         assertFalse(screenRoute.responseFields.contains("previewImage"))
         assertTrue(screenRoute.responseFields.contains("foregroundStableDuringCapture"))
         assertTrue(screenRoute.responseFields.contains("partialOutput"))
@@ -267,7 +267,7 @@ class GhosthandCommandCatalogTest {
         assertTrue(screenRoute.description.contains("surface readability"))
         assertTrue(screenRoute.description.contains("preview availability"))
         assertTrue(screenRoute.description.contains("previewPath"))
-        assertTrue(screenRoute.description.contains("retry hint"))
+        assertTrue(screenRoute.description.contains("fallback recommendation"))
         assertTrue(screenRoute.description.contains("modal transitions"))
 
         val foregroundRoute = GhosthandCommandCatalog.commands.first { it.id == "foreground" }

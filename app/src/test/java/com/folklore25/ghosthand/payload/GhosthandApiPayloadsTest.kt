@@ -683,10 +683,10 @@ class GhosthandApiPayloadsTest {
 
         assertEquals(true, payload["partialOutput"])
         assertEquals(2, payload["returnedElementCount"])
-        assertNull(payload["suggestedFallback"])
-        assertNull(payload["suggestedSource"])
-        assertNull(payload["fallbackReason"])
-        assertNull(payload["retryHint"])
+        assertFalse(payload.containsKey("suggestedFallback"))
+        assertFalse(payload.containsKey("suggestedSource"))
+        assertFalse(payload.containsKey("fallbackReason"))
+        assertFalse(payload.containsKey("retryHint"))
     }
 
     @Test
@@ -708,14 +708,12 @@ class GhosthandApiPayloadsTest {
             clickableOnly = false
         )
 
-        val retryHint = payload["retryHint"] as Map<*, *>
         assertEquals(true, payload["partialOutput"])
         assertEquals(1, payload["returnedElementCount"])
-        assertEquals(ScreenReadMode.HYBRID.wireValue, payload["suggestedFallback"])
         assertEquals(ScreenReadMode.HYBRID.wireValue, payload["suggestedSource"])
         assertEquals("accessibility_operationally_insufficient", payload["fallbackReason"])
-        assertEquals(ScreenReadMode.HYBRID.wireValue, retryHint["source"])
-        assertEquals("accessibility_operationally_insufficient", retryHint["reason"])
+        assertFalse(payload.containsKey("suggestedFallback"))
+        assertFalse(payload.containsKey("retryHint"))
     }
 
     @Test
@@ -735,14 +733,12 @@ class GhosthandApiPayloadsTest {
             clickableOnly = false
         )
 
-        val retryHint = payload["retryHint"] as Map<*, *>
         assertEquals(true, payload["partialOutput"])
         assertEquals(0, payload["returnedElementCount"])
-        assertEquals(ScreenReadMode.OCR.wireValue, payload["suggestedFallback"])
         assertEquals(ScreenReadMode.OCR.wireValue, payload["suggestedSource"])
         assertEquals("accessibility_empty", payload["fallbackReason"])
-        assertEquals(ScreenReadMode.OCR.wireValue, retryHint["source"])
-        assertEquals("accessibility_empty", retryHint["reason"])
+        assertFalse(payload.containsKey("suggestedFallback"))
+        assertFalse(payload.containsKey("retryHint"))
     }
 
     @Test
@@ -774,16 +770,14 @@ class GhosthandApiPayloadsTest {
             clickableOnly = false
         )
 
-        val retryHint = payload["retryHint"] as Map<*, *>
         assertEquals(true, payload["partialOutput"])
         assertEquals(134, payload["candidateNodeCount"])
         assertEquals(70, payload["returnedElementCount"])
         assertEquals(64, payload["omittedNodeCount"])
-        assertEquals(ScreenReadMode.HYBRID.wireValue, payload["suggestedFallback"])
         assertEquals(ScreenReadMode.HYBRID.wireValue, payload["suggestedSource"])
         assertEquals("accessibility_operationally_insufficient", payload["fallbackReason"])
-        assertEquals(ScreenReadMode.HYBRID.wireValue, retryHint["source"])
-        assertEquals("accessibility_operationally_insufficient", retryHint["reason"])
+        assertFalse(payload.containsKey("suggestedFallback"))
+        assertFalse(payload.containsKey("retryHint"))
     }
 
     @Test
