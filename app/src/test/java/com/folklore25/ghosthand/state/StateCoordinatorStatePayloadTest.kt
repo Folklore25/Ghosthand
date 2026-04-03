@@ -8,8 +8,10 @@ package com.folklore25.ghosthand
 
 import com.folklore25.ghosthand.capability.GovernedCapabilityPayloads
 import com.folklore25.ghosthand.state.StatePayloadComposer
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -140,5 +142,35 @@ class StateCoordinatorStatePayloadTest {
 
         assertTrue(statePayloadSupport.contains("GovernedCapabilityPayloads.accessibilityToJson"))
         assertTrue(statePayloadSupport.contains("GovernedCapabilityPayloads.screenshotToJson"))
+    }
+
+    @Test
+    fun postActionStateComposerOwnsCompactStateSummaryAssembly() {
+        val state = PostActionStateComposer.fromObservedEffect(
+            actionEffect = ActionEffectObservation(
+                stateChanged = true,
+                beforeSnapshotToken = "before",
+                afterSnapshotToken = "after",
+                finalPackageName = "com.example",
+                finalActivity = "ExampleActivity"
+            ),
+            fallbackSnapshot = null
+        )
+
+        assertEquals("com.example", state?.packageName)
+        assertEquals("ExampleActivity", state?.activity)
+        assertEquals("after", state?.snapshotToken)
+        assertNull(state?.renderMode)
+    }
+
+    @Test
+    fun routeActionHandlersDelegatePostActionStateOwnershipToStateSummaryModule() {
+        val handlers = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteHandlers.kt",
+            "src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteHandlers.kt"
+        )
+
+        assertTrue(handlers.contains("PostActionStateComposer.fromObservedEffect("))
+        assertFalse(handlers.contains("internal fun buildPostActionState("))
     }
 }

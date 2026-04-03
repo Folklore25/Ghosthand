@@ -111,6 +111,7 @@ class GhosthandApiPayloadsTest {
         assertEquals("snap-after", fields["afterSnapshotToken"])
         assertEquals("com.example.target", fields["finalPackageName"])
         assertEquals("TargetActivity", fields["finalActivity"])
+        assertFalse(fields.containsKey("postActionState"))
     }
 
     @Test
@@ -200,6 +201,16 @@ class GhosthandApiPayloadsTest {
         assertEquals("com.example.target", postActionState["packageName"])
         assertEquals("TargetActivity", postActionState["activity"])
         assertEquals("snap-after", postActionState["snapshotToken"])
+    }
+
+    @Test
+    fun interactionPayloadSupportKeepsActionEffectSeparateFromPostActionState() {
+        val payloadSupport = TestFileSupport.readProjectFile(
+            "app/src/main/java/com/folklore25/ghosthand/GhosthandPayloadSupport.kt",
+            "src/main/java/com/folklore25/ghosthand/GhosthandPayloadSupport.kt"
+        )
+
+        assertFalse(payloadSupport.contains("fun actionEffectFields(effect: ActionEffectObservation): Map<String, Any?> {\n        return linkedMapOf<String, Any?>(\n            \"stateChanged\" to effect.stateChanged,\n            \"beforeSnapshotToken\" to effect.beforeSnapshotToken,\n            \"afterSnapshotToken\" to effect.afterSnapshotToken,\n            \"finalPackageName\" to effect.finalPackageName,\n            \"finalActivity\" to effect.finalActivity\n        ).apply {\n            postActionStateFields("))
     }
 
     @Test
