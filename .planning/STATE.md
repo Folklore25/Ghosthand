@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-03T17:41:28.173Z"
+last_updated: "2026-04-03T19:11:03.500Z"
 progress:
-  total_phases: 8
-  completed_phases: 3
-  total_plans: 36
-  completed_plans: 25
+  total_phases: 9
+  completed_phases: 5
+  total_plans: 40
+  completed_plans: 29
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,14 +17,14 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.3.1 final StateCoordinator thinning** — Phase 24.3 is now planned as a strict final follow-up pass to resolve the last maintainability-convergence blocker without reopening already-passing areas.
+Current focus: **1.3.1 clean closeout** — Phase 24.4 is now planned as a bounded closeout pass to finish the 1.3.x line cleanly without feature expansion or 1.4.0 work.
 
 ## Current Position
 
-Phase: 24.3 (final-statecoordinator-thinning-for-maintainability-convergence) — EXECUTING
-Plan: 3 of 4
+Phase: 24.4 (1-3-1-clean-closeout) — EXECUTING
+Plan: 2 of 4
 
-- **Phase:** 24.3
+- **Phase:** 24.4
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
 - **Status:** Ready to execute
@@ -39,17 +39,17 @@ Plan: 3 of 4
 - Phase 24.1: **PLANNED FOR V1.3.1 FIX PASS** — strict follow-up for LocalApiServer and StateCoordinator thinning, real package/domain decomposition, real layer convergence, real test ownership convergence, and stronger execution/observation seams
 - Phase 24.2: **PLANNED FOR V1.3.1 FIX PASS 02** — strict follow-up for the still-large coordinator, new handler/payload mini-monoliths, and missing canonical ownership of render/readability/state-legibility concepts
 - Phase 24.3: **PLANNED FOR V1.3.1 FIX PASS 03** — strict final follow-up for the last remaining blocker: a still-too-large StateCoordinator
+- Phase 24.4: **PLANNED FOR V1.3.1 CLEAN CLOSEOUT** — preview cleanup, field/hint convergence, bounded code cleanup, and final contract alignment for the 1.3.x line
 
-Overall: Ghosthand’s maintainability convergence now largely passes review except for one remaining blocker: `StateCoordinator` still acting as a too-central coordination surface. The final follow-up is therefore intentionally narrow.
+Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview, hinting, and final contract surfaces become cleaner and less noisy before 1.4.0 starts.
 
 ## Recent Decisions
 
 | Decision | Rationale |
 |---|---|
-| The final strict follow-up exists because one blocker still remains after the previous passes | The coordinator is still too central for strict acceptance |
-| Already-passing areas should not be reopened | LocalApiServer, package layout, test structure, and canonical render/readability ownership are no longer the review blockers |
-| This pass should only finish StateCoordinator thinning | The remaining work is coordinator-centric, not another broad architecture wave |
-| Phase 24.3 is now bound to a plan-by-plan coordinator-only split | Plan 24.3-02 owns state/read/preview moves, 24.3-03 owns execution and utility moves, and 24.3-04 only preserves and verifies |
+| 1.3.x now needs a clean closeout instead of another feature wave | The remaining work is cleanup and contract sharpening, not capability expansion |
+| Preview should not remain an advertised-but-hollow mechanism | If preview exists in schema, the retrieval path must be clear and actually usable |
+| Hint fields should help, not accumulate into background noise | The closeout should reduce overlap and clutter rather than rename it |
 
 ## Decisions
 
@@ -63,17 +63,19 @@ Overall: Ghosthand’s maintainability convergence now largely passes review exc
 - [Phase 24.3]: The final follow-up is now bound to a strict plan split: 24.3-02 only moves state/read/preview ownership, 24.3-03 only moves execution and utility ownership, and 24.3-04 only preserves the already-passing areas and verifies them.
 - [Phase 24.3]: Plan 24.3-02 moved state, tree/find, and preview read composition behind StateReadCoordinator, ScreenSnapshotCoordinator, ScreenFindCoordinator, and ScreenPreviewCoordinator.
 - [Phase 24.3]: StateCoordinator remains a route-facing facade, but read-facing ownership now lives in bounded collaborators so plan 24.3-03 can focus only on execution and utility thinning.
+- [Phase 24.4]: Preview metadata now publishes previewPath on /screen and routes retrieval through /screenshot instead of opaque preview tokens.
+- [Phase 24.4]: Inline preview thumbnail embedding and includePreview opt-in were removed so advertised preview access stays lightweight and truthful.
 
 ## Blockers / Concerns
 
 - `.planning/` and `docs/` are now local-only and intentionally untracked, so planning truth is local workspace state rather than repo-shared state.
-- The remaining strict-review blocker is the still-too-central 693-line `state/StateCoordinator.kt` shell and its remaining execution, utility, and wait-facing surface.
+- `docs/API.md` is absent in this workspace, so any final contract alignment must stay bounded to the command catalog/runtime surface rather than turning into a docs project.
 - OpenClaw and other external agent validation remain user-driven rather than directly invokable from this workspace.
 
 ## Session Continuity
 
-Last session: 2026-04-03T17:41:28.171Z
-Next action: execute Phase 24.3-03 to move the remaining execution, clipboard, notification, and wait or utility delegations out of StateCoordinator without reopening the read/state/preview ownership moved in 24.3-02.
+Last session: 2026-04-03T19:10:46.397Z
+Next action: execute Phase 24.4 plan 02 for field and hint convergence with noise reduction.
 
 ## Performance Metrics
 
@@ -85,3 +87,4 @@ Next action: execute Phase 24.3-03 to move the remaining execution, clipboard, n
 | 24.2 | 02 | 8 min | 1 | 11 |
 | 24.3 | 01 | 0 min | 1 | 4 |
 | 24.3 | 02 | 4m | 1 | 8 |
+| 24.4 | 01 | 9 min | 1 | 14 |

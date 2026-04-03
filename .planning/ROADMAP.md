@@ -19,6 +19,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [x] **Phase 24.1: Maintainability Convergence Review Fix Pass** - Finish the failed 1.3.1 maintainability convergence work by materially thinning `LocalApiServer` and `StateCoordinator`, enforcing real layer ownership, introducing real package/domain structure, converging test ownership, and strengthening the non-root to future-root seam without adding features. (completed 2026-04-03)
 - [ ] **Phase 24.2: Maintainability Convergence Fix 02** - Finish the still-unresolved 1.3.1 convergence work by thinning `StateCoordinator` further, breaking up the new large handler/payload monoliths, and establishing canonical ownership of shared state-legibility concepts without adding features.
 - [ ] **Phase 24.3: Final StateCoordinator Thinning For Maintainability Convergence** - Resolve the last strict-review blocker by turning `StateCoordinator` into a true orchestration shell while preserving the already-passing LocalApiServer/package/test/canonical-ownership gains.
+- [ ] **Phase 24.4: 1.3.1 Clean Closeout** - Finish the 1.3.x line cleanly by making preview actually usable, reducing hint/field noise, cleaning transitional code, and aligning the final runtime/catalog contract without adding features.
 
 ## Phase Details
 
@@ -175,3 +176,22 @@ Plans:
 - [x] 24.3-02: Move remaining state/read/preview collaborators fully out of StateCoordinator
 - [ ] 24.3-03: Move remaining execution, clipboard, notification, and wait or utility delegations out of StateCoordinator
 - [ ] 24.3-04: Preserve passing areas and run final verification gates
+
+### Phase 24.4: 1.3.1 Clean Closeout
+**Goal**: Close the 1.3.x line cleanly by making preview access actually usable, converging noisy and redundant hint fields, cleaning transitional code/contract rough edges, and aligning the final 1.3.1 runtime surface without expanding scope.
+**Depends on**: Phase 24.3
+**Success Criteria** (what must be TRUE):
+  1. [CLOSE-01] Preview is actually usable when advertised, with one clear lightweight retrieval path.
+  2. [CLOSE-02] Fallback and hint fields are cleaner, less redundant, and less noisy in high-frequency `/screen` flows.
+  3. [CLOSE-03] Meaningless contract clutter such as obviously useless always-null fields is removed.
+  4. [CLOSE-04] Project/code structure is cleaner at the end of 1.3.x than after the refactor passes, without reopening architecture-scale redesign.
+  5. [CLOSE-05] Command catalog, runtime payloads, and any present contract docs align to one final 1.3.1 surface.
+  6. [CLOSE-06] No 1.4.0 work, new major capabilities, workflow-planner behavior, or root/libsu work is introduced.
+  7. [CLOSE-07] The Android project still compiles after the closeout lands.
+**Plans**: TBD
+
+Plans:
+- [x] 24.4-01: Preview mechanism cleanup and explicit retrieval-path alignment
+- [ ] 24.4-02: Field and hint convergence with noise reduction
+- [ ] 24.4-03: Project-structure and code cleanup for the 1.3.x line
+- [ ] 24.4-04: Final contract/catalog/docs alignment and closeout verification
