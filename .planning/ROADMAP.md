@@ -232,8 +232,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 25.1-01: Architecture note and root-package/capability-plane convergence map
+- [x] 25.1-01: Architecture note and root-package/capability-plane convergence map
 - [x] 25.1-02: Root-package and directory convergence into domain-owned packages
 - [x] 25.1-03: Capability Plane v2 definitions, availability modeling, and `/capabilities`
 - [x] 25.1-04: `/commands`, `/state`, and `/capabilities` alignment plus stale/dead/truth-conflicting cleanup
-- [ ] 25.1-05: Ownership tests, capability-plane tests, and full verification
+- [x] 25.1-05: Ownership tests, capability-plane tests, and full verification

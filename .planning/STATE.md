@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: verifying
 last_updated: "2026-04-04T11:18:26.741Z"
 progress:
   total_phases: 11
   completed_phases: 7
   total_plans: 50
-  completed_plans: 40
+  completed_plans: 41
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,12 +22,12 @@ Current focus: **1.4.0 architecture convergence** — Phase 25.1 is now planned 
 ## Current Position
 
 Phase: 25.1 (architecture-convergence-for-1-4-0) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 
 - **Phase:** 25.1
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Executing Phase 25.1
+- **Status:** Phase 25.1 complete — ownership, capability-plane, and verification gates passed
 
 ## Progress
 
@@ -88,6 +88,7 @@ Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 e
 - [Phase 25.1]: Root-directory convergence now relocates low-coupling provider, clipboard, notification, OCR, and integration helpers out of the root drop zone, reducing the root directory from 52 Kotlin files to 38 without disturbing the runtime namespace yet.
 - [Phase 25.1]: Capability Plane v2 now has canonical capability definitions, runtime availability derivation, and capability-centric presentation through `/capabilities`, while `/commands` begins to reference capability IDs instead of carrying capability meaning alone.
 - [Phase 25.1]: `/commands` now references canonical capability IDs, `/capabilities` carries the first-class capability burden, and `/state` projects lightweight runtime availability from the same capability source instead of duplicating route metadata.
+- [Phase 25.1]: Full local verification now passes with the root-directory convergence slice, `/capabilities`, and the aligned capability surfaces all on the 1.4.0 branch.
 
 ## Blockers / Concerns
 
@@ -98,7 +99,7 @@ Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 e
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: execute Phase 25.1-05 to finish ownership and capability-plane verification, then run the full build and unit-test gate.
+Next action: Phase 25.1 is complete; report results and decide whether to continue with post-phase branch work or the next roadmap step.
 
 ## Performance Metrics
 
@@ -122,3 +123,4 @@ Next action: execute Phase 25.1-05 to finish ownership and capability-plane veri
 | 25.1 | 02 | 12 min | 1 | 15 |
 | 25.1 | 03 | 14 min | 1 | 10 |
 | 25.1 | 04 | 10 min | 1 | 9 |
+| 25.1 | 05 | 3 min | 1 | 2 |
