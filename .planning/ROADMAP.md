@@ -20,6 +20,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 24.2: Maintainability Convergence Fix 02** - Finish the still-unresolved 1.3.1 convergence work by thinning `StateCoordinator` further, breaking up the new large handler/payload monoliths, and establishing canonical ownership of shared state-legibility concepts without adding features.
 - [ ] **Phase 24.3: Final StateCoordinator Thinning For Maintainability Convergence** - Resolve the last strict-review blocker by turning `StateCoordinator` into a true orchestration shell while preserving the already-passing LocalApiServer/package/test/canonical-ownership gains.
 - [x] **Phase 24.4: 1.3.1 Clean Closeout** - Finish the 1.3.x line cleanly by making preview actually usable, reducing hint/field noise, cleaning transitional code, and aligning the final runtime/catalog contract without adding features. (completed 2026-04-03)
+- [ ] **Phase 25: Agent-Native Interface Evolution For 1.4.0** - Evolve Ghosthand from a route collection into a more agent-native substrate by adding a bounded observation plane, strengthening the capability plane, normalizing action evidence, and only adding thin intent helpers if A/B/C earn them.
 
 ## Phase Details
 
@@ -195,3 +196,22 @@ Plans:
 - [x] 24.4-02: Field and hint convergence with noise reduction
 - [x] 24.4-03: Project-structure and code cleanup for the 1.3.x line
 - [x] 24.4-04: Final contract/catalog/docs alignment and closeout verification
+
+### Phase 25: Agent-Native Interface Evolution For 1.4.0
+**Goal**: Evolve Ghosthand beyond pure endpoint accumulation by keeping HTTP/JSON as the stable control base while adding a bounded observation plane, a stronger machine-readable capability plane, a more coherent action evidence plane, and only a thin intent layer if it clearly earns inclusion.
+**Depends on**: Phase 24.4
+**Success Criteria** (what must be TRUE):
+  1. [IFACE-01] A real observation plane v1 exists through a bounded pollable HTTP/JSON event route with cursor-based retrieval, compact event families, and explicit retention semantics.
+  2. [IFACE-02] `/commands` and current capability or state surfaces materially reduce agent guesswork about capability domains, preconditions, dynamic availability, failure classes, and truth type without becoming encyclopedic.
+  3. [IFACE-03] Major action routes expose a more coherent normalized action evidence family so agents can read performed truth, observed change, post-action state, ambiguity, and observation-mode hints faster.
+  4. [IFACE-04] Any intent helpers added remain thin, generic, inspectable, subordinate to primitives, and may be explicitly deferred if A/B/C do not justify them.
+  5. [IFACE-05] No root/libsu work, giant WebSocket/SSE streaming system, world-model store, app-specific heuristics, planner behavior, or endpoint sprawl is added.
+  6. [IFACE-06] The Android project still compiles and the new observation, capability, and action-evidence behavior is covered by focused regression tests.
+**Plans**: TBD
+
+Plans:
+- [ ] 25-01: Observation plane v1 with cursor-based `/events` retrieval and bounded event retention
+- [ ] 25-02: Capability plane cleanup and strengthening through `/commands` and runtime capability summaries
+- [ ] 25-03: Action evidence normalization across the main interaction routes
+- [ ] 25-04: Thin intent helper decision pass with explicit deferral unless a helper clearly earns inclusion
+- [ ] 25-05: Final contract alignment, focused regression coverage, and build verification

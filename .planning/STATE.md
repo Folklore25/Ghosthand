@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-04-03T19:36:13.088Z"
+status: executing
+last_updated: "2026-04-04T10:05:10.470Z"
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 6
-  total_plans: 40
-  completed_plans: 32
+  total_plans: 45
+  completed_plans: 33
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.3.1 clean closeout** — Phase 24.4 is now planned as a bounded closeout pass to finish the 1.3.x line cleanly without feature expansion or 1.4.0 work.
+Current focus: **1.4.0 agent-native interface evolution** — Phase 25 is now planned as a bounded layered-interface release that keeps HTTP/JSON stable while adding an observation plane, strengthening the capability plane, normalizing action evidence, and only allowing a thin intent layer if it earns inclusion.
 
 ## Current Position
 
-Phase: 24.4 (1-3-1-clean-closeout) — EXECUTING
-Plan: 4 of 4
+Phase: 25 (agent-native-interface-evolution-for-1-4-0) — EXECUTING
+Plan: 1 of 5
 
-- **Phase:** 24.4
+- **Phase:** 25
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase complete — ready for verification
+- **Status:** Executing Phase 25
 
 ## Progress
 
@@ -40,16 +40,17 @@ Plan: 4 of 4
 - Phase 24.2: **PLANNED FOR V1.3.1 FIX PASS 02** — strict follow-up for the still-large coordinator, new handler/payload mini-monoliths, and missing canonical ownership of render/readability/state-legibility concepts
 - Phase 24.3: **PLANNED FOR V1.3.1 FIX PASS 03** — strict final follow-up for the last remaining blocker: a still-too-large StateCoordinator
 - Phase 24.4: **PLANNED FOR V1.3.1 CLEAN CLOSEOUT** — preview cleanup, field/hint convergence, bounded code cleanup, and final contract alignment for the 1.3.x line
+- Phase 25: **PLANNED FOR V1.4.0** — agent-native interface evolution through observation plane v1, capability-plane strengthening, action-evidence normalization, and only a very thin intent layer if it is justified after A/B/C stabilize
 
-Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview, hinting, and final contract surfaces become cleaner and less noisy before 1.4.0 starts.
+Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 exists to make the substrate easier for agents to reason about with less polling, lower ambiguity, and stronger machine-readable self-description.
 
 ## Recent Decisions
 
 | Decision | Rationale |
 |---|---|
-| 1.3.x now needs a clean closeout instead of another feature wave | The remaining work is cleanup and contract sharpening, not capability expansion |
-| Preview should not remain an advertised-but-hollow mechanism | If preview exists in schema, the retrieval path must be clear and actually usable |
-| Hint fields should help, not accumulate into background noise | The closeout should reduce overlap and clutter rather than rename it |
+| 1.4.0 will evolve Ghosthand through layered exposure, not endpoint accumulation | The product goal is a clearer substrate with less request stitching, not more random routes |
+| Observation plane v1 will be pollable and cursor-based over HTTP/JSON | This keeps the event layer debuggable and bounded without prematurely adopting streaming complexity |
+| Thin intent helpers are gated behind A/B/C and may be explicitly deferred | The primitive, capability, observation, and evidence planes remain primary unless a helper clearly reduces repeated low-value reasoning |
 
 ## Decisions
 
@@ -71,6 +72,10 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 - [Phase 24.4]: Publish /commands from a catalog-owned serializer so runtime and tests share one closeout surface.
 - [Phase 24.4]: Keep explicit interaction defaults only where they communicate action semantics; drop null, empty, and not-applicable command metadata elsewhere.
 - [Phase 24.4]: Because docs/API.md is absent locally, finalize closeout contract alignment in the runtime/catalog only instead of creating new docs.
+- [Phase 25]: Keep HTTP/JSON as the stable control base and add a bounded pollable observation plane rather than replacing the current API model.
+- [Phase 25]: Strengthen the existing capability plane through `/commands` and runtime state surfaces instead of creating a separate self-description system.
+- [Phase 25]: Treat thin intent helpers as conditional scope that is only allowed after observation, capability, and evidence planes stabilize and only if the helper remains generic and inspectable.
+- [Phase 25]: Observation plane v1 now uses a bounded in-memory cursor log exposed through `/events`, with `/screen` publishing edge-triggered foreground, readability, fallback, preview, and transient accessibility events instead of a noisy firehose.
 
 ## Blockers / Concerns
 
@@ -80,8 +85,8 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:35:58.806Z
-Next action: verify Phase 24.4 clean closeout completion and prepare the next milestone step.
+Last session: 2026-04-04T00:00:00.000Z
+Next action: execute Phase 25-02 to strengthen `/commands` and runtime capability metadata now that the observation plane exists.
 
 ## Performance Metrics
 
@@ -97,3 +102,4 @@ Next action: verify Phase 24.4 clean closeout completion and prepare the next mi
 | 24.4 | 02 | 3 min | 1 | 6 |
 | 24.4 | 03 | 3 min | 1 | 13 |
 | 24.4 | 04 | 1 min | 2 | 3 |
+| 25 | 01 | 18 min | 1 | 11 |
