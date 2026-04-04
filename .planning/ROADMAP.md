@@ -213,5 +213,5 @@ Plans:
 - [x] 25-01: Observation plane v1 with cursor-based `/events` retrieval and bounded event retention
 - [x] 25-02: Capability plane cleanup and strengthening through `/commands` and runtime capability summaries
 - [x] 25-03: Action evidence normalization across the main interaction routes
-- [ ] 25-04: Thin intent helper decision pass with explicit deferral unless a helper clearly earns inclusion
+- [x] 25-04: Thin intent helper decision pass with explicit deferral unless a helper clearly earns inclusion
 - [ ] 25-05: Final contract alignment, focused regression coverage, and build verification

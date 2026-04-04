@@ -8,7 +8,7 @@ progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 45
-  completed_plans: 35
+  completed_plans: 36
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,7 +22,7 @@ Current focus: **1.4.0 agent-native interface evolution** — Phase 25 is now pl
 ## Current Position
 
 Phase: 25 (agent-native-interface-evolution-for-1-4-0) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 
 - **Phase:** 25
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
@@ -78,6 +78,7 @@ Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 e
 - [Phase 25]: Observation plane v1 now uses a bounded in-memory cursor log exposed through `/events`, with `/screen` publishing edge-triggered foreground, readability, fallback, preview, and transient accessibility events instead of a noisy firehose.
 - [Phase 25]: Capability-plane metadata now publishes `plane`, `availabilityModel`, `truthType`, `directness`, `preconditions`, and `failureModes` through `/commands`, while runtime capability summaries expose current blockers instead of only raw allowed/usable flags.
 - [Phase 25]: Major action routes now project one evidence family around `performed`, execution path/backend, observed change, compact post-action state, and bounded observation-shift hints instead of route-local payload conventions.
+- [Phase 25]: Thin intent helpers are explicitly deferred from 1.4.0 because the new observation, capability, and evidence planes already reduce the repeated mechanical reasoning without hiding primitive truth.
 
 ## Blockers / Concerns
 
@@ -88,7 +89,7 @@ Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 e
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: execute Phase 25-04 and make the thin-intent decision explicitly; defer helpers unless a very small generic helper clearly earns inclusion.
+Next action: execute Phase 25-05 for final contract alignment, regression coverage, and the full verification gate.
 
 ## Performance Metrics
 
@@ -107,3 +108,4 @@ Next action: execute Phase 25-04 and make the thin-intent decision explicitly; d
 | 25 | 01 | 18 min | 1 | 11 |
 | 25 | 02 | 12 min | 1 | 8 |
 | 25 | 03 | 19 min | 1 | 13 |
+| 25 | 04 | 4 min | 1 | 1 |
