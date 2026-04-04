@@ -6,40 +6,21 @@
 
 package com.folklore25.ghosthand.service.accessibility
 
+import com.folklore25.ghosthand.screen.find.AccessibilityNodeLocator
+import com.folklore25.ghosthand.state.device.ForegroundAppProvider
+import com.folklore25.ghosthand.interaction.execution.GestureStroke
+import com.folklore25.ghosthand.interaction.execution.GhostAccessibilityExecutionCore
+import com.folklore25.ghosthand.interaction.execution.GhostAccessibilityExecutionCoreRegistry
+import com.folklore25.ghosthand.interaction.execution.KeyInputDispatchResult
+import com.folklore25.ghosthand.interaction.execution.NodeClickDispatchResult
+import com.folklore25.ghosthand.screen.find.NodeResolutionResult
+import com.folklore25.ghosthand.interaction.execution.NodeTextDispatchResult
+import com.folklore25.ghosthand.state.runtime.RuntimeStateStore
+import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+import com.folklore25.ghosthand.interaction.execution.SwipeGestureDispatchDiagnostic
+import com.folklore25.ghosthand.interaction.execution.TextInputDispatchResult
+
 import com.folklore25.ghosthand.R
-import com.folklore25.ghosthand.capability.*
-import com.folklore25.ghosthand.catalog.*
-import com.folklore25.ghosthand.integration.github.*
-import com.folklore25.ghosthand.integration.projection.*
-import com.folklore25.ghosthand.interaction.accessibility.*
-import com.folklore25.ghosthand.interaction.clipboard.*
-import com.folklore25.ghosthand.interaction.effects.*
-import com.folklore25.ghosthand.interaction.execution.*
-import com.folklore25.ghosthand.notification.*
-import com.folklore25.ghosthand.payload.*
-import com.folklore25.ghosthand.preview.*
-import com.folklore25.ghosthand.screen.find.*
-import com.folklore25.ghosthand.screen.ocr.*
-import com.folklore25.ghosthand.screen.read.*
-import com.folklore25.ghosthand.screen.summary.*
-import com.folklore25.ghosthand.server.*
-import com.folklore25.ghosthand.server.http.*
-import com.folklore25.ghosthand.service.accessibility.*
-import com.folklore25.ghosthand.service.notification.*
-import com.folklore25.ghosthand.service.runtime.*
-import com.folklore25.ghosthand.state.*
-import com.folklore25.ghosthand.state.device.*
-import com.folklore25.ghosthand.state.diagnostics.*
-import com.folklore25.ghosthand.state.health.*
-import com.folklore25.ghosthand.state.read.*
-import com.folklore25.ghosthand.state.runtime.*
-import com.folklore25.ghosthand.state.summary.*
-import com.folklore25.ghosthand.ui.common.dialog.*
-import com.folklore25.ghosthand.ui.common.model.*
-import com.folklore25.ghosthand.ui.diagnostics.*
-import com.folklore25.ghosthand.ui.main.*
-import com.folklore25.ghosthand.ui.permissions.*
-import com.folklore25.ghosthand.wait.*
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
@@ -709,50 +690,22 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
     }
 
     private fun findEditableInputFocusNode(): AccessibilityNodeInfo? {
-        findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-            ?.takeIf(::isEditableTarget)
-            ?.let { return it }
-
-        findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
-            ?.takeIf(::isEditableTarget)
-            ?.let { return it }
-
-        return currentActiveRootOnMainThread()?.let(::findFocusedEditableNode)
+        return findEditableInputFocusNode(this, ::currentActiveRootOnMainThread)
     }
 
     private fun findFocusedEditableNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-        if (isEditableTarget(node) && (node.isFocused || node.isAccessibilityFocused)) {
-            return node
-        }
-
-        for (childIndex in 0 until node.childCount) {
-            val child = node.getChild(childIndex) ?: continue
-            val match = findFocusedEditableNode(child)
-            if (match != null) {
-                return match
-            }
-        }
-        return null
+        return com.folklore25.ghosthand.service.accessibility.findFocusedEditableNode(node)
     }
 
     private fun isEditableTarget(node: AccessibilityNodeInfo): Boolean {
-        return node.isEditable && node.isEnabled
+        return com.folklore25.ghosthand.service.accessibility.isEditableTarget(node)
     }
 
     private fun findClickableParent(
         node: AccessibilityNodeInfo,
         maxDepth: Int
     ): AccessibilityNodeInfo? {
-        var depth = 0
-        var current = node.parent
-        while (current != null && depth < maxDepth) {
-            if (current.isClickable && current.isEnabled) {
-                return current
-            }
-            current = current.parent
-            depth += 1
-        }
-        return null
+        return com.folklore25.ghosthand.service.accessibility.findClickableParent(node, maxDepth)
     }
 
     // Uses AccessibilityService.performGlobalAction directly — performGlobalAction is final

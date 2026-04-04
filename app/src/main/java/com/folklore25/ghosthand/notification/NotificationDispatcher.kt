@@ -7,40 +7,6 @@
 package com.folklore25.ghosthand.notification
 
 import com.folklore25.ghosthand.R
-import com.folklore25.ghosthand.capability.*
-import com.folklore25.ghosthand.catalog.*
-import com.folklore25.ghosthand.integration.github.*
-import com.folklore25.ghosthand.integration.projection.*
-import com.folklore25.ghosthand.interaction.accessibility.*
-import com.folklore25.ghosthand.interaction.clipboard.*
-import com.folklore25.ghosthand.interaction.effects.*
-import com.folklore25.ghosthand.interaction.execution.*
-import com.folklore25.ghosthand.notification.*
-import com.folklore25.ghosthand.payload.*
-import com.folklore25.ghosthand.preview.*
-import com.folklore25.ghosthand.screen.find.*
-import com.folklore25.ghosthand.screen.ocr.*
-import com.folklore25.ghosthand.screen.read.*
-import com.folklore25.ghosthand.screen.summary.*
-import com.folklore25.ghosthand.server.*
-import com.folklore25.ghosthand.server.http.*
-import com.folklore25.ghosthand.service.accessibility.*
-import com.folklore25.ghosthand.service.notification.*
-import com.folklore25.ghosthand.service.runtime.*
-import com.folklore25.ghosthand.state.*
-import com.folklore25.ghosthand.state.device.*
-import com.folklore25.ghosthand.state.diagnostics.*
-import com.folklore25.ghosthand.state.health.*
-import com.folklore25.ghosthand.state.read.*
-import com.folklore25.ghosthand.state.runtime.*
-import com.folklore25.ghosthand.state.summary.*
-import com.folklore25.ghosthand.ui.common.dialog.*
-import com.folklore25.ghosthand.ui.common.model.*
-import com.folklore25.ghosthand.ui.diagnostics.*
-import com.folklore25.ghosthand.ui.main.*
-import com.folklore25.ghosthand.ui.permissions.*
-import com.folklore25.ghosthand.wait.*
-
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -53,6 +19,30 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 
+internal interface NotificationManagerGateway {
+    fun createNotificationChannel(channel: NotificationChannel)
+
+    fun notify(tag: String?, notificationId: Int, notification: Notification)
+
+    fun cancel(tag: String?, notificationId: Int)
+}
+
+private class AndroidNotificationManagerGateway(
+    private val notificationManager: NotificationManager
+) : NotificationManagerGateway {
+    override fun createNotificationChannel(channel: NotificationChannel) {
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    override fun notify(tag: String?, notificationId: Int, notification: Notification) {
+        notificationManager.notify(tag, notificationId, notification)
+    }
+
+    override fun cancel(tag: String?, notificationId: Int) {
+        notificationManager.cancel(tag, notificationId)
+    }
+}
+
 /**
  * Dispatches notification post/cancel via NotificationManager.
  * Uses NotificationManagerCompat for Android 13+ permission handling.
@@ -60,10 +50,13 @@ import androidx.core.content.ContextCompat
  * Does NOT require NotificationListenerService for POST/CANCEL — uses
  * NotificationManager in Ghosthand's own app process.
  */
-class NotificationDispatcher(private val context: Context) {
-
-    private val notificationManager: NotificationManager =
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+class NotificationDispatcher(
+    private val context: Context
+) {
+    private val notificationManagerGateway: NotificationManagerGateway =
+        AndroidNotificationManagerGateway(
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        )
 
     init {
         createNotificationChannel()
@@ -82,7 +75,7 @@ class NotificationDispatcher(private val context: Context) {
             enableLights(true)
             enableVibration(true)
         }
-        notificationManager.createNotificationChannel(channel)
+        notificationManagerGateway.createNotificationChannel(channel)
     }
 
     private fun canPostNotifications(): Boolean {
@@ -142,7 +135,7 @@ class NotificationDispatcher(private val context: Context) {
             .build()
 
         return try {
-            notificationManager.notify(effectiveTag, notificationId, notification)
+            notificationManagerGateway.notify(effectiveTag, notificationId, notification)
             NotificationBuffer.recordPosted(
                 BufferedNotification(
                     packageName = context.packageName,
@@ -170,23 +163,11 @@ class NotificationDispatcher(private val context: Context) {
      * Cancels the notification with the given ID.
      */
     fun cancelNotification(notificationId: Int): NotificationCancelResult {
-        return try {
-            notificationManager.cancel(notificationId)
-            NotificationBuffer.recordRemoved(
-                packageName = context.packageName,
-                tag = TAG_PREFIX,
-                id = notificationId
-            )
-            NotificationCancelResult(
-                performed = true,
-                attemptedPath = "notification_canceled"
-            )
-        } catch (e: Exception) {
-            NotificationCancelResult(
-                performed = false,
-                attemptedPath = "notification_cancel_failed_${e.javaClass.simpleName}"
-            )
-        }
+        return cancelTrackedNotification(
+            packageName = context.packageName,
+            notificationId = notificationId,
+            notificationManagerGateway = notificationManagerGateway
+        )
     }
 
     /**
@@ -218,3 +199,41 @@ data class NotificationCancelResult(
     val performed: Boolean,
     val attemptedPath: String
 )
+
+internal fun cancelTrackedNotification(
+    packageName: String,
+    notificationId: Int,
+    notificationManagerGateway: NotificationManagerGateway
+): NotificationCancelResult {
+    val postedNotification = NotificationBuffer.findByPostedIdentity(
+        packageName = packageName,
+        id = notificationId
+    ) ?: return NotificationCancelResult(
+        performed = false,
+        attemptedPath = "notification_not_found"
+    )
+
+    return try {
+        notificationManagerGateway.cancel(postedNotification.tag, postedNotification.id)
+        val removed = NotificationBuffer.recordRemoved(
+            packageName = postedNotification.packageName,
+            tag = postedNotification.tag,
+            id = postedNotification.id
+        )
+        if (!removed) {
+            return NotificationCancelResult(
+                performed = false,
+                attemptedPath = "notification_buffer_mismatch"
+            )
+        }
+        NotificationCancelResult(
+            performed = true,
+            attemptedPath = "notification_canceled"
+        )
+    } catch (e: Exception) {
+        NotificationCancelResult(
+            performed = false,
+            attemptedPath = "notification_cancel_failed_${e.javaClass.simpleName}"
+        )
+    }
+}

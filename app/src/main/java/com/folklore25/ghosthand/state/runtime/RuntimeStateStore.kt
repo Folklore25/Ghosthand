@@ -6,40 +6,17 @@
 
 package com.folklore25.ghosthand.state.runtime
 
+import com.folklore25.ghosthand.state.read.AccessibilityStatusProvider
+import com.folklore25.ghosthand.ui.common.model.AppTextResolver
+import com.folklore25.ghosthand.capability.CapabilityAccessSnapshotFactory
+import com.folklore25.ghosthand.capability.CapabilityPolicyStore
+import com.folklore25.ghosthand.state.device.ForegroundAppProvider
+import com.folklore25.ghosthand.interaction.execution.GhostAccessibilityExecutionCoreRegistry
+import com.folklore25.ghosthand.service.runtime.GhosthandServiceRegistry
+import com.folklore25.ghosthand.state.diagnostics.HomeDiagnosticsProvider
+import com.folklore25.ghosthand.state.device.PermissionSnapshotProvider
+
 import com.folklore25.ghosthand.R
-import com.folklore25.ghosthand.capability.*
-import com.folklore25.ghosthand.catalog.*
-import com.folklore25.ghosthand.integration.github.*
-import com.folklore25.ghosthand.integration.projection.*
-import com.folklore25.ghosthand.interaction.accessibility.*
-import com.folklore25.ghosthand.interaction.clipboard.*
-import com.folklore25.ghosthand.interaction.effects.*
-import com.folklore25.ghosthand.interaction.execution.*
-import com.folklore25.ghosthand.notification.*
-import com.folklore25.ghosthand.payload.*
-import com.folklore25.ghosthand.preview.*
-import com.folklore25.ghosthand.screen.find.*
-import com.folklore25.ghosthand.screen.ocr.*
-import com.folklore25.ghosthand.screen.read.*
-import com.folklore25.ghosthand.screen.summary.*
-import com.folklore25.ghosthand.server.*
-import com.folklore25.ghosthand.server.http.*
-import com.folklore25.ghosthand.service.accessibility.*
-import com.folklore25.ghosthand.service.notification.*
-import com.folklore25.ghosthand.service.runtime.*
-import com.folklore25.ghosthand.state.*
-import com.folklore25.ghosthand.state.device.*
-import com.folklore25.ghosthand.state.diagnostics.*
-import com.folklore25.ghosthand.state.health.*
-import com.folklore25.ghosthand.state.read.*
-import com.folklore25.ghosthand.state.runtime.*
-import com.folklore25.ghosthand.state.summary.*
-import com.folklore25.ghosthand.ui.common.dialog.*
-import com.folklore25.ghosthand.ui.common.model.*
-import com.folklore25.ghosthand.ui.diagnostics.*
-import com.folklore25.ghosthand.ui.main.*
-import com.folklore25.ghosthand.ui.permissions.*
-import com.folklore25.ghosthand.wait.*
 
 import android.content.Context
 import android.os.Handler
@@ -391,45 +368,24 @@ object RuntimeStateStore {
         actionMessage: String,
         error: Throwable?
     ) {
-        Log.e(
-            BOOTSTRAP_LOG_TAG,
-            "event=bootstrap_failure action=$action preconditions=$preconditions failureClass=$failureClass fallback=$fallback",
-            error
+        RuntimeStateFailureSupport.recordRecoverableFailure(
+            logTag = BOOTSTRAP_LOG_TAG,
+            updateState = ::updateState,
+            action = action,
+            preconditions = preconditions,
+            fallback = fallback,
+            failureClass = failureClass,
+            statusMessage = statusMessage,
+            actionMessage = actionMessage,
+            error = error
         )
-        updateState { current ->
-            current.copy(
-                recoverableFailureAction = actionMessage,
-                recoverableFailureStatus = statusMessage,
-                lastServiceAction = actionMessage,
-                statusText = statusMessage
-            )
-        }
     }
 
     private fun localizedStatusTextFor(state: RuntimeState): String {
-        return when {
-            state.recoverableFailureStatus != null -> state.recoverableFailureStatus
-            state.localApiServerRunning -> AppTextResolver.getString(R.string.status_api_listening)
-            state.foregroundServiceRunning -> AppTextResolver.getString(R.string.status_service_without_api)
-            state.appStarted -> AppTextResolver.getString(R.string.status_app_started)
-            else -> state.statusText
-        }
+        return RuntimeStateFailureSupport.localizedStatusTextFor(state)
     }
 
     private fun localizedLastServiceActionFor(state: RuntimeState): String {
-        if (state.lastServiceAction.isBlank()) {
-            return state.lastServiceAction
-        }
-
-        return when {
-            state.foregroundServiceRunning && state.localApiServerRunning ->
-                AppTextResolver.getString(R.string.status_service_running)
-            state.foregroundServiceRunning ->
-                AppTextResolver.getString(R.string.status_service_created)
-            !state.foregroundServiceRunning && state.appStarted ->
-                AppTextResolver.getString(R.string.status_service_stopped)
-            else ->
-                state.lastServiceAction
-        }
+        return RuntimeStateFailureSupport.localizedLastServiceActionFor(state)
     }
 }

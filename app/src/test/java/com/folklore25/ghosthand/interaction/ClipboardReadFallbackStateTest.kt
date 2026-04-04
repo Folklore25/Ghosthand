@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.interaction
 
 import com.folklore25.ghosthand.capability.*
 import com.folklore25.ghosthand.catalog.*
@@ -41,70 +41,51 @@ import com.folklore25.ghosthand.ui.permissions.*
 import com.folklore25.ghosthand.wait.*
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class GhosthandSelectorsTest {
+class ClipboardReadFallbackStateTest {
     @Test
-    fun normalizePrefersTextAliasFirst() {
-        val selector = GhosthandSelectors.normalize(
-            text = "Send",
-            desc = "ignored",
-            id = "ignored",
-            strategy = "contentDesc",
-            query = "ignored"
-        )
+    fun normalClipboardReadReturnsSystemTextAndClearsFallback() {
+        val state = ClipboardReadFallbackState()
+        state.recordSuccessfulWrite("ghosthand clip path")
 
-        assertEquals(SelectorQuery("text", "Send"), selector)
+        val liveRead = state.resolveRead(itemCount = 1, text = "system text")
+        assertTrue(liveRead.available)
+        assertEquals("system text", liveRead.text)
+        assertEquals("clipboard_read", liveRead.attemptedPath)
+
+        val nextEmptyRead = state.resolveRead(itemCount = 0, text = null)
+        assertFalse(nextEmptyRead.available)
+        assertNull(nextEmptyRead.text)
+        assertEquals("clipboard_empty", nextEmptyRead.attemptedPath)
     }
 
     @Test
-    fun normalizeMapsDescAndIdAliasesToInternalStrategies() {
-        assertEquals(
-            SelectorQuery("contentDesc", "Search"),
-            GhosthandSelectors.normalize(
-                text = null,
-                desc = "Search",
-                id = null,
-                strategy = null,
-                query = null
-            )
-        )
-        assertEquals(
-            SelectorQuery("resourceId", "android:id/input"),
-            GhosthandSelectors.normalize(
-                text = null,
-                desc = null,
-                id = "android:id/input",
-                strategy = null,
-                query = null
-            )
-        )
+    fun emptyClipboardFallsBackOnceAfterSuccessfulWrite() {
+        val state = ClipboardReadFallbackState()
+        state.recordSuccessfulWrite("ghosthand clip path")
+
+        val fallbackRead = state.resolveRead(itemCount = 0, text = null)
+        assertTrue(fallbackRead.available)
+        assertEquals("ghosthand clip path", fallbackRead.text)
+        assertEquals("clipboard_cached_after_write", fallbackRead.attemptedPath)
+
+        val secondEmptyRead = state.resolveRead(itemCount = 0, text = null)
+        assertFalse(secondEmptyRead.available)
+        assertNull(secondEmptyRead.text)
+        assertEquals("clipboard_empty", secondEmptyRead.attemptedPath)
     }
 
     @Test
-    fun normalizeFallsBackToExplicitStrategyAndQuery() {
-        val selector = GhosthandSelectors.normalize(
-            text = null,
-            desc = null,
-            id = null,
-            strategy = "textContains",
-            query = "wifi"
-        )
+    fun emptyClipboardWithoutPriorWriteDoesNotInventText() {
+        val state = ClipboardReadFallbackState()
 
-        assertEquals(SelectorQuery("textContains", "wifi"), selector)
-    }
-
-    @Test
-    fun normalizeReturnsNullWhenNoSelectorProvided() {
-        assertNull(
-            GhosthandSelectors.normalize(
-                text = null,
-                desc = null,
-                id = null,
-                strategy = null,
-                query = null
-            )
-        )
+        val result = state.resolveRead(itemCount = 0, text = null)
+        assertFalse(result.available)
+        assertNull(result.text)
+        assertEquals("clipboard_empty", result.attemptedPath)
     }
 }

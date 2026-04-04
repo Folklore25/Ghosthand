@@ -24,7 +24,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 25.1: Architecture Convergence For 1.4.0** - Converge remaining root-package ownership into real domain folders and formalize Capability Plane v2 through a first-class `/capabilities` surface without broadening 1.4.0 scope.
 - [x] **Phase 25.3: Architecture Convergence Correction Pass For 1.4.0** - Correct the failed strict architecture-convergence review by materially executing root-package convergence and a first-class Capability Plane v2 without broadening 1.4.0 scope. (completed 2026-04-04)
 - [x] **Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0** - Polish the accepted 1.4.0 architecture-convergence result so the capability plane, self-description surfaces, and closeout state feel clean, coherent, and presentation-ready without broadening scope. (completed 2026-04-04)
-- [ ] **Phase 25.5: Current-State Correction Pass For 1.4.0** - Correct the remaining correctness defects and maintenance debt in the accepted 1.4.0 baseline by fixing `/notify` cancellation truthfulness, aligning the screenshot foreground-service contract, removing wildcard-import pollution, making contained coordinator extractions, and continuing test-package convergence without broadening scope.
+- [x] **Phase 25.5: Current-State Correction Pass For 1.4.0** - Correct the remaining correctness defects and maintenance debt in the accepted 1.4.0 baseline by fixing `/notify` cancellation truthfulness, aligning the screenshot foreground-service contract, removing wildcard-import pollution, making contained coordinator extractions, and continuing test-package convergence without broadening scope. (completed 2026-04-04)
 
 ## Phase Details
 
@@ -296,8 +296,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 25.5-01: Fix `/notify` cancellation truthfulness and add regression coverage
-- [ ] 25.5-02: Align screenshot or MediaProjection foreground-service contract and guard against drift
-- [ ] 25.5-03: Remove wildcard imports from main source without behavioral churn
-- [ ] 25.5-04: Perform contained extractions in the remaining oversized coordination-heavy classes
-- [ ] 25.5-05: Continue test-package convergence, update maintainability checks, and run verification
+- [x] 25.5-01: Fix `/notify` cancellation truthfulness and add regression coverage
+- [x] 25.5-02: Align screenshot or MediaProjection foreground-service contract and guard against drift
+- [x] 25.5-03: Remove wildcard imports from main source without behavioral churn
+- [x] 25.5-04: Perform contained extractions in the remaining oversized coordination-heavy classes
+- [x] 25.5-05: Continue test-package convergence, update maintainability checks, and run verification

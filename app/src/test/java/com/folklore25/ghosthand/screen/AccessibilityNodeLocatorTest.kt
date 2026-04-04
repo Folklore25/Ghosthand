@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.folklore25.ghosthand
+package com.folklore25.ghosthand.screen
 
 import com.folklore25.ghosthand.capability.*
 import com.folklore25.ghosthand.catalog.*

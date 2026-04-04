@@ -103,28 +103,42 @@ class MaintainabilityConvergencePackageOwnershipTest {
         val expectedPaths = listOf(
             "app/src/test/java/com/folklore25/ghosthand/server/LocalApiServerCapabilityPolicyTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/server/LocalApiServerRequestParsingTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/server/GhosthandHttpTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/routes/GhosthandRoutePoliciesTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/routes/RouteDisclosureBuildersTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/payload/GhosthandApiPayloadsTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/state/StateCoordinatorStatePayloadTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/screen/AccessibilityTreeSnapshotProviderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/screen/AccessibilityNodeFinderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/screen/AccessibilityNodeLocatorTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/screen/GhosthandSelectorsTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/screen/ScreenOcrProviderTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/screen/StateCoordinatorScreenPayloadTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/wait/GhosthandWaitLogicTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/wait/WaitOutcomeTest.kt",
-            "app/src/test/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalogTest.kt"
+            "app/src/test/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalogTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/capability/CapabilityAccessSnapshotFactoryTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/capability/CapabilityPolicyStoreTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/interaction/ClipboardReadFallbackStateTest.kt"
         )
         val retiredFlatPaths = listOf(
             "app/src/test/java/com/folklore25/ghosthand/LocalApiServerCapabilityPolicyTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/LocalApiServerRequestParsingTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/GhosthandHttpTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/GhosthandRoutePoliciesTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/LocalApiServerDisclosureTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/GhosthandApiPayloadsTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/AccessibilityNodeFinderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/AccessibilityNodeLocatorTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/GhosthandSelectorsTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/AccessibilityTreeSnapshotProviderTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/ScreenOcrProviderTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/GhosthandWaitLogicTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/WaitOutcomeTest.kt",
-            "app/src/test/java/com/folklore25/ghosthand/GhosthandCommandCatalogTest.kt"
+            "app/src/test/java/com/folklore25/ghosthand/GhosthandCommandCatalogTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/CapabilityAccessSnapshotFactoryTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/CapabilityPolicyStoreTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ClipboardReadFallbackStateTest.kt"
         )
 
         expectedPaths.forEach { path ->
