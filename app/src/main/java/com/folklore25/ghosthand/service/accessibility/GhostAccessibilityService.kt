@@ -32,7 +32,6 @@ import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.view.accessibility.AccessibilityWindowInfo
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -98,14 +97,9 @@ class GhostAccessibilityService : AccessibilityService(), GhostAccessibilityExec
             return currentActiveRootOnMainThread()?.let(block)
         }
 
-        var result: T? = null
-        val latch = CountDownLatch(1)
-        mainHandler.post {
-            result = currentActiveRootOnMainThread()?.let(block)
-            latch.countDown()
+        return runOnMainThreadAndAwait(mainHandler, ROOT_SNAPSHOT_TIMEOUT_MS, null) {
+            currentActiveRootOnMainThread()?.let(block)
         }
-        latch.await(ROOT_SNAPSHOT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        return result
     }
 
     override fun dispatchConnectionActive(): Boolean = isConnectedForDispatch
@@ -141,18 +135,17 @@ class GhostAccessibilityService : AccessibilityService(), GhostAccessibilityExec
             return performSetTextInternal(text)
         }
 
-        var result = TextInputDispatchResult(
+        return runOnMainThreadAndAwait(
+            mainHandler,
+            ACTION_TIMEOUT_MS,
+            TextInputDispatchResult(
             targetFound = false,
             performed = false,
             attemptedPath = "root_unavailable"
-        )
-        val latch = CountDownLatch(1)
-        mainHandler.post {
-            result = performSetTextInternal(text)
-            latch.countDown()
+            )
+        ) {
+            performSetTextInternal(text)
         }
-        latch.await(ACTION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        return result
     }
 
     override fun performImeEnterAction(): KeyInputDispatchResult {
@@ -160,18 +153,17 @@ class GhostAccessibilityService : AccessibilityService(), GhostAccessibilityExec
             return performImeEnterActionInternal()
         }
 
-        var result = KeyInputDispatchResult(
+        return runOnMainThreadAndAwait(
+            mainHandler,
+            ACTION_TIMEOUT_MS,
+            KeyInputDispatchResult(
             targetFound = false,
             performed = false,
             attemptedPath = "root_unavailable"
-        )
-        val latch = CountDownLatch(1)
-        mainHandler.post {
-            result = performImeEnterActionInternal()
-            latch.countDown()
+            )
+        ) {
+            performImeEnterActionInternal()
         }
-        latch.await(ACTION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        return result
     }
 
     override fun performNodeClick(nodeId: String): NodeClickDispatchResult {
@@ -179,43 +171,29 @@ class GhostAccessibilityService : AccessibilityService(), GhostAccessibilityExec
             return performNodeClickInternal(nodeId)
         }
 
-        var result = NodeClickDispatchResult(
+        return runOnMainThreadAndAwait(
+            mainHandler,
+            ROOT_SNAPSHOT_TIMEOUT_MS,
+            NodeClickDispatchResult(
             nodeFound = false,
             performed = false,
             attemptedPath = "root_unavailable"
-        )
-        val latch = CountDownLatch(1)
-        mainHandler.post {
-            result = performNodeClickInternal(nodeId)
-            latch.countDown()
+            )
+        ) {
+            performNodeClickInternal(nodeId)
         }
-        latch.await(ROOT_SNAPSHOT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        return result
     }
 
     override fun performTapGesture(x: Int, y: Int): Boolean {
-        val gesture = GestureDescription.Builder()
-            .addStroke(
-                GestureDescription.StrokeDescription(
-                    Path().apply { moveTo(x.toFloat(), y.toFloat()) },
-                    0L,
-                    TAP_DURATION_MS
-                )
-            )
-            .build()
+        val gesture = buildSingleStrokeGesture(x, y, TAP_DURATION_MS)
 
         if (Looper.myLooper() == Looper.getMainLooper()) {
             return dispatchGesture(gesture, null, null)
         }
 
-        var performed = false
-        val latch = CountDownLatch(1)
-        mainHandler.post {
-            performed = dispatchGesture(gesture, null, null)
-            latch.countDown()
+        return runOnMainThreadAndAwait(mainHandler, ACTION_TIMEOUT_MS, false) {
+            dispatchGesture(gesture, null, null)
         }
-        latch.await(ACTION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        return performed
     }
 
     override fun performSwipeGesture(
@@ -244,7 +222,7 @@ class GhostAccessibilityService : AccessibilityService(), GhostAccessibilityExec
         val gesture = GestureDescription.Builder()
             .addStroke(
                 GestureDescription.StrokeDescription(
-                    Path().apply {
+                    android.graphics.Path().apply {
                         moveTo(fromX.toFloat(), fromY.toFloat())
                         lineTo(toX.toFloat(), toY.toFloat())
                     },
@@ -488,138 +466,45 @@ class GhostAccessibilityService : AccessibilityService(), GhostAccessibilityExec
     }
 
     override fun performLongPressGesture(x: Int, y: Int, durationMs: Long): Boolean {
-        val gesture = GestureDescription.Builder()
-            .addStroke(
-                GestureDescription.StrokeDescription(
-                    Path().apply { moveTo(x.toFloat(), y.toFloat()) },
-                    0L,
-                    durationMs
-                )
-            )
-            .build()
+        val gesture = buildSingleStrokeGesture(x, y, durationMs)
 
         if (Looper.myLooper() == Looper.getMainLooper()) {
             return dispatchGesture(gesture, null, null)
         }
 
-        var performed = false
-        val latch = CountDownLatch(1)
-        mainHandler.post {
-            performed = dispatchGesture(gesture, null, null)
-            latch.countDown()
+        return runOnMainThreadAndAwait(
+            mainHandler,
+            (durationMs + ACTION_TIMEOUT_BUFFER_MS).coerceAtLeast(ACTION_TIMEOUT_MS),
+            false
+        ) {
+            dispatchGesture(gesture, null, null)
         }
-        latch.await((durationMs + ACTION_TIMEOUT_BUFFER_MS).coerceAtLeast(ACTION_TIMEOUT_MS), TimeUnit.MILLISECONDS)
-        return performed
     }
 
     override fun performGesture(strokes: List<GestureStroke>): Boolean {
-        if (strokes.isEmpty()) return false
-
-        val gestureBuilder = GestureDescription.Builder()
-        for (stroke in strokes) {
-            if (stroke.points.isEmpty()) continue
-            val path = Path()
-            val pts = stroke.points
-            path.moveTo(pts[0].x.toFloat(), pts[0].y.toFloat())
-            for (i in 1 until pts.size) {
-                path.lineTo(pts[i].x.toFloat(), pts[i].y.toFloat())
-            }
-            gestureBuilder.addStroke(
-                GestureDescription.StrokeDescription(path, 0L, stroke.durationMs)
-            )
-        }
-
-        val gesture = gestureBuilder.build()
-        if (gesture.strokeCount == 0) return false
+        val gesture = buildGesture(strokes) ?: return false
 
         if (Looper.myLooper() == Looper.getMainLooper()) {
             return dispatchGesture(gesture, null, null)
         }
 
-        var performed = false
-        val latch = CountDownLatch(1)
-        mainHandler.post {
-            performed = dispatchGesture(gesture, null, null)
-            latch.countDown()
-        }
         val estimatedTimeout = (strokes.maxOfOrNull { it.durationMs } ?: 0L) + ACTION_TIMEOUT_BUFFER_MS
-        latch.await(estimatedTimeout.coerceAtLeast(ACTION_TIMEOUT_MS), TimeUnit.MILLISECONDS)
-        return performed
+        return runOnMainThreadAndAwait(
+            mainHandler,
+            estimatedTimeout.coerceAtLeast(ACTION_TIMEOUT_MS),
+            false
+        ) {
+            dispatchGesture(gesture, null, null)
+        }
     }
 
     private fun currentActiveRootOnMainThread(): AccessibilityNodeInfo? {
-        val foregroundPackage = foregroundAppProvider.snapshot().packageName
-
-        selectWindowRoot(
-            preferredPackage = foregroundPackage,
-            requireApplicationWindow = true,
-            requireActive = true
-        )?.let { return it }
-
-        selectWindowRoot(
-            preferredPackage = foregroundPackage,
-            requireApplicationWindow = true,
-            requireFocused = true
-        )?.let { return it }
-
-        selectWindowRoot(
-            preferredPackage = foregroundPackage,
-            requireApplicationWindow = true
-        )?.let { return it }
-
-        rootInActiveWindow?.let { return it }
-
-        selectWindowRoot(preferredPackage = foregroundPackage, requireActive = true)?.let { return it }
-        selectWindowRoot(preferredPackage = foregroundPackage, requireFocused = true)?.let { return it }
-        return selectWindowRoot(preferredPackage = foregroundPackage)
+        return currentActiveRoot(
+            preferredPackage = foregroundAppProvider.snapshot().packageName,
+            windows = windows,
+            rootInActiveWindow = rootInActiveWindow
+        )
     }
-
-    private fun selectWindowRoot(
-        preferredPackage: String? = null,
-        requireApplicationWindow: Boolean = false,
-        requireActive: Boolean = false,
-        requireFocused: Boolean = false
-    ): AccessibilityNodeInfo? {
-        return windows
-            .asSequence()
-            .mapNotNull { window ->
-                val root = window.root ?: return@mapNotNull null
-                if (requireApplicationWindow && window.type != AccessibilityWindowInfo.TYPE_APPLICATION) {
-                    return@mapNotNull null
-                }
-                if (requireActive && !window.isActive) {
-                    return@mapNotNull null
-                }
-                if (requireFocused && !window.isFocused) {
-                    return@mapNotNull null
-                }
-                WindowRootCandidate(
-                    root = root,
-                    packageName = root.packageName?.toString(),
-                    layer = window.layer,
-                    active = window.isActive,
-                    focused = window.isFocused
-                )
-            }
-            .sortedWith(
-                compareByDescending<WindowRootCandidate> { candidate ->
-                    preferredPackage != null && candidate.packageName == preferredPackage
-                }
-                    .thenByDescending { it.active }
-                    .thenByDescending { it.focused }
-                    .thenByDescending { it.layer }
-            )
-            .map { it.root }
-            .firstOrNull()
-    }
-
-    private data class WindowRootCandidate(
-        val root: AccessibilityNodeInfo,
-        val packageName: String?,
-        val layer: Int,
-        val active: Boolean,
-        val focused: Boolean
-    )
 
     private companion object {
         const val LOG_TAG = "GhostAccessibility"

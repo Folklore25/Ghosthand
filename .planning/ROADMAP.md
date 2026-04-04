@@ -25,7 +25,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [x] **Phase 25.3: Architecture Convergence Correction Pass For 1.4.0** - Correct the failed strict architecture-convergence review by materially executing root-package convergence and a first-class Capability Plane v2 without broadening 1.4.0 scope. (completed 2026-04-04)
 - [x] **Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0** - Polish the accepted 1.4.0 architecture-convergence result so the capability plane, self-description surfaces, and closeout state feel clean, coherent, and presentation-ready without broadening scope. (completed 2026-04-04)
 - [x] **Phase 25.5: Current-State Correction Pass For 1.4.0** - Correct the remaining correctness defects and maintenance debt in the accepted 1.4.0 baseline by fixing `/notify` cancellation truthfulness, aligning the screenshot foreground-service contract, removing wildcard-import pollution, making contained coordinator extractions, and continuing test-package convergence without broadening scope. (completed 2026-04-04)
-- [ ] **Phase 25.6: Second Current-State Cleanup Pass For 1.4.0** - Finish the still-incomplete engineering cleanup by removing the remaining UI wildcard imports, doing one more contained extraction pass on the largest coordination-heavy files, and reducing the remaining root-flat tests without reopening accepted fixes or broadening scope.
+- [x] **Phase 25.6: Second Current-State Cleanup Pass For 1.4.0** - Finish the still-incomplete engineering cleanup by removing the remaining UI wildcard imports, doing one more contained extraction pass on the largest coordination-heavy files, and reducing the remaining root-flat tests without reopening accepted fixes or broadening scope. (completed 2026-04-05)
 
 ## Phase Details
 
@@ -318,7 +318,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 25.6-01: Remove the remaining wildcard imports from UI-owned main source to reach zero total wildcard imports
-- [ ] 25.6-02: Perform one more contained extraction pass on the biggest coordination-heavy files
-- [ ] 25.6-03: Continue root-flat test convergence and clean touched test imports
-- [ ] 25.6-04: Run final build and unit-test verification and close the cleanup pass
+- [x] 25.6-01: Remove the remaining wildcard imports from UI-owned main source to reach zero total wildcard imports
+- [x] 25.6-02: Perform one more contained extraction pass on the biggest coordination-heavy files
+- [x] 25.6-03: Continue root-flat test convergence and clean touched test imports
+- [x] 25.6-04: Run final build and unit-test verification and close the cleanup pass

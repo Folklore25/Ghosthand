@@ -6,40 +6,6 @@
 
 package com.folklore25.ghosthand
 
-import com.folklore25.ghosthand.capability.*
-import com.folklore25.ghosthand.catalog.*
-import com.folklore25.ghosthand.integration.github.*
-import com.folklore25.ghosthand.integration.projection.*
-import com.folklore25.ghosthand.interaction.accessibility.*
-import com.folklore25.ghosthand.interaction.clipboard.*
-import com.folklore25.ghosthand.interaction.effects.*
-import com.folklore25.ghosthand.interaction.execution.*
-import com.folklore25.ghosthand.notification.*
-import com.folklore25.ghosthand.payload.*
-import com.folklore25.ghosthand.preview.*
-import com.folklore25.ghosthand.screen.find.*
-import com.folklore25.ghosthand.screen.ocr.*
-import com.folklore25.ghosthand.screen.read.*
-import com.folklore25.ghosthand.screen.summary.*
-import com.folklore25.ghosthand.server.*
-import com.folklore25.ghosthand.server.http.*
-import com.folklore25.ghosthand.service.accessibility.*
-import com.folklore25.ghosthand.service.notification.*
-import com.folklore25.ghosthand.service.runtime.*
-import com.folklore25.ghosthand.state.*
-import com.folklore25.ghosthand.state.device.*
-import com.folklore25.ghosthand.state.diagnostics.*
-import com.folklore25.ghosthand.state.health.*
-import com.folklore25.ghosthand.state.read.*
-import com.folklore25.ghosthand.state.runtime.*
-import com.folklore25.ghosthand.state.summary.*
-import com.folklore25.ghosthand.ui.common.dialog.*
-import com.folklore25.ghosthand.ui.common.model.*
-import com.folklore25.ghosthand.ui.diagnostics.*
-import com.folklore25.ghosthand.ui.main.*
-import com.folklore25.ghosthand.ui.permissions.*
-import com.folklore25.ghosthand.wait.*
-
 import java.io.File
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -114,6 +80,11 @@ class MaintainabilityConvergencePackageOwnershipTest {
             "app/src/test/java/com/folklore25/ghosthand/screen/GhosthandSelectorsTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/screen/ScreenOcrProviderTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/screen/StateCoordinatorScreenPayloadTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ui/main/HomeSurfaceLayoutContractTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ui/main/ScreenUiStateMapperTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ui/permissions/PermissionsSurfaceLayoutContractTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ui/common/dialog/UpdateDialogLayoutContractTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ui/diagnostics/UpdateUiStateMapperTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/wait/GhosthandWaitLogicTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/wait/WaitOutcomeTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/catalog/GhosthandCommandCatalogTest.kt",
@@ -133,6 +104,11 @@ class MaintainabilityConvergencePackageOwnershipTest {
             "app/src/test/java/com/folklore25/ghosthand/GhosthandSelectorsTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/AccessibilityTreeSnapshotProviderTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/ScreenOcrProviderTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/HomeSurfaceLayoutContractTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/ScreenUiStateMapperTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/PermissionsSurfaceLayoutContractTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/UpdateDialogLayoutContractTest.kt",
+            "app/src/test/java/com/folklore25/ghosthand/UpdateUiStateMapperTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/GhosthandWaitLogicTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/WaitOutcomeTest.kt",
             "app/src/test/java/com/folklore25/ghosthand/GhosthandCommandCatalogTest.kt",

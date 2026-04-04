@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-04-05T10:20:00.000Z"
+status: ready
+last_updated: "2026-04-05T11:10:00.000Z"
 progress:
   total_phases: 15
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 68
-  completed_plans: 42
+  completed_plans: 46
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 25.6 planning** — the accepted 1.4.0 baseline and the accepted 25.5 correctness fixes stand, but a second cleanup pass is still needed because UI-owned main source still carries wildcard imports, the largest coordination-heavy files remain bigger than requested, and 9 root-flat tests still remain.
+Current focus: **Phase 25.6 complete** — the accepted 1.4.0 baseline and accepted 25.5 fixes remain intact, main source now has zero wildcard imports, the biggest coordination-heavy files are further reduced through contained helpers, and root-flat tests are down to four clearly shared cases.
 
 ## Current Position
 
-Phase: 25.6 (second-current-state-cleanup-pass-for-1-4-0) — PLANNING
-Plan: 0 of 4
+Phase: 25.6 (second-current-state-cleanup-pass-for-1-4-0) — COMPLETE
+Plan: 4 of 4
 
 - **Phase:** 25.6
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Planning Phase 25.6 — accepted 25.5 fixes stay binding, and the new pass closes only the remaining import, contained-extraction, and test-convergence cleanup.
+- **Status:** Phase 25.6 complete — the second cleanup pass closed the remaining import, contained-extraction, and test-convergence debt without broadening scope, and the full compile plus unit-test gate passes.
 
 ## Progress
 
@@ -47,7 +47,7 @@ Plan: 0 of 4
 - Phase 25.5: **PLANNED FOR V1.4.0 CURRENT-STATE CORRECTION** — truthful `/notify` cancellation, screenshot-service contract alignment, wildcard-import cleanup, contained debt reduction in oversized coordinators, and continued test-package convergence
 - Phase 25.6: **PLANNED FOR V1.4.0 SECOND CLEANUP PASS** — finish the remaining UI wildcard-import cleanup, one more contained extraction pass on the biggest coordination-heavy files, and further root-flat test reduction
 
-Overall: Ghosthand’s 1.4.0 line keeps the accepted architecture and accepted 25.5 correctness fixes, but the branch still needs one more bounded cleanup pass to finish the remaining engineering debt cleanly.
+Overall: Ghosthand’s 1.4.0 line now has the accepted architecture, the accepted 25.5 correctness fixes, and the finished 25.6 cleanup closeout. The remaining engineering debt targeted by the second cleanup pass is closed.
 
 ## Recent Decisions
 
@@ -120,6 +120,11 @@ Overall: Ghosthand’s 1.4.0 line keeps the accepted architecture and accepted 2
 - [Phase 25.5]: Shared accessibility-node action helpers, selector-hint helpers, and runtime-state failure/text helpers now live in bounded collaborators instead of staying inline in the biggest owner files.
 - [Phase 25.5]: Root-flat test count dropped from 16 to 9 by moving obvious owner tests into `screen`, `server`, `capability`, and `interaction`.
 - [Phase 25.6]: The next pass is strictly bounded to the remaining wildcard-import cleanup, one more contained extraction pass on the biggest coordination-heavy files, and further reduction of root-flat tests.
+- [Phase 25.6]: A direct 2026-04-05 source scan now shows `app/src/main/java` at zero wildcard-import files and zero wildcard-import occurrences.
+- [Phase 25.6]: The remaining UI wildcard-import residue was removed from all 16 previously dirty files under `ui/main`, `ui/permissions`, `ui/diagnostics`, `ui/common/dialog`, and `ui/common/model`.
+- [Phase 25.6]: Shared main-thread execution and active-window-root helpers now live in `AccessibilityServiceExecutionSupport.kt`, reducing duplicated coordination code in both accessibility services.
+- [Phase 25.6]: Clipboard and notification delegation now live in `StatePeripheralCoordinator.kt`, reducing unrelated peripheral ownership in `StateCoordinator.kt`.
+- [Phase 25.6]: Root-flat test count dropped from 9 to 4 by moving clearly owned UI tests into `ui/main`, `ui/permissions`, `ui/common/dialog`, and `ui/diagnostics`.
 
 ## Blockers / Concerns
 
@@ -130,7 +135,7 @@ Overall: Ghosthand’s 1.4.0 line keeps the accepted architecture and accepted 2
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: Finish the executable plan set for Phase 25.6, then execute the second cleanup pass from the clean 25.5 baseline.
+Next action: Review the finished 1.4.0 branch state and decide whether to prepare merge or shipping work from the fully cleaned baseline.
 
 ## Performance Metrics
 
@@ -160,3 +165,7 @@ Next action: Finish the executable plan set for Phase 25.6, then execute the sec
 | 25.5 | 03 | 8 min | 1 | 89 |
 | 25.5 | 04 | 8 min | 1 | 7 |
 | 25.5 | 05 | 7 min | 1 | 10 |
+| 25.6 | 01 | 6 min | 1 | 16 |
+| 25.6 | 02 | 9 min | 1 | 4 |
+| 25.6 | 03 | 7 min | 1 | 6 |
+| 25.6 | 04 | 2 min | 1 | 3 |

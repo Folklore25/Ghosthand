@@ -96,6 +96,10 @@ class StateCoordinator(
     private val inputOperationPerformer = InputOperationPerformer
     private val screenshotAccess: GhosthandScreenshotAccess = AccessibilityScreenshotAccess
     private val notificationDispatcher = NotificationDispatcher(appContext)
+    private val peripheralCoordinator = StatePeripheralCoordinator(
+        clipboardProvider = clipboardProvider,
+        notificationDispatcher = notificationDispatcher
+    )
     private val screenOcrProvider = ScreenOcrProvider()
     private val screenPreviewCoordinator = ScreenPreviewCoordinator(
         screenshotAccess = screenshotAccess,
@@ -372,11 +376,11 @@ class StateCoordinator(
     }
 
     fun readClipboard(): ClipboardReadResult {
-        return clipboardProvider.readClipboard()
+        return peripheralCoordinator.readClipboard()
     }
 
     fun writeClipboard(text: String): ClipboardWriteResult {
-        return clipboardProvider.writeClipboard(text)
+        return peripheralCoordinator.writeClipboard(text)
     }
 
     fun setMediaProjection(projection: android.media.projection.MediaProjection) {
@@ -390,15 +394,15 @@ class StateCoordinator(
     }
 
     fun postNotification(title: String, text: String): NotificationPostResult {
-        return notificationDispatcher.postNotification(title, text)
+        return peripheralCoordinator.postNotification(title, text)
     }
 
     fun cancelNotification(notificationId: Int): NotificationCancelResult {
-        return notificationDispatcher.cancelNotification(notificationId)
+        return peripheralCoordinator.cancelNotification(notificationId)
     }
 
     fun readNotifications(packageFilter: String?, excludedPackages: Set<String>): JSONObject {
-        return NotificationBuffer.toJson(packageFilter, excludedPackages)
+        return peripheralCoordinator.readNotifications(packageFilter, excludedPackages)
     }
 
     fun waitForCondition(
