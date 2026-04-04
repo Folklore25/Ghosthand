@@ -139,4 +139,43 @@ class MaintainabilityConvergencePackageOwnershipTest {
             screenReadPayloadFields.contains("includeRetryHint")
         )
     }
+
+    @Test
+    fun rootDirectoryIsMateriallyReducedAndProviderOwnershipUsesDomainFolders() {
+        val rootFiles = File("app/src/main/java/com/folklore25/ghosthand")
+            .walkTopDown()
+            .maxDepth(1)
+            .filter { it.isFile && it.extension == "kt" }
+            .map { it.name }
+            .toList()
+
+        assertTrue(
+            "Expected the root directory to be materially reduced, found ${rootFiles.size} files",
+            rootFiles.size <= 38
+        )
+
+        val movedPaths = listOf(
+            "app/src/main/java/com/folklore25/ghosthand/state/device/DeviceSnapshotProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/state/device/ForegroundAppProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/state/device/PermissionSnapshotProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/state/diagnostics/HomeDiagnosticsProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/state/diagnostics/FirstLaunchAcknowledgementStore.kt",
+            "app/src/main/java/com/folklore25/ghosthand/state/read/AccessibilityStatusProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/interaction/clipboard/ClipboardProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/interaction/clipboard/ClipboardReadFallbackState.kt",
+            "app/src/main/java/com/folklore25/ghosthand/integration/github/GitHubReleaseInfo.kt",
+            "app/src/main/java/com/folklore25/ghosthand/integration/github/GitHubReleaseRepository.kt",
+            "app/src/main/java/com/folklore25/ghosthand/integration/projection/MediaProjectionProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/notification/NotificationBuffer.kt",
+            "app/src/main/java/com/folklore25/ghosthand/notification/NotificationDispatcher.kt",
+            "app/src/main/java/com/folklore25/ghosthand/screen/ocr/ScreenOcrProvider.kt"
+        )
+
+        movedPaths.forEach { path ->
+            assertTrue(
+                "Expected moved ownership path at $path",
+                listOf(path, path.removePrefix("app/")).any { candidate -> File(candidate).exists() }
+            )
+        }
+    }
 }
