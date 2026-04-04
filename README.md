@@ -1,375 +1,344 @@
-## License
-
-Ghosthand is licensed under the Mozilla Public License 2.0 (MPL-2.0).
-
-This project uses the standard MPL-2.0 terms. Modifications to MPL-covered files must remain under MPL-2.0, while the project may be combined with other code in a larger work.
-
-See the [LICENSE](./LICENSE) file for the full text.
-
 # Ghosthand
 
-[![Website](https://img.shields.io/badge/Website-ghosthand.cc-111111?style=for-the-badge&logo=googlechrome&logoColor=white)](https://ghosthand.cc/)
-[![Open Site](https://img.shields.io/badge/Open-Live%20Site-f97316?style=for-the-badge&logo=safari&logoColor=white)](https://ghosthand.cc/)
+<p align="center">
+  <img src="./icon.svg" alt="Ghosthand logo" width="120" />
+</p>
 
-> Explore the project site: **[ghosthand.cc](https://ghosthand.cc/)**  
-> Product overview, positioning, and latest public entry point.
+<p align="center">
+  <strong>Android-native, localhost-only execution substrate for OpenClaw-style mobile agents.</strong>
+</p>
 
-Inspired by Karry × Orb 🔮 https://github.com/cflank/orb-eye
+<p align="center">
+  <a href="https://ghosthand.cc/">
+    <img alt="Website" src="https://img.shields.io/badge/ghosthand.cc-live-111111?style=for-the-badge&logo=googlechrome&logoColor=white">
+  </a>
+  <img alt="Android" src="https://img.shields.io/badge/Android-30%2B-34a853?style=for-the-badge&logo=android&logoColor=white">
+  <img alt="API" src="https://img.shields.io/badge/Loopback%20API-127.0.0.1%3A5583-2563eb?style=for-the-badge">
+  <img alt="License" src="https://img.shields.io/badge/License-MPL--2.0-f97316?style=for-the-badge">
+</p>
 
-**Ghosthand** is an Android-native, agent-oriented control substrate for **OpenClaw-like mobile agents**.
+> Ghosthand is not a no-code macro app, not a cloud dashboard, and not a generic RPA shell.  
+> It is a phone-side control plane that exposes truthful Android state and action primitives to an external agent over a local HTTP API.
 
-It is designed for people building or operating:
-
-- Android agents
-- mobile AI assistants
-- accessibility-based automation
-- local loopback phone control APIs
-- device-side tool-use systems
-- screen-reading / screen-action pipelines
-- smartphone agents that need structured UI access instead of brittle image-only automation
-
-Ghosthand is **not** trying to be a consumer automation app, a no-code macro builder, or a generic RPA shell. The goal is narrower and more useful: provide a **truthful, inspectable, Android-side control plane** that an external agent can call through a **local HTTP API**.
+Inspired by Karry × Orb: https://github.com/cflank/orb-eye
 
 ---
 
-## Why Ghosthand exists
+## Why This Exists
 
-Most mobile automation stacks fail in one of two ways:
+Most mobile automation stacks fail one of two ways:
 
-1. they are too weak, exposing only taps, screenshots, and hope
-2. they are too magical, hiding resolution logic and making agents guess why something worked or failed
+1. they are too weak: taps, screenshots, and hope
+2. they are too magical: hidden heuristics, unclear fallback, fake success
 
-Ghosthand takes a different route:
+Ghosthand takes the narrower route:
 
-- expose a compact but powerful runtime API
-- preserve structured UI truth where possible
-- keep interaction results inspectable
-- favor additive capability exposure over black-box “success”
-- make the app itself a reliable substrate for **AI agents**, not merely a human UI tool
+- run locally on Android
+- expose a stable localhost API
+- prefer accessibility-backed semantic control
+- keep capability and permission truth explicit
+- preserve inspectable action and screenshot results
 
-This makes Ghosthand especially useful for:
+That makes it useful for:
 
-- **OpenClaw / Voyager / phone agents**
+- OpenClaw-like mobile agents
 - Android accessibility automation
-- local-first agent execution
-- grounded UI control
-- agent verification and runtime diagnostics
-- mobile browsing, navigation, search, clipboard, notification, and app-launch tasks
+- grounded UI control loops
+- phone-side evaluation harnesses
+- local-first mobile copilots
+- device-side AI tool-use runtimes
 
 ---
 
-## What Ghosthand is good at
+## Current State
 
-Ghosthand is optimized for **agent consumption**, not just human tapping.
+The current codebase includes the accepted 1.4.0 baseline plus the completed Phase 26 visual-observation correction pass for 1.4.1.
 
-### Core strengths
+That means the repo head now emphasizes:
 
-- **Structured screen reading** via `/screen` and `/tree`
-- **Selector-based interaction** via text, content description, and resource id
-- **Transparent click resolution** with click-to-ancestor reconciliation metadata
-- **Coordinate fallback** when a surface is visually interactive but accessibility structure is imperfect
-- **Focused input control** via `/input` and `/setText`
-- **Clipboard read/write** for agent data handoff
-- **Notifications read/post** for notification-driven flows
-- **Foreground app and runtime state visibility**
-- **App launch by package name** via `/launch`
-- **Foreground service based runtime stability**
-- **Permission governance** for sensitive capabilities
-- **GitHub-release-based update path** for full APK updates
+- truthful `/screenshot` success and failure
+- bounded screenshot failure classification
+- lightweight preview metadata through `/screen`
+- preview sizing with an aspect-preserving decision-usable floor
+- real-device verification for full-size and preview screenshot retrieval
 
-### High-value agent primitives
+Current governed sensitive capabilities:
 
-Ghosthand currently exposes a local runtime surface centered on routes like:
+- Accessibility control
+- Screenshot capture
+
+Current local API schema version:
+
+- `/commands` schema: `1.25`
+
+---
+
+## What Ghosthand Exposes
+
+### Read / observe
 
 - `/ping`
 - `/commands`
+- `/capabilities`
 - `/info`
 - `/foreground`
+- `/events`
 - `/screen`
 - `/tree`
+- `/focused`
+- `/screenshot`
+- `/wait` (`GET` and `POST`)
+- `/notify` (`GET`)
+- `/clipboard`
+
+### Act / interact
+
 - `/find`
 - `/click`
 - `/tap`
 - `/input`
+- `/setText`
 - `/scroll`
 - `/swipe`
-- `/wait`
-- `/clipboard`
-- `/notify`
-- `/launch`
+- `/longpress`
+- `/gesture`
 - `/back`
 - `/home`
 - `/recents`
+- `/notify` (`POST` and `DELETE`)
 
-This is the practical toolset an Android agent actually needs: **read UI, reason about UI, act on UI, verify result**.
+### High-value agent properties
+
+- structured screen reading
+- selector-based interaction by text, content description, and resource id
+- explicit click-resolution metadata
+- accessibility-first control with screenshot support
+- capability governance: system truth, app policy, effective usability
+- loopback-only runtime surface, not remote-control-by-default
 
 ---
 
-## Why Ghosthand is agent-friendly
+## What Makes It Agent-Friendly
 
-Ghosthand is unusually friendly to LLM-based or tool-using agents for a few concrete reasons.
+### Structured truth, not one giant “screen dump”
 
-### 1. Inspectable interaction instead of black-box success
+Ghosthand keeps multiple truth surfaces distinct:
 
-When Ghosthand resolves a click, it can report how that happened:
+- `/screen`: shaped actionable surface
+- `/tree`: fuller structural accessibility truth
+- `/foreground`: observer context
+- `/screenshot`: visual truth
+- `/wait`: change and settle primitive
+
+### Inspectable action results
+
+Ghosthand does not just say “click worked”.
+
+It can expose:
 
 - requested selector surface
 - effective strategy
-- whether contains fallback was used
-- whether the matched node itself was clickable
-- whether a clickable ancestor/wrapper was used
-- ancestor depth
-- resolved target identity
+- fallback usage
+- wrapper or ancestor resolution
+- post-action state hints
+- bounded failure categories
 
-That means the agent does not have to guess whether a click landed directly, through a wrapper, or through a bounded fallback path.
+### Truthful screenshot and preview semantics
 
-### 2. Structured UI truth
+Current repo head treats screenshot success as real only when the response has:
 
-Ghosthand separates multiple truth surfaces instead of pretending all UI readings mean the same thing:
+- decodable non-empty image bytes
+- positive returned width
+- positive returned height
 
-- `/screen` = shaped actionable surface snapshot
-- `/tree` = fuller structural accessibility truth
-- `/foreground` = observer context
-- `/wait` = change/settled-state primitive
-
-This matters because mobile UI automation fails when tools collapse all state into one ambiguous “screen dump.”
-
-### 3. Natural Android substrate
-
-Ghosthand is built on the real Android control surfaces that matter:
-
-- **AccessibilityService**
-- **foreground service**
-- **notification listener**
-- **media projection** for screenshots
-- **local loopback HTTP API**
-- normal **package launch intent** paths
-
-So the technical route is realistic and sustainable for a phone-side agent stack.
-
-### 4. Bounded heuristics, not hidden magic
-
-Ghosthand does use bounded convenience logic where it helps, but the design intent is to keep it:
-
-- explicit
-- inspectable
-- non-destructive
-- compatible with agent reasoning
-
-That is important for debugging, evaluation, and future skill-layer orchestration.
+`/screen` preview metadata now points back to `/screenshot` through `previewPath` instead of embedding full image payloads into normal `/screen` responses.
 
 ---
 
-## Technical route: why this architecture makes sense
+## Architecture
 
-Ghosthand’s technical route is intentionally conservative and platform-native.
+```text
+External Agent
+      |
+      v
+127.0.0.1:5583 localhost API
+      |
+      +--> read surfaces: /screen /tree /foreground /events /screenshot
+      |
+      +--> interaction routes: /find /click /tap /input /scroll /swipe ...
+      |
+      v
+Android app runtime
+      |
+      +--> AccessibilityService
+      +--> foreground service
+      +--> notification listener
+      +--> screenshot coordination
+      +--> capability / policy state
+```
 
-### Control path
+Product baseline:
 
-At a high level, Ghosthand works like this:
+- local Android app
+- loopback-only API
+- accessibility-first interaction
+- explicit permission governance
+- local screenshot capture
 
-1. Android app runs locally on the phone
-2. a foreground runtime hosts a **localhost API**
-3. the runtime reads accessibility/UI state
-4. an external agent calls the API over loopback
-5. Ghosthand executes actions and returns structured results
-
-This route avoids several common traps:
-
-- no exposed remote control surface by default
-- no dependency on OCR-only automation
-- no fake abstraction pretending Android is a web page
-- no giant intent DSL trying to predict every workflow
-
-### Why accessibility + local API is the right baseline
-
-For phone-side agents, a good platform has to balance:
-
-- capability
-- inspectability
-- stability
-- permission boundaries
-- agent usability
-
-Accessibility + local API + explicit runtime state is a good baseline because it gives:
-
-- structured node access
-- actionable selectors
-- bounded gesture support
-- grounded runtime diagnostics
-- clear permission and capability governance
-
-### Why this is better than “just screenshots”
-
-Image-only phone automation can work, but it is wasteful, brittle, and hard to debug.
-
-Ghosthand is stronger when the app exposes:
-
-- text
-- content descriptions
-- resource ids
-- bounds
-- focus/editability
-- clickability / wrapper resolution
-- runtime truth signals
-
-Screenshots still matter, but they are part of the stack, not the whole stack.
+This is the supported product path from [docs/RPD.md](./docs/RPD.md).
 
 ---
 
-## Product model
+## Build And Install
 
-Ghosthand is built around a few explicit product ideas.
+### Requirements
 
-### 1. Permission governance matters
+- Android SDK / `adb`
+- JDK compatible with the Gradle build
+- Android device running Android 11+ (`minSdk = 30`)
 
-System authorization is not the same thing as agent usability.
+### Debug build
 
-Ghosthand separates:
+```bash
+./gradlew :app:assembleDebug
+adb install -r -d app/build/outputs/apk/debug/app-debug.apk
+```
 
-- system-granted capability
+### Release build
+
+Release signing is configured from Gradle properties:
+
+- `GHOSTHAND_RELEASE_STORE_FILE`
+- `GHOSTHAND_RELEASE_STORE_PASSWORD`
+- `GHOSTHAND_RELEASE_KEY_ALIAS`
+- `GHOSTHAND_RELEASE_KEY_PASSWORD`
+
+Build:
+
+```bash
+./gradlew :app:assembleRelease
+```
+
+Artifact:
+
+- [app-release.apk](./app/build/outputs/apk/release/app-release.apk)
+
+### Main app components
+
+- launcher activity: `com.folklore25.ghosthand/.ui.main.MainActivity`
+- foreground runtime service: `com.folklore25.ghosthand/.service.runtime.GhosthandForegroundService`
+- primary accessibility service: `com.folklore25.ghosthand/com.folklore25.ghosthand.service.accessibility.GhostCoreAccessibilityService`
+
+---
+
+## Runtime Verification
+
+The repo includes a device-side verifier:
+
+- [scripts/ghosthand-verify-runtime.sh](./scripts/ghosthand-verify-runtime.sh)
+
+Useful modes include:
+
+- `restore-runtime`
+- `core`
+- `screenshot-check`
+- `install-current-build`
+
+Examples:
+
+```bash
+scripts/ghosthand-verify-runtime.sh restore-runtime
+scripts/ghosthand-verify-runtime.sh screenshot-check
+```
+
+Current screenshot verification checks:
+
+- full screenshot returns real PNG payload bytes
+- `/screen` publishes preview metadata only when usable
+- preview fetch through `previewPath` returns a real image
+- preview short edge stays above the current decision-usable floor
+
+---
+
+## Design Principles
+
+### Capability-first
+
+Expose typed platform capability, not raw hidden plumbing.
+
+### Accessibility-first
+
+Semantic control through accessibility is the mainline path.
+
+### Truth over decorative UX
+
+If the app shows capability state, it must reflect:
+
+- system authorization
 - app-level policy
 - effective usable state
 
-That makes it possible to grant Android-side permission while still denying Ghosthand/OpenClaw use of that capability.
+### Local debugability
 
-### 2. Diagnostics should exist, but not dominate
+Critical behavior should be testable on-device without cloud infrastructure.
 
-The app keeps runtime truth visible, but the default surface is not supposed to be a cluttered engineering panel.
+### Platform, not skill
 
-The product direction is:
-
-- clean operator home surface
-- dedicated permissions governance page
-- secondary diagnostics page
-- advanced/root entry kept subordinate
-
-### 3. Full-update model, not fake silent update
-
-Ghosthand checks GitHub release metadata and guides users to a **full APK update** path instead of pretending Android can always do seamless silent updates.
+Ghosthand is the substrate.  
+Prompting, task heuristics, or app-specific strategy should live in the external agent or skill layer.
 
 ---
 
-## Example use cases
+## Non-Goals
 
-Ghosthand is useful for workflows like:
+Ghosthand is not trying to become:
 
-- launch an app by package name
-- inspect current foreground app
-- read the current structured screen
-- find an element by text, content description, or resource id
-- click through nested wrappers with transparent resolution metadata
-- type into a focused input
-- scroll or swipe and verify what changed
-- read or write clipboard contents
-- post or inspect notifications
-- build phone-side agent loops such as:
-  - open app
-  - locate target
-  - click target
-  - wait for state change
-  - read next screen
-  - continue
+- arbitrary shell execution
+- root/libsu product behavior
+- cloud orchestration
+- workflow planner logic
+- no-code automation UI
+- screenshot-only control wrapper
 
-That makes it a strong fit for:
-
-- mobile browser agents
-- Android research tools
-- agent evaluation harnesses
-- local phone copilots
-- device-side AI operators
-- loopback-controlled mobile assistants
+Its value comes from staying narrow and truthful.
 
 ---
 
-## Design principles
+## Who This Is For
 
-Ghosthand follows a few principles that matter for long-term agent tooling.
+Ghosthand is a strong fit if you:
 
-### Expose capability, do not over-hide it
+- build or test Android agents
+- operate OpenClaw-like systems
+- want local inspectable phone control
+- prefer structured UI truth over black-box “worked”
+- are comfortable with Android permissions and runtime debugging
 
-If the platform knows something truthful, it should prefer exposing it rather than hiding it for the sake of short-term success rate.
-
-### Keep heuristics bounded and inspectable
-
-Helpful fallbacks are acceptable.
-Uninspectable magic is not.
-
-### Preserve structural truth
-
-A shaped actionable view is useful.
-A fuller structural truth surface should still remain available.
-
-### Separate platform from skill
-
-Ghosthand is the **platform substrate**.
-A future `ghosthand-skill` or ClawHub package can handle:
-
-- prompting
-- selector-choice discipline
-- escalation defaults
-- task-specific operator guidance
-
-That separation keeps the app reusable and honest.
+If you want a reusable Android agent substrate rather than a consumer automation app, that is exactly the project boundary.
 
 ---
 
-## Current positioning
+## Roadmap
 
-Ghosthand is best understood as:
+The current near-term roadmap lives in [.planning/ROADMAP.md](./.planning/ROADMAP.md).
 
-- an **Android agent control substrate**
-- a **mobile accessibility automation runtime**
-- a **localhost phone API for AI agents**
-- an **OpenClaw-friendly smartphone tool layer**
-- a **structured alternative to blind screenshot-only phone control**
+Recent completed line:
 
-It is especially relevant if you are searching for topics like:
+- 1.4.0 architecture and current-state cleanup passes
+- 1.4.1 visual observation regression correction
 
-- Android AI agent
-- phone agent infrastructure
-- OpenClaw tool
-- Android accessibility API for LLM agents
-- local mobile automation API
-- on-device smartphone agent control
-- Android UI automation for AI
-- mobile agent runtime
-- loopback Android control plane
-- agent-friendly Android automation
-- structured mobile UI control
+The next work should build from that truthful baseline, not reopen the same screenshot contract mistakes.
 
 ---
 
-## Non-goals
+## Project Site
 
-Ghosthand is not trying to be:
-
-- a mass-market automation app
-- a cloud control dashboard
-- a full MDM product
-- a no-code shortcut builder
-- a generic Android intent laboratory
-- an image-only agent wrapper
-
-That focus is part of the point.
+- Website: https://ghosthand.cc/
 
 ---
 
 ## License
 
-Ghosthand uses **MPL 2.0** for the core project files.
+Ghosthand is licensed under the Mozilla Public License 2.0.
 
----
-
-## Who this is for
-
-Ghosthand is most useful if you are the kind of user who:
-
-- builds or tests Android agents
-- runs OpenClaw-like systems
-- wants local, inspectable phone control
-- values structured truth over black-box success
-- is comfortable with Android permissions, accessibility, and runtime debugging
-- wants a practical substrate for mobile AI action loops
-
-If that is what you are looking for, Ghosthand is built for you.
+See [LICENSE](./LICENSE).
