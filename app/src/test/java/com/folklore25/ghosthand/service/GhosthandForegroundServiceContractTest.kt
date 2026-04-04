@@ -13,7 +13,7 @@ import org.junit.Test
 
 class GhosthandForegroundServiceContractTest {
     @Test
-    fun manifestAndRuntimeExposeTheSameMediaProjectionForegroundServiceContract() {
+    fun manifestAndRuntimeStartupUseTheBaseForegroundServiceType() {
         val manifest = TestFileSupport.readProjectFile(
             "app/src/main/AndroidManifest.xml",
             "src/main/AndroidManifest.xml"
@@ -23,14 +23,13 @@ class GhosthandForegroundServiceContractTest {
             "src/main/java/com/folklore25/ghosthand/service/runtime/GhosthandForegroundService.kt"
         )
 
-        assertTrue(manifest.contains(GhosthandForegroundServiceContract.MEDIA_PROJECTION_PERMISSION))
         assertTrue(
             manifest.contains(
                 "android:foregroundServiceType=\"${GhosthandForegroundServiceContract.MANIFEST_FOREGROUND_SERVICE_TYPES}\""
             )
         )
         assertTrue(
-            foregroundService.contains("GhosthandForegroundServiceContract.RUNTIME_FOREGROUND_SERVICE_TYPES")
+            foregroundService.contains("GhosthandForegroundServiceContract.STARTUP_FOREGROUND_SERVICE_TYPES")
         )
     }
 }

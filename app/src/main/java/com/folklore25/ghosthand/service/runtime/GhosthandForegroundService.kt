@@ -60,7 +60,7 @@ class GhosthandForegroundService : Service() {
                 startForeground(
                     NOTIFICATION_ID,
                     notification,
-                    GhosthandForegroundServiceContract.RUNTIME_FOREGROUND_SERVICE_TYPES
+                    GhosthandForegroundServiceContract.STARTUP_FOREGROUND_SERVICE_TYPES
                 )
             } else {
                 startForeground(NOTIFICATION_ID, notification)

@@ -9,10 +9,12 @@ package com.folklore25.ghosthand.service.runtime
 import android.content.pm.ServiceInfo
 
 object GhosthandForegroundServiceContract {
-    const val MANIFEST_FOREGROUND_SERVICE_TYPES = "dataSync|mediaProjection"
-    const val MEDIA_PROJECTION_PERMISSION = "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
+    const val MANIFEST_FOREGROUND_SERVICE_TYPES = "dataSync"
 
-    val RUNTIME_FOREGROUND_SERVICE_TYPES: Int =
+    val STARTUP_FOREGROUND_SERVICE_TYPES: Int =
+        ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+
+    val MEDIA_PROJECTION_FOREGROUND_SERVICE_TYPES: Int =
         ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC or
             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
 }

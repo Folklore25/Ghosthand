@@ -26,8 +26,7 @@ import java.util.concurrent.TimeUnit
  *
  * MediaProjection requires:
  * - User consent via system dialog (triggered from an Activity)
- * - Ghosthand's runtime foreground service declared for dataSync|mediaProjection
- *   and started with the matching media-projection service-type flag during capture
+ * - Ghosthand's runtime foreground service already running during capture
  *
  * Usage:
  * 1. Store a valid MediaProjection via [setProjection].
