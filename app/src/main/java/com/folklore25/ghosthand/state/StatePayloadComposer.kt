@@ -88,16 +88,8 @@ object StatePayloadComposer {
             "implemented" to true,
             "accessibility" to accessibilityEnabled,
             "capabilitySummary" to linkedMapOf(
-                "accessibility" to linkedMapOf(
-                    "allowed" to capabilityAccess.accessibility.policy.allowed,
-                    "usableNow" to capabilityAccess.accessibility.effective.usableNow,
-                    "reason" to capabilityAccess.accessibility.effective.reason
-                ),
-                "screenshot" to linkedMapOf(
-                    "allowed" to capabilityAccess.screenshot.policy.allowed,
-                    "usableNow" to capabilityAccess.screenshot.effective.usableNow,
-                    "reason" to capabilityAccess.screenshot.effective.reason
-                )
+                "accessibility" to GovernedCapabilityPayloads.accessibilitySummaryFields(capabilityAccess.accessibility),
+                "screenshot" to GovernedCapabilityPayloads.screenshotSummaryFields(capabilityAccess.screenshot)
             ),
             "capabilities" to linkedMapOf(
                 "accessibility" to GovernedCapabilityPayloads.accessibilityToJson(capabilityAccess.accessibility),

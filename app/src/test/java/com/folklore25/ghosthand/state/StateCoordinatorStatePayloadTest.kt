@@ -69,6 +69,9 @@ class StateCoordinatorStatePayloadTest {
         val capabilities = permissions["capabilities"] as Map<*, *>
         assertTrue(capabilitySummary.containsKey("accessibility"))
         assertTrue(capabilities.containsKey("screenshot"))
+        val accessibilitySummary = capabilitySummary["accessibility"] as Map<*, *>
+        assertEquals("control_and_observation", accessibilitySummary["plane"])
+        assertTrue((accessibilitySummary["preconditions"] as List<*>).contains("dispatch_capable"))
         assertEquals(true, systemPermissions["usageAccess"])
         assertEquals(false, systemPermissions["notifications"])
         assertEquals(false, systemPermissions["writeSecureSettings"])
@@ -96,6 +99,9 @@ class StateCoordinatorStatePayloadTest {
         val system = fields["system"] as Map<*, *>
         val policy = fields["policy"] as Map<*, *>
         val effective = fields["effective"] as Map<*, *>
+        assertEquals("control_and_observation", fields["plane"])
+        assertEquals("capability_gate_state", fields["truthType"])
+        assertTrue((fields["failureModes"] as List<*>).contains("accessibility_disabled"))
         assertTrue(system.containsKey("dispatchCapable"))
         assertTrue(policy.containsKey("allowed"))
         assertTrue(effective.containsKey("usableNow"))
@@ -121,6 +127,8 @@ class StateCoordinatorStatePayloadTest {
         )
 
         val system = fields["system"] as Map<*, *>
+        assertEquals("preview", fields["plane"])
+        assertTrue((fields["preconditions"] as List<*>).contains("accessibility_capture_ready_or_media_projection_granted"))
         assertTrue(system["accessibilityCaptureReady"] as Boolean)
         assertEquals(false, system["mediaProjectionGranted"] as Boolean)
     }

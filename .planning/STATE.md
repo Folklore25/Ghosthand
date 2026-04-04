@@ -8,7 +8,7 @@ progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 45
-  completed_plans: 33
+  completed_plans: 34
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,7 +22,7 @@ Current focus: **1.4.0 agent-native interface evolution** — Phase 25 is now pl
 ## Current Position
 
 Phase: 25 (agent-native-interface-evolution-for-1-4-0) — EXECUTING
-Plan: 1 of 5
+Plan: 2 of 5
 
 - **Phase:** 25
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
@@ -76,6 +76,7 @@ Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 e
 - [Phase 25]: Strengthen the existing capability plane through `/commands` and runtime state surfaces instead of creating a separate self-description system.
 - [Phase 25]: Treat thin intent helpers as conditional scope that is only allowed after observation, capability, and evidence planes stabilize and only if the helper remains generic and inspectable.
 - [Phase 25]: Observation plane v1 now uses a bounded in-memory cursor log exposed through `/events`, with `/screen` publishing edge-triggered foreground, readability, fallback, preview, and transient accessibility events instead of a noisy firehose.
+- [Phase 25]: Capability-plane metadata now publishes `plane`, `availabilityModel`, `truthType`, `directness`, `preconditions`, and `failureModes` through `/commands`, while runtime capability summaries expose current blockers instead of only raw allowed/usable flags.
 
 ## Blockers / Concerns
 
@@ -86,7 +87,7 @@ Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 e
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: execute Phase 25-02 to strengthen `/commands` and runtime capability metadata now that the observation plane exists.
+Next action: execute Phase 25-03 to normalize major action-route evidence around performed truth, observed change, post-action state, and bounded ambiguity/fallback signals.
 
 ## Performance Metrics
 
@@ -103,3 +104,4 @@ Next action: execute Phase 25-02 to strengthen `/commands` and runtime capabilit
 | 24.4 | 03 | 3 min | 1 | 13 |
 | 24.4 | 04 | 1 min | 2 | 3 |
 | 25 | 01 | 18 min | 1 | 11 |
+| 25 | 02 | 12 min | 1 | 8 |

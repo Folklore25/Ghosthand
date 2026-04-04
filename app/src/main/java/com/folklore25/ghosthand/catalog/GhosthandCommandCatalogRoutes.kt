@@ -28,6 +28,19 @@ internal object GhosthandReadCommandCatalog {
             operatorUses = listOf("observer_context")
         ),
         GhosthandCommandDescriptor(
+            id = "events",
+            category = "read",
+            method = "GET",
+            path = "/events",
+            description = "Poll recent high-value Ghosthand runtime events through a cursor-based observation window. This is the bounded observation plane for recent foreground, readability, preview, fallback, and action-adjacent state changes; it does not replace the primitive HTTP control surface or require a streaming transport.",
+            responseFields = listOf("requestedSinceCursor", "oldestCursor", "latestCursor", "nextCursor", "retentionLimit", "droppedBeforeCursor", "events"),
+            params = listOf(
+                GhosthandCommandParam("since", "long", "query", false, "Return events with cursor values greater than this cursor"),
+                GhosthandCommandParam("limit", "int", "query", false, "Maximum number of events to return")
+            ),
+            exampleRequest = mapOf("since" to 12, "limit" to 20)
+        ),
+        GhosthandCommandDescriptor(
             id = "screen",
             category = "read",
             method = "GET",
