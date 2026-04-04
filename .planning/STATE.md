@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready
-last_updated: "2026-04-05T11:10:00.000Z"
+last_updated: "2026-04-05T15:30:00.000Z"
 progress:
-  total_phases: 15
+  total_phases: 16
   completed_phases: 6
-  total_plans: 68
+  total_plans: 72
   completed_plans: 46
 ---
 
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 25.6 complete** — the accepted 1.4.0 baseline and accepted 25.5 fixes remain intact, main source now has zero wildcard imports, the biggest coordination-heavy files are further reduced through contained helpers, and root-flat tests are down to four clearly shared cases.
+Current focus: **Phase 26 planning** — define a bounded 1.4.1 correction pass that restores truthful, agent-usable screenshot and preview behavior after the real visual-observation regression exposed by OpenClaw usage.
 
 ## Current Position
 
-Phase: 25.6 (second-current-state-cleanup-pass-for-1-4-0) — COMPLETE
-Plan: 4 of 4
+Phase: 26 (visual-observation-regression-correction-for-1-4-1) — PLANNING
+Plan: 0 of 4
 
-- **Phase:** 25.6
+- **Phase:** 26
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase 25.6 complete — the second cleanup pass closed the remaining import, contained-extraction, and test-convergence debt without broadening scope, and the full compile plus unit-test gate passes.
+- **Status:** Planning Phase 26 — the accepted 1.4.0 baseline remains intact, and the next bounded pass will investigate and correct the screenshot regression without broadening into unrelated 1.4.1 work.
 
 ## Progress
 
@@ -46,8 +46,9 @@ Plan: 4 of 4
 - Phase 25.4: **PLANNED FOR V1.4.0 CLEAN FINISH** — bounded cleanup and polish for the accepted architecture result, focused on code cleanliness, capability-plane expression, self-description surface coherence, and closeout quality
 - Phase 25.5: **PLANNED FOR V1.4.0 CURRENT-STATE CORRECTION** — truthful `/notify` cancellation, screenshot-service contract alignment, wildcard-import cleanup, contained debt reduction in oversized coordinators, and continued test-package convergence
 - Phase 25.6: **PLANNED FOR V1.4.0 SECOND CLEANUP PASS** — finish the remaining UI wildcard-import cleanup, one more contained extraction pass on the biggest coordination-heavy files, and further root-flat test reduction
+- Phase 26: **PLANNED FOR V1.4.1** — restore truthful, reliable, agent-usable visual observation by correcting the screenshot regression, lifting lightweight preview usefulness, and tightening visual failure semantics
 
-Overall: Ghosthand’s 1.4.0 line now has the accepted architecture, the accepted 25.5 correctness fixes, and the finished 25.6 cleanup closeout. The remaining engineering debt targeted by the second cleanup pass is closed.
+Overall: Ghosthand’s 1.4.0 line is clean and accepted. The immediate post-1.4.0 focus is a bounded 1.4.1 correction pass for the regressed visual-observation path, starting with screenshot pipeline diagnosis and truthful restoration.
 
 ## Recent Decisions
 
@@ -59,6 +60,7 @@ Overall: Ghosthand’s 1.4.0 line now has the accepted architecture, the accepte
 | 25.1 will formalize capability plane as its own substrate layer | `/commands` and `/state` should stop carrying the entire capability burden alone |
 | 25.3 will treat the failed strict acceptance as binding and will re-plan the architecture convergence work as a correction pass | The missing work must be materially executed in code rather than defended as partial progress |
 | 25.4 will polish and close out the accepted 1.4.0 architecture result instead of extending or redesigning it | The goal is a cleaner maintained substrate, not another feature wave or modeling pass |
+| 1.4.1 begins with a screenshot-regression correction pass rather than broader capability work | Real OpenClaw usage shows the visual observation path is the urgent substrate failure, and the fix must stay tightly bounded |
 
 ## Decisions
 
@@ -125,6 +127,8 @@ Overall: Ghosthand’s 1.4.0 line now has the accepted architecture, the accepte
 - [Phase 25.6]: Shared main-thread execution and active-window-root helpers now live in `AccessibilityServiceExecutionSupport.kt`, reducing duplicated coordination code in both accessibility services.
 - [Phase 25.6]: Clipboard and notification delegation now live in `StatePeripheralCoordinator.kt`, reducing unrelated peripheral ownership in `StateCoordinator.kt`.
 - [Phase 25.6]: Root-flat test count dropped from 9 to 4 by moving clearly owned UI tests into `ui/main`, `ui/permissions`, `ui/common/dialog`, and `ui/diagnostics`.
+- [Phase 26]: The 1.4.1 correction pass is narrowly bound to screenshot or preview reliability, full-resolution capture truth, lightweight visual usefulness, and more specific visual failure semantics.
+- [Phase 26]: The accepted 1.4.0 action-evidence, capability-plane, and observation-plane work remains intact and out of scope unless a screenshot fix requires a tiny direct contract follow-up.
 
 ## Blockers / Concerns
 
@@ -135,7 +139,7 @@ Overall: Ghosthand’s 1.4.0 line now has the accepted architecture, the accepte
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: Review the finished 1.4.0 branch state and decide whether to prepare merge or shipping work from the fully cleaned baseline.
+Next action: Finish Phase 26 planning, then execute the screenshot-regression correction pass on the new 1.4.1 feature branch.
 
 ## Performance Metrics
 
