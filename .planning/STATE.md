@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready
-last_updated: "2026-04-05T15:30:00.000Z"
+last_updated: "2026-04-04T19:19:30.844Z"
 progress:
   total_phases: 16
-  completed_phases: 6
-  total_plans: 72
-  completed_plans: 46
+  completed_phases: 12
+  total_plans: 73
+  completed_plans: 64
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 26 planning** — define a bounded 1.4.1 correction pass that restores truthful, agent-usable screenshot and preview behavior after the real visual-observation regression exposed by OpenClaw usage.
+Current focus: **Phase 26 complete** — the bounded 1.4.1 correction pass restored truthful, agent-usable screenshot and preview behavior and finished with local plus OnePlus device proof.
 
 ## Current Position
 
-Phase: 26 (visual-observation-regression-correction-for-1-4-1) — PLANNING
-Plan: 0 of 4
+Phase: 26 (visual-observation-regression-correction-for-1-4-1) — COMPLETE
+Plan: 4 of 4
 
 - **Phase:** 26
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Planning Phase 26 — the accepted 1.4.0 baseline remains intact, and the next bounded pass will investigate and correct the screenshot regression without broadening into unrelated 1.4.1 work.
+- **Status:** Phase 26 complete
 
 ## Progress
 
@@ -129,6 +129,10 @@ Overall: Ghosthand’s 1.4.0 line is clean and accepted. The immediate post-1.4.
 - [Phase 25.6]: Root-flat test count dropped from 9 to 4 by moving clearly owned UI tests into `ui/main`, `ui/permissions`, `ui/common/dialog`, and `ui/diagnostics`.
 - [Phase 26]: The 1.4.1 correction pass is narrowly bound to screenshot or preview reliability, full-resolution capture truth, lightweight visual usefulness, and more specific visual failure semantics.
 - [Phase 26]: The accepted 1.4.0 action-evidence, capability-plane, and observation-plane work remains intact and out of scope unless a screenshot fix requires a tiny direct contract follow-up.
+- [Phase 26]: Screenshot success now requires decodable non-empty image bytes and positive returned dimensions; available=true alone is never sufficient.
+- [Phase 26]: Backend fallback and /screenshot serialization now rely on the same ScreenshotDispatchResult truth helpers instead of ad hoc route-only checks.
+- [Phase 26]: `/screen` preview metadata now advertises a bounded aspect-preserving `360x804` preview path on-device, and the OnePlus runtime proof confirms both full-size and preview screenshot retrieval on the rebuilt debug install.
+- [Phase 26]: `/screenshot` now reports bounded failure categories instead of one generic failure, while the runtime verifier uses forwarded local HTTP plus decoded-byte checks to prove real payload truth.
 
 ## Blockers / Concerns
 
@@ -138,8 +142,8 @@ Overall: Ghosthand’s 1.4.0 line is clean and accepted. The immediate post-1.4.
 
 ## Session Continuity
 
-Last session: 2026-04-04T00:00:00.000Z
-Next action: Finish Phase 26 planning, then execute the screenshot-regression correction pass on the new 1.4.1 feature branch.
+Last session: 2026-04-04T19:19:30.844Z
+Next action: Choose the next post-1.4.1 roadmap item or close out the current milestone with the finished Phase 26 baseline.
 
 ## Performance Metrics
 
@@ -173,3 +177,6 @@ Next action: Finish Phase 26 planning, then execute the screenshot-regression co
 | 25.6 | 02 | 9 min | 1 | 4 |
 | 25.6 | 03 | 7 min | 1 | 6 |
 | 25.6 | 04 | 2 min | 1 | 3 |
+| 26 | 02 | 26 min | 2 | 6 |
+| 26 | 03 | 0 min | 2 | 7 |
+| 26 | 04 | 0 min | 2 | 5 |

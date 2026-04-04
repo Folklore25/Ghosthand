@@ -93,7 +93,7 @@ internal fun ScreenshotDispatchResult.classifyFailure(): ScreenshotFailureClassi
             code = "SCREENSHOT_FRAME_TIMEOUT",
             message = "Screenshot capture timed out while waiting for a real frame."
         )
-        attemptedPath in setOf("bitmap_wrap_failed", "bitmap_prepare_failed", "screenshot_exception") ||
+        attemptedPath in setOf("bitmap_wrap_failed", "bitmap_prepare_failed", "resize_encode_failed", "screenshot_exception") ||
             attemptedPath.startsWith("screenshot_failure_") ||
             attemptedPath.startsWith("capture_exception_") ->
             ScreenshotFailureClassification(

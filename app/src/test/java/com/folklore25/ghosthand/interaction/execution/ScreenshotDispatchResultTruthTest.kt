@@ -147,9 +147,56 @@ class ScreenshotDispatchResultTruthTest {
         }
     }
 
+    @Test
+    fun customSizeRequestsCaptureNativeImageBeforeFallbackProjection() {
+        val service = FakeExecutionCore(
+            screenshotResult = ScreenshotDispatchResult(
+                available = false,
+                base64 = null,
+                format = "png",
+                width = 0,
+                height = 0,
+                attemptedPath = "bitmap_prepare_failed"
+            )
+        )
+        GhostAccessibilityExecutionCoreRegistry.registerPrimary(service)
+
+        var projectionWidth = -1
+        var projectionHeight = -1
+
+        try {
+            AccessibilityScreenshotAccess.captureBestAvailable(
+                width = 360,
+                height = 804,
+                captureProjection = { width, height ->
+                    projectionWidth = width
+                    projectionHeight = height
+                    ScreenshotDispatchResult(
+                        available = false,
+                        base64 = null,
+                        format = "png",
+                        width = 0,
+                        height = 0,
+                        attemptedPath = "projection_missing"
+                    )
+                }
+            )
+
+            assertEquals(0, service.lastScreenshotWidth)
+            assertEquals(0, service.lastScreenshotHeight)
+            assertEquals(0, projectionWidth)
+            assertEquals(0, projectionHeight)
+        } finally {
+            GhostAccessibilityExecutionCoreRegistry.unregister(service)
+        }
+    }
+
     private class FakeExecutionCore(
         private val screenshotResult: ScreenshotDispatchResult
     ) : GhostAccessibilityExecutionCore {
+        var lastScreenshotWidth: Int = -1
+        var lastScreenshotHeight: Int = -1
+
         override fun <T> withActiveWindowRoot(block: (AccessibilityNodeInfo) -> T): T? = null
 
         override fun dispatchConnectionActive(): Boolean = true
@@ -194,7 +241,11 @@ class ScreenshotDispatchResultTruthTest {
             )
         }
 
-        override fun takeScreenshot(width: Int, height: Int): ScreenshotDispatchResult = screenshotResult
+        override fun takeScreenshot(width: Int, height: Int): ScreenshotDispatchResult {
+            lastScreenshotWidth = width
+            lastScreenshotHeight = height
+            return screenshotResult
+        }
 
         override fun setTextOnNode(nodeId: String, text: CharSequence): NodeTextDispatchResult {
             return NodeTextDispatchResult(nodeFound = false, performed = false, attemptedPath = "unused")
