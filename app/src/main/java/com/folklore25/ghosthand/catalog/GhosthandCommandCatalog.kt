@@ -6,8 +6,10 @@
 
 package com.folklore25.ghosthand.catalog
 
+import com.folklore25.ghosthand.capability.GhosthandCapabilityPresentation
+
 object GhosthandCommandCatalog {
-    const val schemaVersion = "1.24"
+    const val schemaVersion = "1.25"
 
     val selectorAliases: Map<String, String> = GhosthandSelectorCatalog.aliases
 
@@ -21,15 +23,24 @@ object GhosthandCommandCatalog {
     }
 
     fun commandPayloads(): List<Map<String, Any?>> = commands.map { command ->
+        val capabilityMetadata = GhosthandCapabilityPlaneCatalog.metadataFor(command)
         linkedMapOf<String, Any?>(
             "id" to command.id,
             "category" to command.category,
             "method" to command.method,
             "path" to command.path,
             "description" to command.description,
+            "capabilityIds" to command.capabilityIds.takeIf { it.isNotEmpty() },
+            "capabilities" to GhosthandCapabilityPresentation.commandCapabilityFields(command.capabilityIds).takeIf { it.isNotEmpty() },
             "params" to command.params.map(::paramPayload),
-            "responseFields" to command.responseFields
+            "responseFields" to command.responseFields,
+            "plane" to capabilityMetadata.plane,
+            "availabilityModel" to capabilityMetadata.availabilityModel,
+            "truthType" to capabilityMetadata.truthType,
+            "directness" to capabilityMetadata.directness
         ).apply {
+            if (capabilityMetadata.preconditions.isNotEmpty()) put("preconditions", capabilityMetadata.preconditions)
+            if (capabilityMetadata.failureModes.isNotEmpty()) put("failureModes", capabilityMetadata.failureModes)
             command.selectorSupport?.let { selectorSupport ->
                 put(
                     "selectorSupport",

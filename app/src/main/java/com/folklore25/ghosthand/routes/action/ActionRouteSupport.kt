@@ -6,8 +6,11 @@
 
 package com.folklore25.ghosthand.routes.action
 
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.ActionEffectObservation
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.interaction.execution.ActionEffectObservation
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.payload.PostActionState
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -25,7 +28,8 @@ internal data class ScrollSurfaceObservation(
     val beforeSnapshotToken: String?,
     val afterSnapshotToken: String?,
     val finalPackageName: String?,
-    val finalActivity: String?
+    val finalActivity: String?,
+    val afterSnapshot: AccessibilityTreeSnapshot? = null
 )
 
 internal fun unsupportedBackendResponse(): String {
@@ -45,7 +49,14 @@ internal fun observeScrollSurfaceChange(
     val surfaceChanged = (beforeToken != null && afterToken != null && beforeToken != afterToken) ||
         beforePackage != afterPackage ||
         beforeActivity != afterActivity
-    return ScrollSurfaceObservation(surfaceChanged, beforeToken, afterToken, afterPackage, afterActivity)
+    return ScrollSurfaceObservation(
+        surfaceChanged = surfaceChanged,
+        beforeSnapshotToken = beforeToken,
+        afterSnapshotToken = afterToken,
+        finalPackageName = afterPackage,
+        finalActivity = afterActivity,
+        afterSnapshot = afterSnapshot
+    )
 }
 
 internal fun observeActionSurfaceChange(

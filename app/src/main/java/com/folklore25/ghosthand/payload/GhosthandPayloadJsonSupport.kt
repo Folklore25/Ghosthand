@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.payload
 
+import com.folklore25.ghosthand.R
+
 import org.json.JSONArray
 import org.json.JSONObject
 

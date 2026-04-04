@@ -6,6 +6,40 @@
 
 package com.folklore25.ghosthand.state
 
+import com.folklore25.ghosthand.capability.*
+import com.folklore25.ghosthand.catalog.*
+import com.folklore25.ghosthand.integration.github.*
+import com.folklore25.ghosthand.integration.projection.*
+import com.folklore25.ghosthand.interaction.accessibility.*
+import com.folklore25.ghosthand.interaction.clipboard.*
+import com.folklore25.ghosthand.interaction.effects.*
+import com.folklore25.ghosthand.interaction.execution.*
+import com.folklore25.ghosthand.notification.*
+import com.folklore25.ghosthand.payload.*
+import com.folklore25.ghosthand.preview.*
+import com.folklore25.ghosthand.screen.find.*
+import com.folklore25.ghosthand.screen.ocr.*
+import com.folklore25.ghosthand.screen.read.*
+import com.folklore25.ghosthand.screen.summary.*
+import com.folklore25.ghosthand.server.*
+import com.folklore25.ghosthand.server.http.*
+import com.folklore25.ghosthand.service.accessibility.*
+import com.folklore25.ghosthand.service.notification.*
+import com.folklore25.ghosthand.service.runtime.*
+import com.folklore25.ghosthand.state.*
+import com.folklore25.ghosthand.state.device.*
+import com.folklore25.ghosthand.state.diagnostics.*
+import com.folklore25.ghosthand.state.health.*
+import com.folklore25.ghosthand.state.read.*
+import com.folklore25.ghosthand.state.runtime.*
+import com.folklore25.ghosthand.state.summary.*
+import com.folklore25.ghosthand.ui.common.dialog.*
+import com.folklore25.ghosthand.ui.common.model.*
+import com.folklore25.ghosthand.ui.diagnostics.*
+import com.folklore25.ghosthand.ui.main.*
+import com.folklore25.ghosthand.ui.permissions.*
+import com.folklore25.ghosthand.wait.*
+
 import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.capability.GovernedCapabilityPayloads
 import com.folklore25.ghosthand.payload.GhosthandApiPayloads
@@ -54,7 +88,13 @@ class StateCoordinatorStatePayloadTest {
 
         val permissions = StatePayloadComposer.permissionsPayload(
             accessibilityEnabled = true,
-            capabilityAccess = capabilityAccess
+            capabilityAccess = capabilityAccess,
+            permissionSnapshot = PermissionSnapshot(
+                usageAccess = true,
+                notifications = false,
+                overlay = null,
+                writeSecureSettings = false
+            )
         )
         val systemPermissions = StatePayloadComposer.systemPermissionsPayload(
             PermissionSnapshot(
@@ -67,8 +107,14 @@ class StateCoordinatorStatePayloadTest {
 
         val capabilitySummary = permissions["capabilitySummary"] as Map<*, *>
         val capabilities = permissions["capabilities"] as Map<*, *>
-        assertTrue(capabilitySummary.containsKey("accessibility"))
+        assertTrue(capabilitySummary.containsKey("accessibility_control"))
         assertTrue(capabilities.containsKey("screenshot"))
+        val accessibilitySummary = capabilitySummary["accessibility_control"] as Map<*, *>
+        assertEquals(true, accessibilitySummary["availableNow"])
+        assertEquals(false, accessibilitySummary["degraded"])
+        assertFalse(accessibilitySummary.containsKey("blockers"))
+        assertEquals(listOf("accessibility_service"), accessibilitySummary["requiredServices"])
+        assertEquals("accessibility", accessibilitySummary["currentBackend"])
         assertEquals(true, systemPermissions["usageAccess"])
         assertEquals(false, systemPermissions["notifications"])
         assertEquals(false, systemPermissions["writeSecureSettings"])
@@ -96,6 +142,9 @@ class StateCoordinatorStatePayloadTest {
         val system = fields["system"] as Map<*, *>
         val policy = fields["policy"] as Map<*, *>
         val effective = fields["effective"] as Map<*, *>
+        assertEquals("control_and_observation", fields["plane"])
+        assertEquals("capability_gate_state", fields["truthType"])
+        assertTrue((fields["failureModes"] as List<*>).contains("accessibility_disabled"))
         assertTrue(system.containsKey("dispatchCapable"))
         assertTrue(policy.containsKey("allowed"))
         assertTrue(effective.containsKey("usableNow"))
@@ -121,6 +170,8 @@ class StateCoordinatorStatePayloadTest {
         )
 
         val system = fields["system"] as Map<*, *>
+        assertEquals("preview", fields["plane"])
+        assertTrue((fields["preconditions"] as List<*>).contains("accessibility_capture_ready_or_media_projection_granted"))
         assertTrue(system["accessibilityCaptureReady"] as Boolean)
         assertEquals(false, system["mediaProjectionGranted"] as Boolean)
     }

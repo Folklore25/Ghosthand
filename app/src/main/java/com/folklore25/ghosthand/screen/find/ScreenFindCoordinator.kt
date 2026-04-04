@@ -6,10 +6,11 @@
 
 package com.folklore25.ghosthand.screen.find
 
-import com.folklore25.ghosthand.AccessibilityNodeFinder
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotProvider
-import com.folklore25.ghosthand.FindNodeResult
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotProvider
+
+import com.folklore25.ghosthand.R
+
 import org.json.JSONObject
 
 internal class ScreenFindCoordinator(

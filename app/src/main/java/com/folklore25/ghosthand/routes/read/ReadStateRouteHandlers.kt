@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.routes.read
 
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.successEnvelope
 import com.folklore25.ghosthand.state.StateCoordinator

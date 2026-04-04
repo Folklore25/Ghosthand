@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.wait
 
+import com.folklore25.ghosthand.R
+
 data class UiStateSnapshot(
     val snapshotToken: String?,
     val packageName: String?,

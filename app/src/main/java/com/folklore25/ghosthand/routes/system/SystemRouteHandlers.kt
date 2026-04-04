@@ -27,6 +27,7 @@ internal class SystemRouteHandlers(
             LocalApiServerRoute("GET", "/ping") { buildPingResponse() },
             LocalApiServerRoute("GET", "/health") { buildHealthResponse() },
             LocalApiServerRoute("GET", "/commands") { buildCommandsResponse() },
+            LocalApiServerRoute("GET", "/capabilities") { buildCapabilitiesResponse() },
             LocalApiServerRoute("GET", "/state") { buildStateResponse() },
             LocalApiServerRoute("GET", "/device") { buildDeviceResponse() },
             LocalApiServerRoute("GET", "/foreground") { buildForegroundResponse() },
@@ -76,6 +77,10 @@ internal class SystemRouteHandlers(
 
     private fun buildStateResponse(): String {
         return buildJsonResponse(200, successEnvelope(stateCoordinator.createStatePayload()))
+    }
+
+    private fun buildCapabilitiesResponse(): String {
+        return buildJsonResponse(200, successEnvelope(stateCoordinator.createCapabilitiesPayload()))
     }
 
     private fun buildDeviceResponse(): String {

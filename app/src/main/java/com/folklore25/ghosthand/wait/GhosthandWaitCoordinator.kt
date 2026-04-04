@@ -6,11 +6,14 @@
 
 package com.folklore25.ghosthand.wait
 
-import com.folklore25.ghosthand.AccessibilityNodeFinder
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotResult
-import com.folklore25.ghosthand.FlatAccessibilityNode
-import com.folklore25.ghosthand.ForegroundAppSnapshot
+import com.folklore25.ghosthand.screen.find.AccessibilityNodeFinder
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotResult
+import com.folklore25.ghosthand.screen.read.FlatAccessibilityNode
+import com.folklore25.ghosthand.state.device.ForegroundAppSnapshot
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.state.StateCoordinator
 
 internal class GhosthandWaitCoordinator(

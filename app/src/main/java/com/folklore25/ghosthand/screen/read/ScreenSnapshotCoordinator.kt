@@ -6,9 +6,8 @@
 
 package com.folklore25.ghosthand.screen.read
 
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotProvider
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotResult
+import com.folklore25.ghosthand.R
+
 import org.json.JSONObject
 
 internal class ScreenSnapshotCoordinator(

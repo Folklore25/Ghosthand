@@ -6,9 +6,12 @@
 
 package com.folklore25.ghosthand.routes.read
 
-import com.folklore25.ghosthand.FindMissHint
-import com.folklore25.ghosthand.FindNodeResult
-import com.folklore25.ghosthand.TreeUnavailableReason
+import com.folklore25.ghosthand.screen.find.FindMissHint
+import com.folklore25.ghosthand.screen.find.FindNodeResult
+import com.folklore25.ghosthand.screen.read.TreeUnavailableReason
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
 import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
 import com.folklore25.ghosthand.payload.GhosthandScreenPayloads

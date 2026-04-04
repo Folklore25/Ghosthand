@@ -6,10 +6,42 @@
 
 package com.folklore25.ghosthand.state
 
+import com.folklore25.ghosthand.screen.find.AccessibilityNodeFinder
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotProvider
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotResult
+import com.folklore25.ghosthand.capability.CapabilityAccessSnapshot
+import com.folklore25.ghosthand.capability.CapabilityPolicyStore
+import com.folklore25.ghosthand.interaction.accessibility.ClickAttemptResult
+import com.folklore25.ghosthand.interaction.clipboard.ClipboardProvider
+import com.folklore25.ghosthand.interaction.clipboard.ClipboardReadResult
+import com.folklore25.ghosthand.interaction.clipboard.ClipboardWriteResult
+import com.folklore25.ghosthand.screen.find.FindNodeResult
+import com.folklore25.ghosthand.screen.read.FlatAccessibilityNode
+import com.folklore25.ghosthand.interaction.execution.GestureStroke
+import com.folklore25.ghosthand.interaction.execution.GlobalActionResult
+import com.folklore25.ghosthand.interaction.accessibility.InputKeyFailureReason
+import com.folklore25.ghosthand.integration.projection.MediaProjectionProvider
+import com.folklore25.ghosthand.notification.NotificationBuffer
+import com.folklore25.ghosthand.notification.NotificationCancelResult
+import com.folklore25.ghosthand.notification.NotificationDispatcher
+import com.folklore25.ghosthand.notification.NotificationPostResult
+import com.folklore25.ghosthand.screen.ocr.ScreenOcrProvider
+import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+import com.folklore25.ghosthand.interaction.accessibility.ScrollAttemptResult
+import com.folklore25.ghosthand.interaction.accessibility.ScrollFailureReason
+import com.folklore25.ghosthand.interaction.accessibility.SetTextAttemptResult
+import com.folklore25.ghosthand.interaction.accessibility.SwipeAttemptResult
+import com.folklore25.ghosthand.interaction.accessibility.TapAttemptResult
+import com.folklore25.ghosthand.interaction.accessibility.TypeAttemptResult
+import com.folklore25.ghosthand.interaction.accessibility.TypeFailureReason
+
+import com.folklore25.ghosthand.R
+
 import android.content.Context
-import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.interaction.execution.AccessibilityScreenshotAccess
 import com.folklore25.ghosthand.capability.CapabilityAccessResolver
+import com.folklore25.ghosthand.capability.GhosthandCapabilityPresentation
 import com.folklore25.ghosthand.interaction.execution.AccessibilityInteractionPlane
 import com.folklore25.ghosthand.interaction.execution.GhosthandScreenshotAccess
 import com.folklore25.ghosthand.interaction.execution.GhosthandInteractionPlane
@@ -25,6 +57,12 @@ import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 import com.folklore25.ghosthand.screen.read.ScreenSnapshotCoordinator
 import com.folklore25.ghosthand.state.read.StateReadCoordinator
 import com.folklore25.ghosthand.state.health.StateHealthPayloads
+import com.folklore25.ghosthand.state.runtime.RuntimeState
+import com.folklore25.ghosthand.state.diagnostics.HomeDiagnosticsProvider
+import com.folklore25.ghosthand.state.device.DeviceSnapshotProvider
+import com.folklore25.ghosthand.state.device.ForegroundAppProvider
+import com.folklore25.ghosthand.state.device.PermissionSnapshotProvider
+import com.folklore25.ghosthand.state.read.AccessibilityStatusProvider
 import com.folklore25.ghosthand.wait.GhosthandWaitCoordinator
 import com.folklore25.ghosthand.wait.WaitOutcome
 import org.json.JSONObject
@@ -58,6 +96,10 @@ class StateCoordinator(
     private val inputOperationPerformer = InputOperationPerformer
     private val screenshotAccess: GhosthandScreenshotAccess = AccessibilityScreenshotAccess
     private val notificationDispatcher = NotificationDispatcher(appContext)
+    private val peripheralCoordinator = StatePeripheralCoordinator(
+        clipboardProvider = clipboardProvider,
+        notificationDispatcher = notificationDispatcher
+    )
     private val screenOcrProvider = ScreenOcrProvider()
     private val screenPreviewCoordinator = ScreenPreviewCoordinator(
         screenshotAccess = screenshotAccess,
@@ -120,6 +162,15 @@ class StateCoordinator(
 
     fun createForegroundPayload(): JSONObject {
         return stateReadCoordinator.createForegroundPayload()
+    }
+
+    fun createCapabilitiesPayload(): JSONObject {
+        return JSONObject(
+            GhosthandCapabilityPresentation.capabilitiesFields(
+                capabilityAccess = stateReadCoordinator.capabilityAccessSnapshot(),
+                permissionSnapshot = permissionSnapshotProvider.snapshot()
+            )
+        )
     }
 
     fun createDevicePayload(): JSONObject {
@@ -325,11 +376,11 @@ class StateCoordinator(
     }
 
     fun readClipboard(): ClipboardReadResult {
-        return clipboardProvider.readClipboard()
+        return peripheralCoordinator.readClipboard()
     }
 
     fun writeClipboard(text: String): ClipboardWriteResult {
-        return clipboardProvider.writeClipboard(text)
+        return peripheralCoordinator.writeClipboard(text)
     }
 
     fun setMediaProjection(projection: android.media.projection.MediaProjection) {
@@ -343,15 +394,15 @@ class StateCoordinator(
     }
 
     fun postNotification(title: String, text: String): NotificationPostResult {
-        return notificationDispatcher.postNotification(title, text)
+        return peripheralCoordinator.postNotification(title, text)
     }
 
     fun cancelNotification(notificationId: Int): NotificationCancelResult {
-        return notificationDispatcher.cancelNotification(notificationId)
+        return peripheralCoordinator.cancelNotification(notificationId)
     }
 
     fun readNotifications(packageFilter: String?, excludedPackages: Set<String>): JSONObject {
-        return NotificationBuffer.toJson(packageFilter, excludedPackages)
+        return peripheralCoordinator.readNotifications(packageFilter, excludedPackages)
     }
 
     fun waitForCondition(

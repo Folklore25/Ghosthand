@@ -6,7 +6,11 @@
 
 package com.folklore25.ghosthand.routes.read
 
-import com.folklore25.ghosthand.TreeUnavailableReason
+import com.folklore25.ghosthand.screen.read.TreeUnavailableReason
+
+import com.folklore25.ghosthand.R
+
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
 import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
 import com.folklore25.ghosthand.payload.GhosthandScreenPayloads
@@ -20,7 +24,8 @@ import com.folklore25.ghosthand.state.StateCoordinator
 import org.json.JSONObject
 
 internal class ReadScreenRouteHandlers(
-    private val stateCoordinator: StateCoordinator
+    private val stateCoordinator: StateCoordinator,
+    private val observationPublisher: GhosthandObservationPublisher
 ) {
     fun buildScreenResponse(queryParameters: Map<String, String>): String {
         val mode = ScreenReadMode.fromWireValue(queryParameters["source"]) ?: ScreenReadMode.ACCESSIBILITY
@@ -40,6 +45,10 @@ internal class ReadScreenRouteHandlers(
 
         val treeSnapshotResult = stateCoordinator.getTreeSnapshotResult()
         if (mode == ScreenReadMode.ACCESSIBILITY && !treeSnapshotResult.available) {
+            observationPublisher.recordAccessibilityTemporarilyUnavailable(
+                reason = treeSnapshotResult.reason,
+                requestedSource = mode
+            )
             return buildTreeUnavailableResponse(treeSnapshotResult.reason)
         }
 
@@ -69,6 +78,8 @@ internal class ReadScreenRouteHandlers(
                 }
             }
         }
+
+        observationPublisher.recordScreenPayload(payload)
 
         val bodyPayload = if (summaryOnly) {
             GhosthandPayloadJsonSupport.fieldsToJson(GhosthandScreenPayloads.summaryFields(payload))

@@ -6,15 +6,19 @@
 
 package com.folklore25.ghosthand.routes.read
 
+import com.folklore25.ghosthand.R
+
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.server.LocalApiServerRoute
 import com.folklore25.ghosthand.state.StateCoordinator
 
 internal class ReadRouteHandlers(
-    internal val stateCoordinator: StateCoordinator
+    internal val stateCoordinator: StateCoordinator,
+    observationPublisher: GhosthandObservationPublisher
 ) {
     private val treeHandlers = ReadTreeRouteHandlers(stateCoordinator)
     private val findHandlers = ReadFindRouteHandlers(stateCoordinator)
-    private val screenHandlers = ReadScreenRouteHandlers(stateCoordinator)
+    private val screenHandlers = ReadScreenRouteHandlers(stateCoordinator, observationPublisher)
     private val screenshotHandlers = ReadScreenshotRouteHandlers(stateCoordinator)
     private val stateHandlers = ReadStateRouteHandlers(stateCoordinator)
 

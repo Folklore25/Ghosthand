@@ -6,7 +6,10 @@
 
 package com.folklore25.ghosthand.routes.read
 
-import com.folklore25.ghosthand.TreeUnavailableReason
+import com.folklore25.ghosthand.screen.read.TreeUnavailableReason
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.buildTreeUnavailableResponse
 import com.folklore25.ghosthand.routes.errorEnvelope

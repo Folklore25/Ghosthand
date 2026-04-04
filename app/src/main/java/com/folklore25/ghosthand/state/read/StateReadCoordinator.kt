@@ -6,15 +6,17 @@
 
 package com.folklore25.ghosthand.state.read
 
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotResult
+import com.folklore25.ghosthand.capability.CapabilityAccessSnapshot
+import com.folklore25.ghosthand.state.device.DeviceSnapshotProvider
+import com.folklore25.ghosthand.state.device.ForegroundAppProvider
+import com.folklore25.ghosthand.state.diagnostics.HomeDiagnosticsProvider
+import com.folklore25.ghosthand.state.device.PermissionSnapshotProvider
+import com.folklore25.ghosthand.state.runtime.RuntimeState
+
+import com.folklore25.ghosthand.R
+
 import android.os.SystemClock
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotResult
-import com.folklore25.ghosthand.AccessibilityStatusProvider
-import com.folklore25.ghosthand.CapabilityAccessSnapshot
-import com.folklore25.ghosthand.DeviceSnapshotProvider
-import com.folklore25.ghosthand.ForegroundAppProvider
-import com.folklore25.ghosthand.HomeDiagnosticsProvider
-import com.folklore25.ghosthand.PermissionSnapshotProvider
-import com.folklore25.ghosthand.RuntimeState
 import com.folklore25.ghosthand.capability.CapabilityAccessResolver
 import com.folklore25.ghosthand.state.StatePayloadComposer
 import com.folklore25.ghosthand.state.health.StateHealthPayloads

@@ -6,7 +6,9 @@
 
 package com.folklore25.ghosthand.payload
 
-import com.folklore25.ghosthand.FindMissHint
+import com.folklore25.ghosthand.screen.find.FindMissHint
+
+import com.folklore25.ghosthand.R
 
 internal object GhosthandDisclosurePayloads {
     fun clickFailureFields(hint: FindMissHint): Map<String, Any?> {

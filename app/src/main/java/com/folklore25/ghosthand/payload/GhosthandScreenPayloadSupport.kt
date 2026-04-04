@@ -6,11 +6,13 @@
 
 package com.folklore25.ghosthand.payload
 
-import com.folklore25.ghosthand.AccessibilityNodeLocator
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.FindNodeResult
-import com.folklore25.ghosthand.FlatAccessibilityNode
-import com.folklore25.ghosthand.NodeBounds
+import com.folklore25.ghosthand.screen.find.AccessibilityNodeLocator
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.screen.find.FindNodeResult
+import com.folklore25.ghosthand.screen.read.FlatAccessibilityNode
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.screen.read.ScreenReadElement
 import com.folklore25.ghosthand.screen.read.ScreenReadMode
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload

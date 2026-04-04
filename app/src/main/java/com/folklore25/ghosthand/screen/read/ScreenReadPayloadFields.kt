@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.screen.read
 
+import com.folklore25.ghosthand.R
+
 object ScreenReadPayloadFields {
     fun screenReadFields(payload: ScreenReadPayload): Map<String, Any?> {
         val legibility = ScreenStateLegibilityProjector.fromPayload(payload)

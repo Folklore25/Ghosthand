@@ -6,16 +6,23 @@
 
 package com.folklore25.ghosthand.routes.input
 
+import com.folklore25.ghosthand.interaction.effects.ActionEvidencePayloads
+import com.folklore25.ghosthand.interaction.accessibility.InputKeyFailureReason
+import com.folklore25.ghosthand.interaction.accessibility.SetTextFailureReason
+import com.folklore25.ghosthand.interaction.accessibility.TypeFailureReason
+
+import com.folklore25.ghosthand.R
+
 import android.util.Log
-import com.folklore25.ghosthand.InputKeyFailureReason
-import com.folklore25.ghosthand.SetTextFailureReason
-import com.folklore25.ghosthand.TypeFailureReason
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.payload.GhosthandInputPayloads
 import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
-import com.folklore25.ghosthand.routes.action.putPostActionState
 import com.folklore25.ghosthand.routes.action.BACKEND_ACCESSIBILITY
 import com.folklore25.ghosthand.routes.action.BACKEND_AUTO
 import com.folklore25.ghosthand.routes.action.DEFAULT_BACKEND
+import com.folklore25.ghosthand.routes.action.observeActionSurfaceChange
+import com.folklore25.ghosthand.routes.action.observeScrollSurfaceChange
+import com.folklore25.ghosthand.routes.action.toActionEffectObservation
 import com.folklore25.ghosthand.routes.action.unsupportedBackendResponse
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
@@ -30,7 +37,8 @@ import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONObject
 
 internal class InputRouteHandlers(
-    private val stateCoordinator: StateCoordinator
+    private val stateCoordinator: StateCoordinator,
+    private val observationPublisher: GhosthandObservationPublisher
 ) {
     fun routes(): List<LocalApiServerRoute> {
         return listOf(
@@ -84,17 +92,60 @@ internal class InputRouteHandlers(
         if (parsedRequest.errorMessage != null || parsedRequest.request == null) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", parsedRequest.errorMessage ?: "Invalid /input request."))
         }
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
         val typeResult = stateCoordinator.performInput(parsedRequest.request)
+        val observation = if (typeResult.performed) {
+            observeActionSurfaceChange(beforeSnapshot) { stateCoordinator.getTreeSnapshotResult().snapshot }
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
+        val actionEffect = if (typeResult.performed) observation.toActionEffectObservation() else null
         val payloadResult = typeResult.copy(
             postActionState = PostActionStateComposer.fromObservedEffect(
-                actionEffect = null,
-                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                actionEffect = actionEffect,
+                fallbackSnapshot = observation.afterSnapshot
             )
         )
-        val resultPayload = GhosthandPayloadJsonSupport.fieldsToJson(GhosthandInputPayloads.inputResultFields(payloadResult))
+        val attemptedPath = when {
+            parsedRequest.request.textAction != null && parsedRequest.request.key != null -> "composite_input"
+            payloadResult.textMutation != null -> payloadResult.textMutation.attemptedPath
+            payloadResult.keyDispatch != null -> payloadResult.keyDispatch.attemptedPath
+            else -> null
+        }
+        val backendUsed = listOfNotNull(
+            payloadResult.textMutation?.backendUsed,
+            payloadResult.keyDispatch?.backendUsed
+        ).distinct().singleOrNull() ?: payloadResult.textMutation?.backendUsed ?: payloadResult.keyDispatch?.backendUsed
+        val resultPayload = GhosthandPayloadJsonSupport.fieldsToJson(
+            GhosthandInputPayloads.inputResultFields(
+                payloadResult,
+                actionEffect = actionEffect,
+                attemptedPath = attemptedPath,
+                backendUsed = backendUsed
+            )
+        )
         Log.i(INPUT_LOG_TAG, "event=input_request textAction=${parsedRequest.request.textAction?.wireValue ?: "none"} key=${parsedRequest.request.key?.wireValue ?: "none"} success=${typeResult.performed}")
         return when {
-            typeResult.performed -> buildJsonResponse(200, successEnvelope(resultPayload))
+            typeResult.performed -> {
+                observationPublisher.recordActionCompleted(
+                    route = "/input",
+                    attemptedPath = attemptedPath,
+                    backendUsed = backendUsed,
+                    actionEffect = actionEffect,
+                    postActionState = payloadResult.postActionState
+                )
+                buildJsonResponse(
+                    200,
+                    successEnvelope(
+                        resultPayload,
+                        disclosure = com.folklore25.ghosthand.routes.action.buildActionEffectDisclosure(
+                            "/input",
+                            true,
+                            actionEffect?.stateChanged ?: false
+                        )
+                    )
+                )
+            }
             hasInputAccessibilityUnavailable(typeResult) ->
                 buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Accessibility service is not available for one or more requested /input operations.", resultPayload))
             else ->
@@ -114,24 +165,48 @@ internal class InputRouteHandlers(
         }
         val rawText = body.opt("text")
         val text = if (rawText is String) rawText else ""
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
         val setTextResult = stateCoordinator.setTextOnNode(nodeId, text)
+        val observation = if (setTextResult.performed) {
+            observeActionSurfaceChange(beforeSnapshot) { stateCoordinator.getTreeSnapshotResult().snapshot }
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
         Log.i(SETTEXT_LOG_TAG, "event=settext_request nodeId=$nodeId settextPath=${setTextResult.attemptedPath} success=${setTextResult.performed}")
         return when {
-            setTextResult.performed ->
+            setTextResult.performed -> {
+                val actionEffect = observation.toActionEffectObservation()
+                val postActionState = PostActionStateComposer.fromObservedEffect(
+                    actionEffect = actionEffect,
+                    fallbackSnapshot = observation.afterSnapshot
+                )
+                observationPublisher.recordActionCompleted(
+                    route = "/setText",
+                    attemptedPath = setTextResult.attemptedPath,
+                    backendUsed = setTextResult.backendUsed,
+                    actionEffect = actionEffect,
+                    postActionState = postActionState
+                )
                 buildJsonResponse(
                     200,
                     successEnvelope(
-                        JSONObject()
-                            .put("performed", true)
-                            .put("backendUsed", setTextResult.backendUsed)
-                            .putPostActionState(
-                                PostActionStateComposer.fromObservedEffect(
-                                    actionEffect = null,
-                                    fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
-                                )
+                        JSONObject(
+                            com.folklore25.ghosthand.interaction.effects.ActionEvidencePayloads.commonFields(
+                                performed = true,
+                                attemptedPath = setTextResult.attemptedPath,
+                                backendUsed = setTextResult.backendUsed,
+                                actionEffect = actionEffect,
+                                postActionState = postActionState
                             )
+                        ),
+                        disclosure = com.folklore25.ghosthand.routes.action.buildActionEffectDisclosure(
+                            "/setText",
+                            true,
+                            actionEffect.stateChanged
+                        )
                     )
                 )
+            }
             setTextResult.failureReason == SetTextFailureReason.ACCESSIBILITY_UNAVAILABLE ->
                 buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Accessibility service is not available for text setting."))
             setTextResult.failureReason == SetTextFailureReason.NODE_NOT_FOUND ->

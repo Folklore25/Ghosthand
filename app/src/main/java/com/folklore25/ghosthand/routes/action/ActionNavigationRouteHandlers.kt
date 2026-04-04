@@ -6,6 +6,11 @@
 
 package com.folklore25.ghosthand.routes.action
 
+import com.folklore25.ghosthand.state.summary.PostActionStateComposer
+
+import com.folklore25.ghosthand.R
+
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
 import com.folklore25.ghosthand.payload.GhosthandInteractionPayloads
 import com.folklore25.ghosthand.routes.buildJsonResponse
@@ -15,25 +20,41 @@ import com.folklore25.ghosthand.state.StateCoordinator
 import org.json.JSONObject
 
 internal class ActionNavigationRouteHandlers(
-    private val stateCoordinator: StateCoordinator
+    private val stateCoordinator: StateCoordinator,
+    private val observationPublisher: GhosthandObservationPublisher
 ) {
     fun buildGlobalActionResponse(actionName: String, actionCode: Int): String {
         val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
         val initialResult = stateCoordinator.performGlobalAction(actionCode)
+        val observation = if (initialResult.performed) {
+            observeActionSurfaceChange(beforeSnapshot) {
+                stateCoordinator.getTreeSnapshotResult().snapshot
+            }
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
         val result = if (initialResult.performed) {
             initialResult.copy(
-                effect = observeActionSurfaceChange(beforeSnapshot) {
-                    stateCoordinator.getTreeSnapshotResult().snapshot
-                }.toActionEffectObservation()
+                effect = observation.toActionEffectObservation()
             )
         } else {
             initialResult
         }
         return if (result.performed) {
+            val postActionState = com.folklore25.ghosthand.state.summary.PostActionStateComposer.fromObservedEffect(
+                actionEffect = result.effect,
+                fallbackSnapshot = observation.afterSnapshot
+            )
+            observationPublisher.recordActionCompleted(
+                route = "/$actionName",
+                attemptedPath = result.attemptedPath,
+                actionEffect = result.effect,
+                postActionState = postActionState
+            )
             buildJsonResponse(
                 200,
                 successEnvelope(
-                    JSONObject(GhosthandInteractionPayloads.globalActionFields(result)),
+                    JSONObject(GhosthandInteractionPayloads.globalActionFields(result, observation.afterSnapshot)),
                     disclosure = buildActionEffectDisclosure("/$actionName", result.performed, result.effect?.stateChanged ?: false)
                 )
             )

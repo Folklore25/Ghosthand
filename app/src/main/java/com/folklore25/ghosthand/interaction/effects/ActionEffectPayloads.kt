@@ -6,7 +6,9 @@
 
 package com.folklore25.ghosthand.interaction.effects
 
-import com.folklore25.ghosthand.ActionEffectObservation
+import com.folklore25.ghosthand.interaction.execution.ActionEffectObservation
+
+import com.folklore25.ghosthand.R
 
 object ActionEffectPayloads {
     fun fields(effect: ActionEffectObservation): Map<String, Any?> {

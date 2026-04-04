@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-04-03T19:36:13.088Z"
+status: ready
+last_updated: "2026-04-05T11:10:00.000Z"
 progress:
-  total_phases: 9
+  total_phases: 15
   completed_phases: 6
-  total_plans: 40
-  completed_plans: 32
+  total_plans: 68
+  completed_plans: 46
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.3.1 clean closeout** — Phase 24.4 is now planned as a bounded closeout pass to finish the 1.3.x line cleanly without feature expansion or 1.4.0 work.
+Current focus: **Phase 25.6 complete** — the accepted 1.4.0 baseline and accepted 25.5 fixes remain intact, main source now has zero wildcard imports, the biggest coordination-heavy files are further reduced through contained helpers, and root-flat tests are down to four clearly shared cases.
 
 ## Current Position
 
-Phase: 24.4 (1-3-1-clean-closeout) — EXECUTING
+Phase: 25.6 (second-current-state-cleanup-pass-for-1-4-0) — COMPLETE
 Plan: 4 of 4
 
-- **Phase:** 24.4
+- **Phase:** 25.6
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
-- **Verified route set:** `/ping`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase complete — ready for verification
+- **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
+- **Status:** Phase 25.6 complete — the second cleanup pass closed the remaining import, contained-extraction, and test-convergence debt without broadening scope, and the full compile plus unit-test gate passes.
 
 ## Progress
 
@@ -40,16 +40,25 @@ Plan: 4 of 4
 - Phase 24.2: **PLANNED FOR V1.3.1 FIX PASS 02** — strict follow-up for the still-large coordinator, new handler/payload mini-monoliths, and missing canonical ownership of render/readability/state-legibility concepts
 - Phase 24.3: **PLANNED FOR V1.3.1 FIX PASS 03** — strict final follow-up for the last remaining blocker: a still-too-large StateCoordinator
 - Phase 24.4: **PLANNED FOR V1.3.1 CLEAN CLOSEOUT** — preview cleanup, field/hint convergence, bounded code cleanup, and final contract alignment for the 1.3.x line
+- Phase 25: **PLANNED FOR V1.4.0** — agent-native interface evolution through observation plane v1, capability-plane strengthening, action-evidence normalization, and only a very thin intent layer if it is justified after A/B/C stabilize
+- Phase 25.1: **PLANNED FOR V1.4.0** — architecture convergence through root-package cleanup and Capability Plane v2 formalization with a first-class `/capabilities` route
+- Phase 25.3: **PLANNED FOR V1.4.0 CORRECTION PASS** — strict correction for the rejected architecture-convergence review, focused only on materially executing root-package convergence and a first-class Capability Plane v2
+- Phase 25.4: **PLANNED FOR V1.4.0 CLEAN FINISH** — bounded cleanup and polish for the accepted architecture result, focused on code cleanliness, capability-plane expression, self-description surface coherence, and closeout quality
+- Phase 25.5: **PLANNED FOR V1.4.0 CURRENT-STATE CORRECTION** — truthful `/notify` cancellation, screenshot-service contract alignment, wildcard-import cleanup, contained debt reduction in oversized coordinators, and continued test-package convergence
+- Phase 25.6: **PLANNED FOR V1.4.0 SECOND CLEANUP PASS** — finish the remaining UI wildcard-import cleanup, one more contained extraction pass on the biggest coordination-heavy files, and further root-flat test reduction
 
-Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview, hinting, and final contract surfaces become cleaner and less noisy before 1.4.0 starts.
+Overall: Ghosthand’s 1.4.0 line now has the accepted architecture, the accepted 25.5 correctness fixes, and the finished 25.6 cleanup closeout. The remaining engineering debt targeted by the second cleanup pass is closed.
 
 ## Recent Decisions
 
 | Decision | Rationale |
 |---|---|
-| 1.3.x now needs a clean closeout instead of another feature wave | The remaining work is cleanup and contract sharpening, not capability expansion |
-| Preview should not remain an advertised-but-hollow mechanism | If preview exists in schema, the retrieval path must be clear and actually usable |
-| Hint fields should help, not accumulate into background noise | The closeout should reduce overlap and clutter rather than rename it |
+| 1.4.0 will evolve Ghosthand through layered exposure, not endpoint accumulation | The product goal is a clearer substrate with less request stitching, not more random routes |
+| Observation plane v1 will be pollable and cursor-based over HTTP/JSON | This keeps the event layer debuggable and bounded without prematurely adopting streaming complexity |
+| Thin intent helpers are gated behind A/B/C and may be explicitly deferred | The primitive, capability, observation, and evidence planes remain primary unless a helper clearly reduces repeated low-value reasoning |
+| 25.1 will formalize capability plane as its own substrate layer | `/commands` and `/state` should stop carrying the entire capability burden alone |
+| 25.3 will treat the failed strict acceptance as binding and will re-plan the architecture convergence work as a correction pass | The missing work must be materially executed in code rather than defended as partial progress |
+| 25.4 will polish and close out the accepted 1.4.0 architecture result instead of extending or redesigning it | The goal is a cleaner maintained substrate, not another feature wave or modeling pass |
 
 ## Decisions
 
@@ -71,6 +80,51 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 - [Phase 24.4]: Publish /commands from a catalog-owned serializer so runtime and tests share one closeout surface.
 - [Phase 24.4]: Keep explicit interaction defaults only where they communicate action semantics; drop null, empty, and not-applicable command metadata elsewhere.
 - [Phase 24.4]: Because docs/API.md is absent locally, finalize closeout contract alignment in the runtime/catalog only instead of creating new docs.
+- [Phase 25]: Keep HTTP/JSON as the stable control base and add a bounded pollable observation plane rather than replacing the current API model.
+- [Phase 25]: Strengthen the existing capability plane through `/commands` and runtime state surfaces instead of creating a separate self-description system.
+- [Phase 25]: Treat thin intent helpers as conditional scope that is only allowed after observation, capability, and evidence planes stabilize and only if the helper remains generic and inspectable.
+- [Phase 25]: Observation plane v1 now uses a bounded in-memory cursor log exposed through `/events`, with `/screen` publishing edge-triggered foreground, readability, fallback, preview, and transient accessibility events instead of a noisy firehose.
+- [Phase 25]: Capability-plane metadata now publishes `plane`, `availabilityModel`, `truthType`, `directness`, `preconditions`, and `failureModes` through `/commands`, while runtime capability summaries expose current blockers instead of only raw allowed/usable flags.
+- [Phase 25]: Major action routes now project one evidence family around `performed`, execution path/backend, observed change, compact post-action state, and bounded observation-shift hints instead of route-local payload conventions.
+- [Phase 25]: Thin intent helpers are explicitly deferred from 1.4.0 because the new observation, capability, and evidence planes already reduce the repeated mechanical reasoning without hiding primitive truth.
+- [Phase 25]: Full local verification now passes with the observation plane, strengthened capability plane, normalized action evidence, and explicit thin-intent deferral all aligned on the 1.4.0 branch.
+- [Phase 25.1]: The remaining root-package classes should move into real subsystem packages so only true top-level entrypoints remain at the root.
+- [Phase 25.1]: Capability Plane v2 will be modeled as definitions, dynamic availability, and presentation views, with `/capabilities` as the capability-centric surface and `/commands` plus `/state` as aligned projections.
+- [Phase 25.1]: Because `docs/API.md` is absent locally, capability-plane alignment should stay runtime/catalog-centered unless minimal new docs are strictly necessary.
+- [Phase 25.1]: Root-directory convergence now relocates low-coupling provider, clipboard, notification, OCR, and integration helpers out of the root drop zone, reducing the root directory from 52 Kotlin files to 38 without disturbing the runtime namespace yet.
+- [Phase 25.1]: Capability Plane v2 now has canonical capability definitions, runtime availability derivation, and capability-centric presentation through `/capabilities`, while `/commands` begins to reference capability IDs instead of carrying capability meaning alone.
+- [Phase 25.1]: `/commands` now references canonical capability IDs, `/capabilities` carries the first-class capability burden, and `/state` projects lightweight runtime availability from the same capability source instead of duplicating route metadata.
+- [Phase 25.1]: Full local verification now passes with the root-directory convergence slice, `/capabilities`, and the aligned capability surfaces all on the 1.4.0 branch.
+- [Phase 25.3]: Strict review rejection is accepted as binding, so the correction pass must materially reduce the root package beyond the prior low-coupling slice and must make Capability Plane v2 unambiguously first-class.
+- [Phase 25.3]: The correction pass stays bounded to two workstreams only: root-package or directory convergence and Capability Plane v2 implementation plus alignment.
+- [Phase 25.3]: The root source directory now contains only `GhosthandApp.kt`; UI, service, interaction, screen, runtime-state, and HTTP helper files moved into real owner folders instead of remaining in the root drop zone.
+- [Phase 25.3]: `/commands` now publishes `capabilityIds` plus canonical capability definition projections from the same source used by `/capabilities`.
+- [Phase 25.3]: `/state.permissions.capabilitySummary` now exposes full dynamic capability availability fields, including blockers, required services or permissions, and current backend or mode where meaningful.
+- [Phase 25.3]: Full local verification passes after the correction pass with `./gradlew :app:compileDebugKotlin testDebugUnitTest`.
+- [Phase 25.4]: The closeout pass is constrained to four polish workstreams only: code-cleanliness cleanup, capability-plane presentation polish, `/commands` plus `/state` plus `/capabilities` coherence polish, and final 1.4.0 closeout cleanup.
+- [Phase 25.4]: The accepted 25.3 architecture direction is binding; 25.4 must not reopen package ownership decisions or capability-plane structure for another redesign cycle.
+- [Phase 25.4]: Capability-surface owners no longer carry the broad wildcard-import residue left behind by the 25.3 convergence work.
+- [Phase 25.4]: `/commands` now keeps compact capability references while `/capabilities` remains the fuller capability-definition surface and `/state` remains the lighter runtime availability surface.
+- [Phase 25.4]: The lightweight `/state.permissions.capabilitySummary` view now omits empty noise fields while preserving meaningful blockers, requirements, and backend or mode data when present.
+- [Phase 25.4]: Because `docs/API.md` is absent locally, the closeout stayed runtime and catalog centered rather than turning into a docs rewrite.
+- [Phase 25.4]: Full local verification passes after the clean-finish pass with `./gradlew :app:compileDebugKotlin testDebugUnitTest`.
+- [Phase 25.5]: The accepted 1.4.0 architecture baseline is binding; the new pass must correct current-state defects without reopening package convergence or Capability Plane v2 design.
+- [Phase 25.5]: Notification cancellation must become symmetric with tagged notification posting and must not let `NotificationBuffer` pretend removal succeeded when identity does not match.
+- [Phase 25.5]: Screenshot or MediaProjection capability truth, provider comments, manifest declarations, and foreground-service runtime flags must converge to one truthful contract.
+- [Phase 25.5]: Wildcard imports in main source are now treated as mandatory maintainability debt rather than optional style polish.
+- [Phase 25.5]: Remaining coordinator-heavy files should be improved only through bounded helper or collaborator extraction, not by another broad redesign cycle.
+- [Phase 25.5]: Root-flat tests should continue moving into domain-owned packages wherever ownership is clear.
+- [Phase 25.5]: `/notify` cancellation now resolves the exact recorded tag-plus-id identity before removing buffered notification state.
+- [Phase 25.5]: Ghosthand's runtime foreground service now declares and starts with the MediaProjection-compatible service type instead of drifting from the screenshot contract.
+- [Phase 25.5]: The direct correction pass removed wildcard imports from most of main source, but a direct 2026-04-05 source scan shows 16 UI-owned main-source files still carry 528 wildcard-import lines, so one more cleanup pass is required.
+- [Phase 25.5]: Shared accessibility-node action helpers, selector-hint helpers, and runtime-state failure/text helpers now live in bounded collaborators instead of staying inline in the biggest owner files.
+- [Phase 25.5]: Root-flat test count dropped from 16 to 9 by moving obvious owner tests into `screen`, `server`, `capability`, and `interaction`.
+- [Phase 25.6]: The next pass is strictly bounded to the remaining wildcard-import cleanup, one more contained extraction pass on the biggest coordination-heavy files, and further reduction of root-flat tests.
+- [Phase 25.6]: A direct 2026-04-05 source scan now shows `app/src/main/java` at zero wildcard-import files and zero wildcard-import occurrences.
+- [Phase 25.6]: The remaining UI wildcard-import residue was removed from all 16 previously dirty files under `ui/main`, `ui/permissions`, `ui/diagnostics`, `ui/common/dialog`, and `ui/common/model`.
+- [Phase 25.6]: Shared main-thread execution and active-window-root helpers now live in `AccessibilityServiceExecutionSupport.kt`, reducing duplicated coordination code in both accessibility services.
+- [Phase 25.6]: Clipboard and notification delegation now live in `StatePeripheralCoordinator.kt`, reducing unrelated peripheral ownership in `StateCoordinator.kt`.
+- [Phase 25.6]: Root-flat test count dropped from 9 to 4 by moving clearly owned UI tests into `ui/main`, `ui/permissions`, `ui/common/dialog`, and `ui/diagnostics`.
 
 ## Blockers / Concerns
 
@@ -80,8 +134,8 @@ Overall: Ghosthand’s 1.3.x line now needs a bounded clean closeout so preview,
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:35:58.806Z
-Next action: verify Phase 24.4 clean closeout completion and prepare the next milestone step.
+Last session: 2026-04-04T00:00:00.000Z
+Next action: Review the finished 1.4.0 branch state and decide whether to prepare merge or shipping work from the fully cleaned baseline.
 
 ## Performance Metrics
 
@@ -97,3 +151,21 @@ Next action: verify Phase 24.4 clean closeout completion and prepare the next mi
 | 24.4 | 02 | 3 min | 1 | 6 |
 | 24.4 | 03 | 3 min | 1 | 13 |
 | 24.4 | 04 | 1 min | 2 | 3 |
+| 25 | 01 | 18 min | 1 | 11 |
+| 25 | 02 | 12 min | 1 | 8 |
+| 25 | 03 | 19 min | 1 | 13 |
+| 25 | 04 | 4 min | 1 | 1 |
+| 25 | 05 | 3 min | 1 | 2 |
+| 25.1 | 02 | 12 min | 1 | 15 |
+| 25.1 | 03 | 14 min | 1 | 10 |
+| 25.1 | 04 | 10 min | 1 | 9 |
+| 25.1 | 05 | 3 min | 1 | 2 |
+| 25.5 | 01 | 9 min | 1 | 3 |
+| 25.5 | 02 | 5 min | 1 | 5 |
+| 25.5 | 03 | 8 min | 1 | 89 |
+| 25.5 | 04 | 8 min | 1 | 7 |
+| 25.5 | 05 | 7 min | 1 | 10 |
+| 25.6 | 01 | 6 min | 1 | 16 |
+| 25.6 | 02 | 9 min | 1 | 4 |
+| 25.6 | 03 | 7 min | 1 | 6 |
+| 25.6 | 04 | 2 min | 1 | 3 |

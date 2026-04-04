@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.catalog
 
+import com.folklore25.ghosthand.R
+
 internal object GhosthandSelectorCatalog {
     val aliases: Map<String, String> = linkedMapOf(
         "text" to "text",

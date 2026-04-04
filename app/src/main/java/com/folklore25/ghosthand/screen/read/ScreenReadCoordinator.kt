@@ -6,11 +6,13 @@
 
 package com.folklore25.ghosthand.screen.read
 
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.CapabilityAccessSnapshot
-import com.folklore25.ghosthand.ForegroundAppSnapshot
-import com.folklore25.ghosthand.ScreenOcrProvider
-import com.folklore25.ghosthand.ScreenshotDispatchResult
+import com.folklore25.ghosthand.capability.CapabilityAccessSnapshot
+import com.folklore25.ghosthand.state.device.ForegroundAppSnapshot
+import com.folklore25.ghosthand.screen.ocr.ScreenOcrProvider
+import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.preview.ScreenPreviewCaptureSupport
 
 internal class ScreenReadCoordinator(

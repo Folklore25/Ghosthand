@@ -6,14 +6,20 @@
 
 package com.folklore25.ghosthand.server
 
+import com.folklore25.ghosthand.capability.CapabilityAccessSnapshot
+import com.folklore25.ghosthand.capability.GhosthandCapability
+import com.folklore25.ghosthand.state.runtime.RuntimeState
+import com.folklore25.ghosthand.state.runtime.RuntimeStateStore
+
+import com.folklore25.ghosthand.R
+
 import android.util.Log
-import com.folklore25.ghosthand.CapabilityAccessSnapshot
-import com.folklore25.ghosthand.GhosthandCapability
-import com.folklore25.ghosthand.RuntimeState
-import com.folklore25.ghosthand.RuntimeStateStore
+import com.folklore25.ghosthand.observation.GhosthandObservationLog
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.routes.action.ActionRouteHandlers
 import com.folklore25.ghosthand.routes.GhosthandRoutePolicies
 import com.folklore25.ghosthand.routes.input.InputRouteHandlers
+import com.folklore25.ghosthand.routes.observation.ObservationRouteHandlers
 import com.folklore25.ghosthand.routes.read.ReadRouteHandlers
 import com.folklore25.ghosthand.routes.system.SystemRouteHandlers
 import com.folklore25.ghosthand.routes.wait.WaitRouteHandlers
@@ -51,6 +57,8 @@ class LocalApiServer(
         runtimeStateProvider = runtimeStateProvider
     )
     private val running = AtomicBoolean(false)
+    private val observationLog = GhosthandObservationLog()
+    private val observationPublisher = GhosthandObservationPublisher(observationLog)
 
     @Volatile
     private var resources = createResources()
@@ -258,9 +266,10 @@ class LocalApiServer(
     private fun createRouteRegistry(): LocalApiServerRouteRegistry {
         val routes = buildList {
             addAll(SystemRouteHandlers(stateCoordinator).routes())
-            addAll(ReadRouteHandlers(stateCoordinator).routes())
-            addAll(ActionRouteHandlers(stateCoordinator).routes())
-            addAll(InputRouteHandlers(stateCoordinator).routes())
+            addAll(ObservationRouteHandlers(observationLog).routes())
+            addAll(ReadRouteHandlers(stateCoordinator, observationPublisher).routes())
+            addAll(ActionRouteHandlers(stateCoordinator, observationPublisher).routes())
+            addAll(InputRouteHandlers(stateCoordinator, observationPublisher).routes())
             addAll(WaitRouteHandlers(stateCoordinator).routes())
         }
         val pathPolicies = buildMap {

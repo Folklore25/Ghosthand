@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.payload
 
+import com.folklore25.ghosthand.R
+
 data class GhosthandInputRequest(
     val textAction: InputTextAction? = null,
     val text: String? = null,
@@ -53,5 +55,7 @@ data class PostActionState(
     val focusedEditablePresent: Boolean? = null,
     val renderMode: String? = null,
     val surfaceReadability: String? = null,
-    val visualAvailable: Boolean? = null
+    val visualAvailable: Boolean? = null,
+    val suggestedSource: String? = null,
+    val fallbackReason: String? = null
 )

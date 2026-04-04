@@ -20,6 +20,12 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 24.2: Maintainability Convergence Fix 02** - Finish the still-unresolved 1.3.1 convergence work by thinning `StateCoordinator` further, breaking up the new large handler/payload monoliths, and establishing canonical ownership of shared state-legibility concepts without adding features.
 - [ ] **Phase 24.3: Final StateCoordinator Thinning For Maintainability Convergence** - Resolve the last strict-review blocker by turning `StateCoordinator` into a true orchestration shell while preserving the already-passing LocalApiServer/package/test/canonical-ownership gains.
 - [x] **Phase 24.4: 1.3.1 Clean Closeout** - Finish the 1.3.x line cleanly by making preview actually usable, reducing hint/field noise, cleaning transitional code, and aligning the final runtime/catalog contract without adding features. (completed 2026-04-03)
+- [ ] **Phase 25: Agent-Native Interface Evolution For 1.4.0** - Evolve Ghosthand from a route collection into a more agent-native substrate by adding a bounded observation plane, strengthening the capability plane, normalizing action evidence, and only adding thin intent helpers if A/B/C earn them.
+- [ ] **Phase 25.1: Architecture Convergence For 1.4.0** - Converge remaining root-package ownership into real domain folders and formalize Capability Plane v2 through a first-class `/capabilities` surface without broadening 1.4.0 scope.
+- [x] **Phase 25.3: Architecture Convergence Correction Pass For 1.4.0** - Correct the failed strict architecture-convergence review by materially executing root-package convergence and a first-class Capability Plane v2 without broadening 1.4.0 scope. (completed 2026-04-04)
+- [x] **Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0** - Polish the accepted 1.4.0 architecture-convergence result so the capability plane, self-description surfaces, and closeout state feel clean, coherent, and presentation-ready without broadening scope. (completed 2026-04-04)
+- [x] **Phase 25.5: Current-State Correction Pass For 1.4.0** - Correct the remaining correctness defects and maintenance debt in the accepted 1.4.0 baseline by fixing `/notify` cancellation truthfulness, aligning the screenshot foreground-service contract, removing wildcard-import pollution, making contained coordinator extractions, and continuing test-package convergence without broadening scope. (completed 2026-04-04)
+- [x] **Phase 25.6: Second Current-State Cleanup Pass For 1.4.0** - Finish the still-incomplete engineering cleanup by removing the remaining UI wildcard imports, doing one more contained extraction pass on the largest coordination-heavy files, and reducing the remaining root-flat tests without reopening accepted fixes or broadening scope. (completed 2026-04-05)
 
 ## Phase Details
 
@@ -195,3 +201,124 @@ Plans:
 - [x] 24.4-02: Field and hint convergence with noise reduction
 - [x] 24.4-03: Project-structure and code cleanup for the 1.3.x line
 - [x] 24.4-04: Final contract/catalog/docs alignment and closeout verification
+
+### Phase 25: Agent-Native Interface Evolution For 1.4.0
+**Goal**: Evolve Ghosthand beyond pure endpoint accumulation by keeping HTTP/JSON as the stable control base while adding a bounded observation plane, a stronger machine-readable capability plane, a more coherent action evidence plane, and only a thin intent layer if it clearly earns inclusion.
+**Depends on**: Phase 24.4
+**Success Criteria** (what must be TRUE):
+  1. [IFACE-01] A real observation plane v1 exists through a bounded pollable HTTP/JSON event route with cursor-based retrieval, compact event families, and explicit retention semantics.
+  2. [IFACE-02] `/commands` and current capability or state surfaces materially reduce agent guesswork about capability domains, preconditions, dynamic availability, failure classes, and truth type without becoming encyclopedic.
+  3. [IFACE-03] Major action routes expose a more coherent normalized action evidence family so agents can read performed truth, observed change, post-action state, ambiguity, and observation-mode hints faster.
+  4. [IFACE-04] Any intent helpers added remain thin, generic, inspectable, subordinate to primitives, and may be explicitly deferred if A/B/C do not justify them.
+  5. [IFACE-05] No root/libsu work, giant WebSocket/SSE streaming system, world-model store, app-specific heuristics, planner behavior, or endpoint sprawl is added.
+  6. [IFACE-06] The Android project still compiles and the new observation, capability, and action-evidence behavior is covered by focused regression tests.
+**Plans**: TBD
+
+Plans:
+- [x] 25-01: Observation plane v1 with cursor-based `/events` retrieval and bounded event retention
+- [x] 25-02: Capability plane cleanup and strengthening through `/commands` and runtime capability summaries
+- [x] 25-03: Action evidence normalization across the main interaction routes
+- [x] 25-04: Thin intent helper decision pass with explicit deferral unless a helper clearly earns inclusion
+- [x] 25-05: Final contract alignment, focused regression coverage, and build verification
+
+### Phase 25.1: Architecture Convergence For 1.4.0
+**Goal**: Finish the next 1.4.0 architecture-convergence step by materially reducing the root-package drop zone and formalizing Capability Plane v2 as a first-class substrate layer centered on definitions, dynamic availability, and capability-centric presentation.
+**Depends on**: Phase 25
+**Success Criteria** (what must be TRUE):
+  1. [ACONV-01] The remaining root-package classes are materially converged into clear domain folders so only true top-level entrypoints remain at the root.
+  2. [ACONV-02] Package placement expresses real subsystem ownership across UI, services, interaction, state, screen, preview, notification, integration, capability, catalog, server, and routes instead of relying on filename guesswork.
+  3. [ACONV-03] Capability Plane v2 exists as a first-class model with clear `CapabilityDefinition`, `CapabilityAvailability`, and `CapabilityPresentation` layers rather than spread across ad hoc route metadata and state summaries.
+  4. [ACONV-04] `GET /capabilities` exists and is genuinely capability-centric rather than a dumb alias of `/commands`.
+  5. [ACONV-05] `/commands`, `/state`, and `/capabilities` align on one canonical capability source of truth without semantic drift.
+  6. [ACONV-06] No de-scoped 1.x public capabilities, especially launch/root-related truths, are accidentally reintroduced during cleanup.
+  7. [ACONV-07] No root/libsu work, observation-plane redesign, intent expansion, app-specific hacks, or unrelated 1.4.1 optimization work is added.
+  8. [ACONV-08] The Android project still compiles and focused tests cover package ownership and capability-plane behavior.
+**Plans**: TBD
+
+Plans:
+- [x] 25.1-01: Architecture note and root-package/capability-plane convergence map
+- [x] 25.1-02: Root-package and directory convergence into domain-owned packages
+- [x] 25.1-03: Capability Plane v2 definitions, availability modeling, and `/capabilities`
+- [x] 25.1-04: `/commands`, `/state`, and `/capabilities` alignment plus stale/dead/truth-conflicting cleanup
+- [x] 25.1-05: Ownership tests, capability-plane tests, and full verification
+
+### Phase 25.3: Architecture Convergence Correction Pass For 1.4.0
+**Goal**: Correct the failed strict 1.4.0 architecture-convergence review by materially converging the root package into real domain ownership and implementing Capability Plane v2 as a first-class capability substrate rather than partial route-centric approximations.
+**Depends on**: Phase 25.1
+**Success Criteria** (what must be TRUE):
+  1. [ACFIX-01] The root package is materially converged so it is no longer the default ownership sink and only true top-level entrypoints remain there.
+  2. [ACFIX-02] Remaining UI, service, provider, runtime-state, execution, integration, notification, and screen-owned classes move into clear domain packages with clean imports and manifest alignment where required.
+  3. [ACFIX-03] Capability Plane v2 exists as a real first-class layer with canonical `CapabilityDefinition`, `CapabilityAvailability`, and `CapabilityPresentation` models backed by one capability source of truth.
+  4. [ACFIX-04] `GET /capabilities` exists and is genuinely capability-centric, machine-readable, compact, and distinct from `/commands`.
+  5. [ACFIX-05] `/commands`, `/state`, and `/capabilities` expose aligned meanings over the same canonical capability source without semantic drift or duplicated-but-divergent capability descriptions.
+  6. [ACFIX-06] Stale, dead, or truth-conflicting root-package and capability-surface leftovers, especially launch-adjacent or other de-scoped 1.x public capability remnants, are removed or kept clearly non-public.
+  7. [ACFIX-07] No root/libsu work, observation-plane redesign, intent-layer expansion, unrelated endpoint growth, or other new product features are added in the correction pass.
+  8. [ACFIX-08] The Android project still compiles and focused tests cover root-package convergence, `/capabilities`, capability modeling, cross-surface alignment, and non-regression of existing runtime behavior.
+**Plans**: TBD
+
+Plans:
+- [x] 25.3-01: Architecture correction note and root-package or capability-plane execution map
+- [x] 25.3-02: Material root-package and directory convergence into real domain ownership
+- [x] 25.3-03: Capability Plane v2 canonical model and first-class `/capabilities` route
+- [x] 25.3-04: `/commands`, `/state`, and `/capabilities` alignment plus stale or truth-conflicting cleanup
+- [x] 25.3-05: Focused tests, ownership verification, and final build gate
+
+### Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0
+**Goal**: Finish 1.4.0 cleanly by polishing the accepted architecture-convergence result, reducing refactor residue, sharpening capability-plane presentation, tightening `/commands` plus `/state` plus `/capabilities` coherence, and closing out small remaining roughness without changing product direction.
+**Depends on**: Phase 25.3
+**Success Criteria** (what must be TRUE):
+  1. [POLISH-01] The accepted 1.4.0 architecture feels cleaner and less mid-refactor through targeted cleanup of wildcard imports, import clutter, stale glue, and obvious naming roughness without reopening structural decisions.
+  2. [POLISH-02] Capability-plane presentation is sharper and more coherent, with cleaner field ordering, naming, grouping, and compact capability-centric expression for agent consumption.
+  3. [POLISH-03] `/commands`, `/state`, and `/capabilities` feel intentionally aligned as route-contract, runtime, and capability-plane surfaces without bloating or semantically drifting.
+  4. [POLISH-04] Stale, dead, or truth-conflicting residue is further reduced and de-scoped 1.x truths remain respected.
+  5. [POLISH-05] No new routes, capability-plane redesign, observation-plane work, intent-layer work, root/libsu work, broad naming migration, UI redesign, 1.4.1 optimization, or app-specific heuristics are added.
+  6. [POLISH-06] The Android project still compiles and focused tests cover capability-plane presentation consistency, self-description surface coherence, and cleanup non-regression.
+**Plans**: TBD
+
+Plans:
+- [x] 25.4-01: Closeout note and bounded polish map
+- [x] 25.4-02: Code-cleanliness and refactor-residue cleanup
+- [x] 25.4-03: Capability-plane presentation polish
+- [x] 25.4-04: `/commands`, `/state`, and `/capabilities` coherence polish plus final closeout cleanup
+- [x] 25.4-05: Focused tests and final 1.4.0 clean-finish verification
+
+### Phase 25.5: Current-State Correction Pass For 1.4.0
+**Goal**: Finish the current 1.4.0 baseline cleanly by correcting the remaining notification, screenshot-contract, import-cleanliness, coordinator-size, and test-ownership defects without reopening the accepted architecture direction.
+**Depends on**: Phase 25.4
+**Success Criteria** (what must be TRUE):
+  1. [CURFIX-01] `/notify` post/cancel behavior is truthful and symmetric for actual posted notifications, including tagged notifications tracked through the in-memory notification buffer.
+  2. [CURFIX-02] The screenshot or MediaProjection foreground-service contract is internally consistent across manifest declarations, runtime service flags, provider comments, and capability claims.
+  3. [CURFIX-03] Wildcard imports are removed from main Kotlin source so package ownership is readable without self-package or project-wide star imports.
+  4. [CURFIX-04] The worst remaining oversized coordination-heavy classes are materially cleaner through bounded helper or collaborator extraction rather than hero rewrites.
+  5. [CURFIX-05] Test ownership continues to converge out of the flat root test package wherever domain ownership is clear.
+  6. [CURFIX-06] The accepted 1.4.0 package and capability-plane baseline remains intact and no route, capability, or permission-model scope is broadened.
+  7. [CURFIX-07] Focused regression coverage proves the notification truthfulness fix and the screenshot/service contract alignment.
+  8. [CURFIX-08] The Android project still compiles and focused unit tests pass after the correction pass lands.
+**Plans**: TBD
+
+Plans:
+- [x] 25.5-01: Fix `/notify` cancellation truthfulness and add regression coverage
+- [x] 25.5-02: Align screenshot or MediaProjection foreground-service contract and guard against drift
+- [x] 25.5-03: Remove wildcard imports from main source without behavioral churn
+- [x] 25.5-04: Perform contained extractions in the remaining oversized coordination-heavy classes
+- [x] 25.5-05: Continue test-package convergence, update maintainability checks, and run verification
+
+### Phase 25.6: Second Current-State Cleanup Pass For 1.4.0
+**Goal**: Finish the still-open engineering cleanup on the accepted 1.4.0 baseline by removing the remaining wildcard imports in UI-owned main source, doing one more contained extraction pass on the biggest coordination-heavy files, and further reducing root-flat tests without touching already accepted fixes.
+**Depends on**: Phase 25.5
+**Success Criteria** (what must be TRUE):
+  1. [CURFIX2-01] `app/src/main/java` contains zero wildcard imports, including the remaining UI-package star imports and any self-package star imports.
+  2. [CURFIX2-02] `GhostCoreAccessibilityService.kt`, `GhostAccessibilityService.kt`, and `StateCoordinator.kt` are materially cleaner through contained helper or collaborator extraction rather than another architecture rewrite.
+  3. [CURFIX2-03] Optional follow-up cleanup in `RuntimeStateStore.kt` or `GhosthandCommandCatalogRoutes.kt` happens only if it is clearly safe and materially useful.
+  4. [CURFIX2-04] Root-flat tests are reduced further so only truly shared or cross-domain tests remain at `app/src/test/java/com/folklore25/ghosthand`.
+  5. [CURFIX2-05] Touched tests also have clean import hygiene and preserve existing test behavior.
+  6. [CURFIX2-06] Already accepted `/notify` and screenshot or MediaProjection fixes remain untouched unless a tiny build-driven follow-up is strictly required.
+  7. [CURFIX2-07] No new routes, contracts, capabilities, presentation polish, or speculative package reshuffling is introduced.
+  8. [CURFIX2-08] The Android project still builds and unit tests pass after the cleanup closes.
+**Plans**: TBD
+
+Plans:
+- [x] 25.6-01: Remove the remaining wildcard imports from UI-owned main source to reach zero total wildcard imports
+- [x] 25.6-02: Perform one more contained extraction pass on the biggest coordination-heavy files
+- [x] 25.6-03: Continue root-flat test convergence and clean touched test imports
+- [x] 25.6-04: Run final build and unit-test verification and close the cleanup pass

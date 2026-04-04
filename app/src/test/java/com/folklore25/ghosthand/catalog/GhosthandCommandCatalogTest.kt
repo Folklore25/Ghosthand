@@ -6,7 +6,6 @@
 
 package com.folklore25.ghosthand.catalog
 
-import com.folklore25.ghosthand.catalog.*
 import com.folklore25.ghosthand.routes.GhosthandRoutePolicies
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -41,7 +40,7 @@ class GhosthandCommandCatalogTest {
         assertEquals("commands", commandsRoute.id)
         assertEquals("introspection", commandsRoute.category)
         assertTrue(commandsRoute.description.isNotBlank())
-        assertEquals("1.24", GhosthandCommandCatalog.schemaVersion)
+        assertEquals("1.25", GhosthandCommandCatalog.schemaVersion)
         assertNotNull(commandsRoute.exampleResponse)
     }
 
@@ -54,6 +53,12 @@ class GhosthandCommandCatalogTest {
             screenPayload["responseFields"]
         )
         assertEquals("structured_actionable_surface_snapshot", screenPayload["stateTruth"])
+        assertEquals("observation", screenPayload["plane"])
+        assertEquals("source_dependent_runtime_gated", screenPayload["availabilityModel"])
+        assertEquals("structured_surface_observation", screenPayload["truthType"])
+        assertEquals("mixed", screenPayload["directness"])
+        assertTrue((screenPayload["preconditions"] as List<*>).contains("accessibility_when_source=accessibility"))
+        assertTrue((screenPayload["failureModes"] as List<*>).contains("ocr_capture_unavailable"))
         assertEquals("selector_reresolution", screenPayload["recommendedInteractionModel"])
         assertEquals("snapshot_ephemeral", screenPayload["referenceStability"])
         assertEquals("same_snapshot_only", screenPayload["snapshotScope"])
@@ -70,6 +75,22 @@ class GhosthandCommandCatalogTest {
         assertFalse(packageParam.containsKey("allowedValues"))
 
         val clickPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "click" }
+        assertEquals("control", clickPayload["plane"])
+        assertEquals("accessibility_runtime_gated", clickPayload["availabilityModel"])
+        assertEquals("action_truth", clickPayload["truthType"])
+        assertEquals("direct", clickPayload["directness"])
+        assertTrue((clickPayload["failureModes"] as List<*>).contains("stale_node_reference"))
+        assertEquals(listOf("accessibility_control"), clickPayload["capabilityIds"])
+        val clickCapabilities = clickPayload["capabilities"] as List<*>
+        val clickCapability = clickCapabilities.single() as Map<*, *>
+        assertEquals("accessibility_control", clickCapability["capabilityId"])
+        assertEquals("control", clickCapability["domain"])
+        assertEquals("primitive", clickCapability["kind"])
+        assertEquals("direct", clickCapability["directness"])
+        assertEquals("action_truth", clickCapability["truthType"])
+        assertEquals(true, clickCapability["implemented"])
+        assertFalse(clickCapability.containsKey("preconditions"))
+        assertFalse(clickCapability.containsKey("failureModes"))
         assertTrue(clickPayload.containsKey("selectorSupport"))
         assertTrue(clickPayload.containsKey("exampleRequest"))
         assertTrue(clickPayload.containsKey("exampleResponse"))
@@ -77,6 +98,11 @@ class GhosthandCommandCatalogTest {
 
         val commandsPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "commands" }
         assertEquals("/commands", commandsPayload["path"])
+        assertEquals("capability", commandsPayload["plane"])
+        assertEquals("capability_truth", commandsPayload["truthType"])
+        assertEquals(listOf("route_contract_catalog"), commandsPayload["capabilityIds"])
+        val commandsCapabilities = commandsPayload["capabilities"] as List<*>
+        assertEquals("route_contract_catalog", (commandsCapabilities.single() as Map<*, *>)["capabilityId"])
         assertNull(commandsPayload["selectorSupport"])
         assertNull(commandsPayload["exampleRequest"])
         assertNotNull(commandsPayload["exampleResponse"])
@@ -334,6 +360,28 @@ class GhosthandCommandCatalogTest {
         val commandsRoute = GhosthandCommandCatalog.commands.first { it.id == "commands" }
         assertTrue(commandsRoute.responseFields.contains("schemaVersion"))
         assertTrue(commandsRoute.responseFields.contains("commands"))
+
+        val eventsRoute = GhosthandCommandCatalog.commands.first { it.id == "events" }
+        assertEquals("/events", eventsRoute.path)
+        assertTrue(eventsRoute.responseFields.contains("events"))
+        assertTrue(eventsRoute.responseFields.contains("nextCursor"))
+        assertTrue(eventsRoute.params.any { it.name == "since" })
+        assertTrue(eventsRoute.params.any { it.name == "limit" })
+        val eventsPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "events" }
+        assertEquals("observation", eventsPayload["plane"])
+        assertEquals("always_available", eventsPayload["availabilityModel"])
+        assertEquals("observation_truth", eventsPayload["truthType"])
+        assertEquals("derived", eventsPayload["directness"])
+        assertEquals(listOf("event_observation"), eventsPayload["capabilityIds"])
+        val eventsCapabilities = eventsPayload["capabilities"] as List<*>
+        assertEquals("event_observation", (eventsCapabilities.single() as Map<*, *>)["capabilityId"])
+        assertTrue((eventsPayload["failureModes"] as List<*>).contains("stale_cursor_window"))
+
+        val capabilitiesPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "capabilities" }
+        val referencedCapabilities = capabilitiesPayload["capabilities"] as List<*>
+        val referencedCapabilityIds = referencedCapabilities.map { (it as Map<*, *>)["capabilityId"] }
+        assertTrue(referencedCapabilityIds.contains("accessibility_control"))
+        assertTrue(referencedCapabilityIds.contains("route_contract_catalog"))
     }
 
     @Test

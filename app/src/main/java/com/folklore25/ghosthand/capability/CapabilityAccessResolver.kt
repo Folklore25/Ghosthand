@@ -6,13 +6,11 @@
 
 package com.folklore25.ghosthand.capability
 
-import com.folklore25.ghosthand.AccessibilityStatusProvider
-import com.folklore25.ghosthand.AccessibilityStatusSnapshot
-import com.folklore25.ghosthand.CapabilityAccessSnapshot
-import com.folklore25.ghosthand.CapabilityAccessSnapshotFactory
-import com.folklore25.ghosthand.CapabilityPolicyStore
-import com.folklore25.ghosthand.GhostAccessibilityExecutionCoreRegistry
-import com.folklore25.ghosthand.MediaProjectionProvider
+import com.folklore25.ghosthand.integration.projection.MediaProjectionProvider
+import com.folklore25.ghosthand.interaction.execution.GhostAccessibilityExecutionCoreRegistry
+import com.folklore25.ghosthand.state.read.AccessibilityStatusProvider
+import com.folklore25.ghosthand.state.read.AccessibilityStatusSnapshot
+
 
 class CapabilityAccessResolver(
     private val accessibilityStatusProvider: AccessibilityStatusProvider,

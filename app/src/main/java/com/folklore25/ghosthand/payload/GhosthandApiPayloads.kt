@@ -6,7 +6,17 @@
 
 package com.folklore25.ghosthand.payload
 
-import com.folklore25.ghosthand.*
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.interaction.execution.ActionEffectObservation
+import com.folklore25.ghosthand.interaction.accessibility.ClickAttemptResult
+import com.folklore25.ghosthand.screen.find.ClickSelectorResolution
+import com.folklore25.ghosthand.screen.find.FindMissHint
+import com.folklore25.ghosthand.screen.find.FindNodeResult
+import com.folklore25.ghosthand.screen.read.FlatAccessibilityNode
+import com.folklore25.ghosthand.interaction.execution.GlobalActionResult
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 import com.folklore25.ghosthand.state.InputOperationResult
 

@@ -6,42 +6,56 @@
 
 package com.folklore25.ghosthand.payload
 
-import com.folklore25.ghosthand.ActionEffectObservation
-import com.folklore25.ghosthand.ClickAttemptResult
-import com.folklore25.ghosthand.ClickSelectorResolution
-import com.folklore25.ghosthand.GlobalActionResult
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.interaction.execution.ActionEffectObservation
+import com.folklore25.ghosthand.interaction.accessibility.ClickAttemptResult
+import com.folklore25.ghosthand.screen.find.ClickSelectorResolution
+import com.folklore25.ghosthand.interaction.execution.GlobalActionResult
+
+import com.folklore25.ghosthand.R
+
+import com.folklore25.ghosthand.interaction.effects.ActionEvidencePayloads
 import com.folklore25.ghosthand.interaction.effects.ActionEffectPayloads
 import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 
 internal object GhosthandInteractionPayloads {
-    fun clickFields(result: ClickAttemptResult): Map<String, Any?> {
-        val payload = linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "backendUsed" to result.backendUsed,
-            "attemptedPath" to result.attemptedPath
-        )
-        result.effect?.let { effect -> payload.putAll(actionEffectFields(effect)) }
-        PostActionStateComposer.fromObservedEffect(
-            actionEffect = result.effect,
-            fallbackSnapshot = null
-        )?.let(PostActionStateComposer::fields)?.takeIf { it.isNotEmpty() }?.let { payload["postActionState"] = it }
+    fun clickFields(
+        result: ClickAttemptResult,
+        fallbackSnapshot: AccessibilityTreeSnapshot? = null
+    ): Map<String, Any?> {
+        val payload = linkedMapOf<String, Any?>().apply {
+            putAll(
+                ActionEvidencePayloads.commonFields(
+                    performed = result.performed,
+                    backendUsed = result.backendUsed,
+                    attemptedPath = result.attemptedPath,
+                    actionEffect = result.effect,
+                    postActionState = PostActionStateComposer.fromObservedEffect(
+                        actionEffect = result.effect,
+                        fallbackSnapshot = fallbackSnapshot
+                    )
+                )
+            )
+        }
         result.selectorResolution?.let { resolution ->
             payload["resolution"] = clickResolutionFields(resolution)
         }
         return payload
     }
 
-    fun globalActionFields(result: GlobalActionResult): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "attemptedPath" to result.attemptedPath
-        ).apply {
-            result.effect?.let { effect -> putAll(ActionEffectPayloads.fields(effect)) }
-            PostActionStateComposer.fromObservedEffect(
+    fun globalActionFields(
+        result: GlobalActionResult,
+        fallbackSnapshot: AccessibilityTreeSnapshot? = null
+    ): Map<String, Any?> {
+        return ActionEvidencePayloads.commonFields(
+            performed = result.performed,
+            attemptedPath = result.attemptedPath,
+            actionEffect = result.effect,
+            postActionState = PostActionStateComposer.fromObservedEffect(
                 actionEffect = result.effect,
-                fallbackSnapshot = null
-            )?.let(PostActionStateComposer::fields)?.takeIf { it.isNotEmpty() }?.let { put("postActionState", it) }
-        }
+                fallbackSnapshot = fallbackSnapshot
+            )
+        )
     }
 
     fun clickResolutionFields(resolution: ClickSelectorResolution): Map<String, Any?> {

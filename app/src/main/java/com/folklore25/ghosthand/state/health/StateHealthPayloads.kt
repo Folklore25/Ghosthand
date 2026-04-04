@@ -6,10 +6,13 @@
 
 package com.folklore25.ghosthand.state.health
 
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotResult
-import com.folklore25.ghosthand.DeviceSnapshot
-import com.folklore25.ghosthand.ForegroundAppSnapshot
-import com.folklore25.ghosthand.RuntimeState
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotResult
+import com.folklore25.ghosthand.state.device.DeviceSnapshot
+import com.folklore25.ghosthand.state.device.ForegroundAppSnapshot
+import com.folklore25.ghosthand.state.runtime.RuntimeState
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.server.LocalApiServer
 import org.json.JSONObject
 

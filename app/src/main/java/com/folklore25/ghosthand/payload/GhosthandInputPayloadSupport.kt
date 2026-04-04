@@ -6,6 +6,11 @@
 
 package com.folklore25.ghosthand.payload
 
+import com.folklore25.ghosthand.interaction.execution.ActionEffectObservation
+
+import com.folklore25.ghosthand.R
+
+import com.folklore25.ghosthand.interaction.effects.ActionEvidencePayloads
 import com.folklore25.ghosthand.state.InputKeyDispatchResult
 import com.folklore25.ghosthand.state.InputOperationResult
 import com.folklore25.ghosthand.state.InputTextMutationResult
@@ -91,19 +96,25 @@ internal object GhosthandInputPayloads {
         )
     }
 
-    fun inputResultFields(result: InputOperationResult): Map<String, Any?> {
-        return linkedMapOf<String, Any?>(
-            "performed" to result.performed,
-            "textChanged" to (result.textMutation?.performed ?: false),
-            "keyDispatched" to (result.keyDispatch?.performed ?: false),
-            "textMutation" to result.textMutation?.let(::textMutationFields),
-            "keyDispatch" to result.keyDispatch?.let(::keyDispatchFields)
-        ).apply {
-            result.postActionState
-                ?.let(PostActionStateComposer::fields)
-                ?.takeIf { it.isNotEmpty() }
-                ?.let { put("postActionState", it) }
-        }
+    fun inputResultFields(
+        result: InputOperationResult,
+        actionEffect: ActionEffectObservation? = null,
+        attemptedPath: String? = null,
+        backendUsed: String? = null
+    ): Map<String, Any?> {
+        return ActionEvidencePayloads.commonFields(
+            performed = result.performed,
+            attemptedPath = attemptedPath,
+            backendUsed = backendUsed,
+            actionEffect = actionEffect,
+            postActionState = result.postActionState,
+            extras = linkedMapOf(
+                "textChanged" to (result.textMutation?.performed ?: false),
+                "keyDispatched" to (result.keyDispatch?.performed ?: false),
+                "textMutation" to result.textMutation?.let(::textMutationFields),
+                "keyDispatch" to result.keyDispatch?.let(::keyDispatchFields)
+            )
+        )
     }
 
     private fun textMutationFields(mutation: InputTextMutationResult): Map<String, Any?> {

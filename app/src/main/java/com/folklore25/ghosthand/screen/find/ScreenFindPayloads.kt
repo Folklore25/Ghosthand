@@ -6,11 +6,12 @@
 
 package com.folklore25.ghosthand.screen.find
 
-import com.folklore25.ghosthand.AccessibilityNodeFinder
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotResult
-import com.folklore25.ghosthand.FindNodeResult
-import com.folklore25.ghosthand.FlatAccessibilityNode
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotResult
+import com.folklore25.ghosthand.screen.read.FlatAccessibilityNode
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
 import com.folklore25.ghosthand.payload.GhosthandScreenPayloads
 import org.json.JSONObject

@@ -6,7 +6,10 @@
 
 package com.folklore25.ghosthand.routes.wait
 
-import com.folklore25.ghosthand.FlatAccessibilityNode
+import com.folklore25.ghosthand.screen.read.FlatAccessibilityNode
+
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse

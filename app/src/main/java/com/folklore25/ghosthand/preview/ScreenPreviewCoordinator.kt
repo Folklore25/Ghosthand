@@ -6,9 +6,12 @@
 
 package com.folklore25.ghosthand.preview
 
+import com.folklore25.ghosthand.integration.projection.MediaProjectionProvider
+import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+
+import com.folklore25.ghosthand.R
+
 import android.media.projection.MediaProjection
-import com.folklore25.ghosthand.MediaProjectionProvider
-import com.folklore25.ghosthand.ScreenshotDispatchResult
 import com.folklore25.ghosthand.interaction.execution.GhosthandScreenshotAccess
 
 internal class ScreenPreviewCoordinator(

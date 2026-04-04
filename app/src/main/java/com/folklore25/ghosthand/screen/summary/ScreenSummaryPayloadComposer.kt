@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.screen.summary
 
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.screen.read.ScreenReadPayloadFields
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 import com.folklore25.ghosthand.screen.read.ScreenStateLegibilityProjector

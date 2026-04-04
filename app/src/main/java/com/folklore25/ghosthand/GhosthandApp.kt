@@ -6,6 +6,10 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.R
+import com.folklore25.ghosthand.state.runtime.RuntimeStateStore
+import com.folklore25.ghosthand.ui.common.model.AppTextResolver
+
 import android.app.Application
 import android.util.Log
 

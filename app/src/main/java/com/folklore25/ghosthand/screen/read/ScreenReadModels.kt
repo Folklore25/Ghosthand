@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.screen.read
 
+import com.folklore25.ghosthand.R
+
 enum class ScreenReadMode(val wireValue: String) {
     ACCESSIBILITY("accessibility"),
     OCR("ocr"),

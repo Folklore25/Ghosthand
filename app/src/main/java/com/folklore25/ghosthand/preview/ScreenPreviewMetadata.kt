@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.preview
 
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 
 object ScreenPreviewMetadata {

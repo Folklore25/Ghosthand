@@ -6,8 +6,8 @@
 
 package com.folklore25.ghosthand.interaction.execution
 
-import com.folklore25.ghosthand.GhostAccessibilityExecutionCoreRegistry
-import com.folklore25.ghosthand.ScreenshotDispatchResult
+import com.folklore25.ghosthand.R
+
 
 internal interface GhosthandScreenshotAccess {
     fun captureBestAvailable(

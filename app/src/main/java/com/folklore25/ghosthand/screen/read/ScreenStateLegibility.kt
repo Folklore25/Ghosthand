@@ -6,9 +6,8 @@
 
 package com.folklore25.ghosthand.screen.read
 
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.FlatAccessibilityNode
-import com.folklore25.ghosthand.NodeBounds
+import com.folklore25.ghosthand.R
+
 
 data class ScreenStateLegibility(
     val focusedEditablePresent: Boolean?,

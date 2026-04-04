@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.interaction.execution
 
+import com.folklore25.ghosthand.R
+
 import com.folklore25.ghosthand.payload.GhosthandInputRequest
 import com.folklore25.ghosthand.payload.InputTextAction
 import com.folklore25.ghosthand.state.InputKeyDispatchResult

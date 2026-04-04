@@ -6,14 +6,15 @@
 
 package com.folklore25.ghosthand.state
 
-import com.folklore25.ghosthand.AccessibilityStatusSnapshot
-import com.folklore25.ghosthand.CapabilityAccessSnapshot
-import com.folklore25.ghosthand.DeviceSnapshot
-import com.folklore25.ghosthand.ForegroundAppSnapshot
-import com.folklore25.ghosthand.HomeDiagnosticsSnapshot
-import com.folklore25.ghosthand.PermissionSnapshot
-import com.folklore25.ghosthand.RuntimeState
+import com.folklore25.ghosthand.capability.CapabilityAccessSnapshot
+import com.folklore25.ghosthand.capability.GhosthandCapabilityPresentation
 import com.folklore25.ghosthand.capability.GovernedCapabilityPayloads
+import com.folklore25.ghosthand.state.device.DeviceSnapshot
+import com.folklore25.ghosthand.state.device.ForegroundAppSnapshot
+import com.folklore25.ghosthand.state.device.PermissionSnapshot
+import com.folklore25.ghosthand.state.diagnostics.HomeDiagnosticsSnapshot
+import com.folklore25.ghosthand.state.read.AccessibilityStatusSnapshot
+import com.folklore25.ghosthand.state.runtime.RuntimeState
 import com.folklore25.ghosthand.server.LocalApiServer
 import org.json.JSONObject
 
@@ -73,7 +74,8 @@ object StatePayloadComposer {
                 JSONObject(
                     permissionsPayload(
                         accessibilityEnabled = accessibilitySnapshot.enabled,
-                        capabilityAccess = capabilityAccess
+                        capabilityAccess = capabilityAccess,
+                        permissionSnapshot = permissionSnapshot
                     )
                 )
             )
@@ -82,22 +84,15 @@ object StatePayloadComposer {
 
     fun permissionsPayload(
         accessibilityEnabled: Boolean,
-        capabilityAccess: CapabilityAccessSnapshot
+        capabilityAccess: CapabilityAccessSnapshot,
+        permissionSnapshot: PermissionSnapshot
     ): Map<String, Any?> {
         return linkedMapOf(
             "implemented" to true,
             "accessibility" to accessibilityEnabled,
-            "capabilitySummary" to linkedMapOf(
-                "accessibility" to linkedMapOf(
-                    "allowed" to capabilityAccess.accessibility.policy.allowed,
-                    "usableNow" to capabilityAccess.accessibility.effective.usableNow,
-                    "reason" to capabilityAccess.accessibility.effective.reason
-                ),
-                "screenshot" to linkedMapOf(
-                    "allowed" to capabilityAccess.screenshot.policy.allowed,
-                    "usableNow" to capabilityAccess.screenshot.effective.usableNow,
-                    "reason" to capabilityAccess.screenshot.effective.reason
-                )
+            "capabilitySummary" to GhosthandCapabilityPresentation.stateSummaryFields(
+                capabilityAccess = capabilityAccess,
+                permissionSnapshot = permissionSnapshot
             ),
             "capabilities" to linkedMapOf(
                 "accessibility" to GovernedCapabilityPayloads.accessibilityToJson(capabilityAccess.accessibility),

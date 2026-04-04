@@ -6,16 +6,18 @@
 
 package com.folklore25.ghosthand.interaction.execution
 
+import com.folklore25.ghosthand.screen.find.AccessibilityNodeFinder
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshot
+import com.folklore25.ghosthand.screen.read.AccessibilityTreeSnapshotResult
+import com.folklore25.ghosthand.interaction.accessibility.ClickAttemptResult
+import com.folklore25.ghosthand.interaction.accessibility.ClickFailureReason
+import com.folklore25.ghosthand.screen.find.FindNodeResult
+import com.folklore25.ghosthand.interaction.accessibility.ScrollAttemptResult
+import com.folklore25.ghosthand.interaction.accessibility.ScrollFailureReason
+
+import com.folklore25.ghosthand.R
+
 import android.os.SystemClock
-import com.folklore25.ghosthand.AccessibilityNodeFinder
-import com.folklore25.ghosthand.AccessibilityTreeSnapshot
-import com.folklore25.ghosthand.AccessibilityTreeSnapshotResult
-import com.folklore25.ghosthand.ClickAttemptResult
-import com.folklore25.ghosthand.ClickFailureReason
-import com.folklore25.ghosthand.FindNodeResult
-import com.folklore25.ghosthand.GestureStroke
-import com.folklore25.ghosthand.ScrollAttemptResult
-import com.folklore25.ghosthand.ScrollFailureReason
 import com.folklore25.ghosthand.payload.GhosthandInputRequest
 import com.folklore25.ghosthand.screen.find.FocusedNodeResult
 import com.folklore25.ghosthand.state.InputOperationResult
