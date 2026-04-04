@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.catalog
 
+import com.folklore25.ghosthand.capability.GhosthandCapabilityDefinitions
+
 internal data class GhosthandCapabilityPlaneMetadata(
     val plane: String,
     val availabilityModel: String,
@@ -30,25 +32,24 @@ internal object GhosthandCapabilityPlaneCatalog {
     )
 
     fun metadataFor(command: GhosthandCommandDescriptor): GhosthandCapabilityPlaneMetadata {
-        return when (command.id) {
-            "tap" -> controlMetadata(failureModes = listOf("accessibility_unavailable", "accessibility_action_failed", "node_not_found"))
-            "click" -> controlMetadata(failureModes = listOf("accessibility_unavailable", "node_not_found", "stale_node_reference", "accessibility_action_failed"))
-            "input" -> controlMetadata(failureModes = listOf("accessibility_unavailable", "focused_editable_missing", "text_mutation_failed", "key_dispatch_failed"))
-            "set_text" -> controlMetadata(failureModes = listOf("accessibility_unavailable", "node_not_found", "text_mutation_failed"))
-            "scroll" -> controlMetadata(failureModes = listOf("accessibility_unavailable", "node_not_found", "invalid_direction", "dispatch_failed"))
-            "swipe" -> controlMetadata(failureModes = listOf("accessibility_unavailable", "dispatch_failed"))
-            "longpress", "gesture", "back", "home", "recents" ->
-                controlMetadata(failureModes = listOf("accessibility_unavailable", "dispatch_failed"))
-
-            "find" -> GhosthandCapabilityPlaneMetadata(
-                plane = "observation",
-                availabilityModel = "accessibility_runtime_gated",
-                preconditions = accessibilityObservationPreconditions,
-                failureModes = listOf("accessibility_unavailable", "no_selector_match"),
-                truthType = "structured_selector_observation",
-                directness = "derived"
+        if (command.capabilityIds.size == 1) {
+            val capability = GhosthandCapabilityDefinitions.definition(command.capabilityIds.single())
+            val availabilityModel = when (capability.capabilityId) {
+                "accessibility_control", "accessibility_observation" -> "accessibility_runtime_gated"
+                "screenshot_capture", "preview_access" -> "screenshot_runtime_gated"
+                else -> "always_available"
+            }
+            return GhosthandCapabilityPlaneMetadata(
+                plane = capability.domain,
+                availabilityModel = availabilityModel,
+                preconditions = capability.preconditions,
+                failureModes = capability.failureModes,
+                truthType = capability.truthType,
+                directness = capability.directness
             )
+        }
 
+        return when (command.id) {
             "screen" -> GhosthandCapabilityPlaneMetadata(
                 plane = "observation",
                 availabilityModel = "source_dependent_runtime_gated",
@@ -88,51 +89,6 @@ internal object GhosthandCapabilityPlaneCatalog {
                 directness = "derived"
             )
 
-            "events" -> GhosthandCapabilityPlaneMetadata(
-                plane = "observation",
-                availabilityModel = "always_available",
-                preconditions = emptyList(),
-                failureModes = listOf("stale_cursor_window"),
-                truthType = "recent_event_observation",
-                directness = "derived"
-            )
-
-            "capabilities", "commands" -> GhosthandCapabilityPlaneMetadata(
-                plane = "capability",
-                availabilityModel = "always_available",
-                preconditions = emptyList(),
-                failureModes = emptyList(),
-                truthType = "capability_truth",
-                directness = "derived"
-            )
-            "screenshot" -> GhosthandCapabilityPlaneMetadata(
-                plane = "preview",
-                availabilityModel = "screenshot_runtime_gated",
-                preconditions = screenshotPreconditions,
-                failureModes = listOf("screenshot_unavailable"),
-                truthType = "visual_truth",
-                directness = "direct"
-            )
-
-            "wait_ui_change", "wait_condition" -> GhosthandCapabilityPlaneMetadata(
-                plane = "evidence",
-                availabilityModel = "accessibility_runtime_gated",
-                preconditions = accessibilityObservationPreconditions,
-                failureModes = listOf("timed_out", "accessibility_unavailable"),
-                truthType = "settled_state_evidence",
-                directness = "derived"
-            )
-
-            "clipboard_read", "clipboard_write", "notify_read", "notify_post", "notify_cancel" ->
-                GhosthandCapabilityPlaneMetadata(
-                    plane = "utility",
-                    availabilityModel = "always_available",
-                    preconditions = emptyList(),
-                    failureModes = emptyList(),
-                    truthType = "local_runtime_utility",
-                    directness = "direct"
-                )
-
             else -> GhosthandCapabilityPlaneMetadata(
                 plane = "observation",
                 availabilityModel = "always_available",
@@ -144,14 +100,4 @@ internal object GhosthandCapabilityPlaneCatalog {
         }
     }
 
-    private fun controlMetadata(failureModes: List<String>): GhosthandCapabilityPlaneMetadata {
-        return GhosthandCapabilityPlaneMetadata(
-            plane = "control",
-            availabilityModel = "accessibility_runtime_gated",
-            preconditions = accessibilityControlPreconditions,
-            failureModes = failureModes,
-            truthType = "execution_truth_with_effect_evidence",
-            directness = "direct"
-        )
-    }
 }

@@ -78,7 +78,7 @@ class GhosthandCommandCatalogTest {
         val clickPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "click" }
         assertEquals("control", clickPayload["plane"])
         assertEquals("accessibility_runtime_gated", clickPayload["availabilityModel"])
-        assertEquals("execution_truth_with_effect_evidence", clickPayload["truthType"])
+        assertEquals("action_truth", clickPayload["truthType"])
         assertEquals("direct", clickPayload["directness"])
         assertTrue((clickPayload["failureModes"] as List<*>).contains("stale_node_reference"))
         assertTrue(clickPayload.containsKey("selectorSupport"))
@@ -89,7 +89,8 @@ class GhosthandCommandCatalogTest {
         val commandsPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "commands" }
         assertEquals("/commands", commandsPayload["path"])
         assertEquals("capability", commandsPayload["plane"])
-        assertEquals("capability_schema", commandsPayload["truthType"])
+        assertEquals("capability_truth", commandsPayload["truthType"])
+        assertEquals(listOf("route_contract_catalog"), commandsPayload["capabilities"])
         assertNull(commandsPayload["selectorSupport"])
         assertNull(commandsPayload["exampleRequest"])
         assertNotNull(commandsPayload["exampleResponse"])
@@ -357,9 +358,15 @@ class GhosthandCommandCatalogTest {
         val eventsPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "events" }
         assertEquals("observation", eventsPayload["plane"])
         assertEquals("always_available", eventsPayload["availabilityModel"])
-        assertEquals("recent_event_observation", eventsPayload["truthType"])
+        assertEquals("observation_truth", eventsPayload["truthType"])
         assertEquals("derived", eventsPayload["directness"])
+        assertEquals(listOf("event_observation"), eventsPayload["capabilities"])
         assertTrue((eventsPayload["failureModes"] as List<*>).contains("stale_cursor_window"))
+
+        val capabilitiesPayload = GhosthandCommandCatalog.commandPayloads().first { it["id"] == "capabilities" }
+        val referencedCapabilities = capabilitiesPayload["capabilities"] as List<*>
+        assertTrue(referencedCapabilities.contains("accessibility_control"))
+        assertTrue(referencedCapabilities.contains("route_contract_catalog"))
     }
 
     @Test

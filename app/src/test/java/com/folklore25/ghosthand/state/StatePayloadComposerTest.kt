@@ -47,17 +47,22 @@ class StatePayloadComposerTest {
                         reason = "capture_unavailable"
                     )
                 )
+            ),
+            permissionSnapshot = com.folklore25.ghosthand.PermissionSnapshot(
+                usageAccess = true,
+                notifications = false,
+                overlay = null,
+                writeSecureSettings = false
             )
         )
 
         val capabilitySummary = permissions["capabilitySummary"] as Map<*, *>
-        val accessibility = capabilitySummary["accessibility"] as Map<*, *>
-        val screenshot = capabilitySummary["screenshot"] as Map<*, *>
+        val accessibility = capabilitySummary["accessibility_control"] as Map<*, *>
+        val screenshot = capabilitySummary["screenshot_capture"] as Map<*, *>
 
-        assertEquals("control_and_observation", accessibility["plane"])
-        assertEquals("preview", screenshot["plane"])
-        assertTrue((accessibility["preconditions"] as List<*>).contains("service_connected"))
+        assertEquals(false, accessibility["availableNow"])
+        assertEquals(false, screenshot["availableNow"])
         assertTrue((accessibility["blockers"] as List<*>).contains("policy_blocked"))
-        assertTrue((screenshot["failureModes"] as List<*>).contains("capture_path_unavailable"))
+        assertTrue((screenshot["blockers"] as List<*>).contains("capture_path_unavailable"))
     }
 }

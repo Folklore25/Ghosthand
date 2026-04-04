@@ -42,7 +42,7 @@ internal object GhosthandCapabilityDefinitions {
             directness = "direct",
             truthType = "action_truth",
             preconditions = listOf("accessibility_required", "runtime_service_required"),
-            failureModes = listOf("accessibility_unavailable", "dispatch_failed", "node_not_found"),
+            failureModes = listOf("accessibility_unavailable", "dispatch_failed", "node_not_found", "stale_node_reference"),
             routes = listOf("/tap", "/click", "/input", "/setText", "/scroll", "/swipe", "/longpress", "/gesture", "/back", "/home", "/recents")
         ),
         CapabilityDefinition(
@@ -222,6 +222,20 @@ internal object GhosthandCapabilityAvailabilityResolver {
 }
 
 internal object GhosthandCapabilityPresentation {
+    fun stateSummaryFields(
+        capabilityAccess: CapabilityAccessSnapshot,
+        permissionSnapshot: PermissionSnapshot
+    ): Map<String, Any?> {
+        return GhosthandCapabilityAvailabilityResolver.resolveAll(capabilityAccess, permissionSnapshot)
+            .associate { availability ->
+                availability.capabilityId to linkedMapOf(
+                    "availableNow" to availability.availableNow,
+                    "degraded" to availability.degraded,
+                    "blockers" to availability.blockers
+                )
+            }
+    }
+
     fun capabilitiesFields(
         capabilityAccess: CapabilityAccessSnapshot,
         permissionSnapshot: PermissionSnapshot

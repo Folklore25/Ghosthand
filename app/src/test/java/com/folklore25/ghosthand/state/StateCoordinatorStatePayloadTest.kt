@@ -54,7 +54,13 @@ class StateCoordinatorStatePayloadTest {
 
         val permissions = StatePayloadComposer.permissionsPayload(
             accessibilityEnabled = true,
-            capabilityAccess = capabilityAccess
+            capabilityAccess = capabilityAccess,
+            permissionSnapshot = PermissionSnapshot(
+                usageAccess = true,
+                notifications = false,
+                overlay = null,
+                writeSecureSettings = false
+            )
         )
         val systemPermissions = StatePayloadComposer.systemPermissionsPayload(
             PermissionSnapshot(
@@ -67,11 +73,12 @@ class StateCoordinatorStatePayloadTest {
 
         val capabilitySummary = permissions["capabilitySummary"] as Map<*, *>
         val capabilities = permissions["capabilities"] as Map<*, *>
-        assertTrue(capabilitySummary.containsKey("accessibility"))
+        assertTrue(capabilitySummary.containsKey("accessibility_control"))
         assertTrue(capabilities.containsKey("screenshot"))
-        val accessibilitySummary = capabilitySummary["accessibility"] as Map<*, *>
-        assertEquals("control_and_observation", accessibilitySummary["plane"])
-        assertTrue((accessibilitySummary["preconditions"] as List<*>).contains("dispatch_capable"))
+        val accessibilitySummary = capabilitySummary["accessibility_control"] as Map<*, *>
+        assertEquals(true, accessibilitySummary["availableNow"])
+        assertEquals(false, accessibilitySummary["degraded"])
+        assertEquals(emptyList<String>(), accessibilitySummary["blockers"])
         assertEquals(true, systemPermissions["usageAccess"])
         assertEquals(false, systemPermissions["notifications"])
         assertEquals(false, systemPermissions["writeSecureSettings"])

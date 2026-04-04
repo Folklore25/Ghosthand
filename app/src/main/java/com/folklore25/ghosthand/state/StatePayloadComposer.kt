@@ -13,6 +13,7 @@ import com.folklore25.ghosthand.ForegroundAppSnapshot
 import com.folklore25.ghosthand.HomeDiagnosticsSnapshot
 import com.folklore25.ghosthand.PermissionSnapshot
 import com.folklore25.ghosthand.RuntimeState
+import com.folklore25.ghosthand.capability.GhosthandCapabilityPresentation
 import com.folklore25.ghosthand.capability.GovernedCapabilityPayloads
 import com.folklore25.ghosthand.server.LocalApiServer
 import org.json.JSONObject
@@ -73,7 +74,8 @@ object StatePayloadComposer {
                 JSONObject(
                     permissionsPayload(
                         accessibilityEnabled = accessibilitySnapshot.enabled,
-                        capabilityAccess = capabilityAccess
+                        capabilityAccess = capabilityAccess,
+                        permissionSnapshot = permissionSnapshot
                     )
                 )
             )
@@ -82,14 +84,15 @@ object StatePayloadComposer {
 
     fun permissionsPayload(
         accessibilityEnabled: Boolean,
-        capabilityAccess: CapabilityAccessSnapshot
+        capabilityAccess: CapabilityAccessSnapshot,
+        permissionSnapshot: PermissionSnapshot
     ): Map<String, Any?> {
         return linkedMapOf(
             "implemented" to true,
             "accessibility" to accessibilityEnabled,
-            "capabilitySummary" to linkedMapOf(
-                "accessibility" to GovernedCapabilityPayloads.accessibilitySummaryFields(capabilityAccess.accessibility),
-                "screenshot" to GovernedCapabilityPayloads.screenshotSummaryFields(capabilityAccess.screenshot)
+            "capabilitySummary" to GhosthandCapabilityPresentation.stateSummaryFields(
+                capabilityAccess = capabilityAccess,
+                permissionSnapshot = permissionSnapshot
             ),
             "capabilities" to linkedMapOf(
                 "accessibility" to GovernedCapabilityPayloads.accessibilityToJson(capabilityAccess.accessibility),
