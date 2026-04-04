@@ -24,6 +24,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 25.1: Architecture Convergence For 1.4.0** - Converge remaining root-package ownership into real domain folders and formalize Capability Plane v2 through a first-class `/capabilities` surface without broadening 1.4.0 scope.
 - [x] **Phase 25.3: Architecture Convergence Correction Pass For 1.4.0** - Correct the failed strict architecture-convergence review by materially executing root-package convergence and a first-class Capability Plane v2 without broadening 1.4.0 scope. (completed 2026-04-04)
 - [x] **Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0** - Polish the accepted 1.4.0 architecture-convergence result so the capability plane, self-description surfaces, and closeout state feel clean, coherent, and presentation-ready without broadening scope. (completed 2026-04-04)
+- [ ] **Phase 25.5: Current-State Correction Pass For 1.4.0** - Correct the remaining correctness defects and maintenance debt in the accepted 1.4.0 baseline by fixing `/notify` cancellation truthfulness, aligning the screenshot foreground-service contract, removing wildcard-import pollution, making contained coordinator extractions, and continuing test-package convergence without broadening scope.
 
 ## Phase Details
 
@@ -279,3 +280,24 @@ Plans:
 - [x] 25.4-03: Capability-plane presentation polish
 - [x] 25.4-04: `/commands`, `/state`, and `/capabilities` coherence polish plus final closeout cleanup
 - [x] 25.4-05: Focused tests and final 1.4.0 clean-finish verification
+
+### Phase 25.5: Current-State Correction Pass For 1.4.0
+**Goal**: Finish the current 1.4.0 baseline cleanly by correcting the remaining notification, screenshot-contract, import-cleanliness, coordinator-size, and test-ownership defects without reopening the accepted architecture direction.
+**Depends on**: Phase 25.4
+**Success Criteria** (what must be TRUE):
+  1. [CURFIX-01] `/notify` post/cancel behavior is truthful and symmetric for actual posted notifications, including tagged notifications tracked through the in-memory notification buffer.
+  2. [CURFIX-02] The screenshot or MediaProjection foreground-service contract is internally consistent across manifest declarations, runtime service flags, provider comments, and capability claims.
+  3. [CURFIX-03] Wildcard imports are removed from main Kotlin source so package ownership is readable without self-package or project-wide star imports.
+  4. [CURFIX-04] The worst remaining oversized coordination-heavy classes are materially cleaner through bounded helper or collaborator extraction rather than hero rewrites.
+  5. [CURFIX-05] Test ownership continues to converge out of the flat root test package wherever domain ownership is clear.
+  6. [CURFIX-06] The accepted 1.4.0 package and capability-plane baseline remains intact and no route, capability, or permission-model scope is broadened.
+  7. [CURFIX-07] Focused regression coverage proves the notification truthfulness fix and the screenshot/service contract alignment.
+  8. [CURFIX-08] The Android project still compiles and focused unit tests pass after the correction pass lands.
+**Plans**: TBD
+
+Plans:
+- [ ] 25.5-01: Fix `/notify` cancellation truthfulness and add regression coverage
+- [ ] 25.5-02: Align screenshot or MediaProjection foreground-service contract and guard against drift
+- [ ] 25.5-03: Remove wildcard imports from main source without behavioral churn
+- [ ] 25.5-04: Perform contained extractions in the remaining oversized coordination-heavy classes
+- [ ] 25.5-05: Continue test-package convergence, update maintainability checks, and run verification

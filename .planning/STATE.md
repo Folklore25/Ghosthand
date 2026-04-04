@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-04-04T13:53:47.212Z"
+status: planning
+last_updated: "2026-04-04T14:30:00.000Z"
 progress:
-  total_phases: 13
-  completed_phases: 9
-  total_plans: 60
-  completed_plans: 51
+  total_phases: 14
+  completed_phases: 4
+  total_plans: 64
+  completed_plans: 37
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.4.0 clean finish complete** — Phase 25.4 has now reduced the remaining import residue, tightened capability-plane presentation, and polished `/commands`, `/state`, and `/capabilities` coherence without changing the accepted 1.4.0 direction.
+Current focus: **Phase 25.5 planning** — the accepted 1.4.0 baseline stands, but the current codebase still needs one bounded correction pass for `/notify` cancellation truthfulness, screenshot-service contract alignment, wildcard-import cleanup, contained coordinator thinning, and continued test-package convergence.
 
 ## Current Position
 
-Phase: 25.4 (clean-finish-and-capability-presentation-polish-for-1-4-0) — COMPLETE
-Plan: 5 of 5
+Phase: 25.5 (current-state-correction-pass-for-1-4-0) — PLANNING
+Plan: 0 of 5
 
-- **Phase:** 25.4
+- **Phase:** 25.5
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase 25.4 complete — the accepted 1.4.0 architecture is cleaner, the capability-plane expression is sharper, and the full compile plus unit-test gate still passes.
+- **Status:** Planning Phase 25.5 — the next pass stays on the accepted 1.4.0 baseline and corrects the remaining notification, screenshot-contract, import-cleanliness, oversized-file, and test-ownership defects without broadening scope.
 
 ## Progress
 
@@ -44,8 +44,9 @@ Plan: 5 of 5
 - Phase 25.1: **PLANNED FOR V1.4.0** — architecture convergence through root-package cleanup and Capability Plane v2 formalization with a first-class `/capabilities` route
 - Phase 25.3: **PLANNED FOR V1.4.0 CORRECTION PASS** — strict correction for the rejected architecture-convergence review, focused only on materially executing root-package convergence and a first-class Capability Plane v2
 - Phase 25.4: **PLANNED FOR V1.4.0 CLEAN FINISH** — bounded cleanup and polish for the accepted architecture result, focused on code cleanliness, capability-plane expression, self-description surface coherence, and closeout quality
+- Phase 25.5: **PLANNED FOR V1.4.0 CURRENT-STATE CORRECTION** — truthful `/notify` cancellation, screenshot-service contract alignment, wildcard-import cleanup, contained debt reduction in oversized coordinators, and continued test-package convergence
 
-Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 25.4 finished the accepted architecture result cleanly without redesigning it or adding new capability surface.
+Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 25.5 is a bounded correctness-and-maintainability correction pass on top of the accepted architecture baseline rather than a new product direction or capability expansion.
 
 ## Recent Decisions
 
@@ -106,6 +107,12 @@ Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 
 - [Phase 25.4]: The lightweight `/state.permissions.capabilitySummary` view now omits empty noise fields while preserving meaningful blockers, requirements, and backend or mode data when present.
 - [Phase 25.4]: Because `docs/API.md` is absent locally, the closeout stayed runtime and catalog centered rather than turning into a docs rewrite.
 - [Phase 25.4]: Full local verification passes after the clean-finish pass with `./gradlew :app:compileDebugKotlin testDebugUnitTest`.
+- [Phase 25.5]: The accepted 1.4.0 architecture baseline is binding; the new pass must correct current-state defects without reopening package convergence or Capability Plane v2 design.
+- [Phase 25.5]: Notification cancellation must become symmetric with tagged notification posting and must not let `NotificationBuffer` pretend removal succeeded when identity does not match.
+- [Phase 25.5]: Screenshot or MediaProjection capability truth, provider comments, manifest declarations, and foreground-service runtime flags must converge to one truthful contract.
+- [Phase 25.5]: Wildcard imports in main source are now treated as mandatory maintainability debt rather than optional style polish.
+- [Phase 25.5]: Remaining coordinator-heavy files should be improved only through bounded helper or collaborator extraction, not by another broad redesign cycle.
+- [Phase 25.5]: Root-flat tests should continue moving into domain-owned packages wherever ownership is clear.
 
 ## Blockers / Concerns
 
@@ -116,7 +123,7 @@ Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: Review the completed 1.4.0 branch state, then decide whether to prepare a merge, ship this line, or plan the next roadmap step.
+Next action: Finish the executable plan set for Phase 25.5, then execute the bounded correction pass from a clean 25.4 baseline.
 
 ## Performance Metrics
 
