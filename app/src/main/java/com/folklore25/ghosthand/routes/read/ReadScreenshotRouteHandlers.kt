@@ -8,6 +8,8 @@ package com.folklore25.ghosthand.routes.read
 
 import com.folklore25.ghosthand.R
 
+import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+import com.folklore25.ghosthand.interaction.execution.hasUsableImage
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -25,25 +27,7 @@ internal class ReadScreenshotRouteHandlers(
         val height = queryParameters["height"]?.toIntOrNull() ?: 0
         val screenshotResult = stateCoordinator.captureBestScreenshot(width, height)
 
-        return if (screenshotResult.available) {
-            buildJsonResponse(
-                statusCode = 200,
-                body = successEnvelope(
-                    JSONObject()
-                        .put("image", "data:image/png;base64,${screenshotResult.base64 ?: ""}")
-                        .put("width", screenshotResult.width)
-                        .put("height", screenshotResult.height)
-                )
-            )
-        } else {
-            buildJsonResponse(
-                statusCode = 503,
-                body = errorEnvelope(
-                    code = "SCREENSHOT_FAILED",
-                    message = "Screenshot capture failed. Reason: ${screenshotResult.attemptedPath}"
-                )
-            )
-        }
+        return buildScreenshotResponseFor(screenshotResult)
     }
 
     fun buildScreenshotResponse(requestBody: String): String {
@@ -54,12 +38,16 @@ internal class ReadScreenshotRouteHandlers(
         val height = body.optIntOrNull("height") ?: 0
 
         val screenshotResult = stateCoordinator.captureBestScreenshot(width, height)
-        return if (screenshotResult.available) {
+        return buildScreenshotResponseFor(screenshotResult)
+    }
+
+    private fun buildScreenshotResponseFor(screenshotResult: ScreenshotDispatchResult): String {
+        return if (screenshotResult.hasUsableImage) {
             buildJsonResponse(
                 statusCode = 200,
                 body = successEnvelope(
                     JSONObject()
-                        .put("image", "data:image/png;base64,${screenshotResult.base64 ?: ""}")
+                        .put("image", "data:image/png;base64,${screenshotResult.base64}")
                         .put("width", screenshotResult.width)
                         .put("height", screenshotResult.height)
                 )

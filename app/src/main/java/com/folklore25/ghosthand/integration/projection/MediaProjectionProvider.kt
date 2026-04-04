@@ -7,6 +7,7 @@
 package com.folklore25.ghosthand.integration.projection
 
 import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+import com.folklore25.ghosthand.interaction.execution.hasUsableImage
 
 import com.folklore25.ghosthand.R
 
@@ -15,6 +16,8 @@ import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import java.util.concurrent.ExecutorService
@@ -105,6 +108,17 @@ class MediaProjectionProvider(private val context: Context) {
         val width = if (requestWidth > 0) requestWidth else screenWidth
         val height = if (requestHeight > 0) requestHeight else screenHeight
 
+        if (hasInvalidResizeRequest(requestWidth, requestHeight)) {
+            return ScreenshotDispatchResult(
+                available = false,
+                base64 = null,
+                format = "png",
+                width = 0,
+                height = 0,
+                attemptedPath = "invalid_resize_request"
+            )
+        }
+
         val displayDpi = displayMetrics.densityDpi
 
         val latch = java.util.concurrent.CountDownLatch(1)
@@ -134,6 +148,24 @@ class MediaProjectionProvider(private val context: Context) {
                     null
                 )
                 virtualDisplay = vd
+
+                val imageAvailableLatch = java.util.concurrent.CountDownLatch(1)
+                reader.setOnImageAvailableListener(
+                    { imageAvailableLatch.countDown() },
+                    Handler(Looper.getMainLooper())
+                )
+                if (!imageAvailableLatch.await(SCREENSHOT_FRAME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    result = ScreenshotDispatchResult(
+                        available = false,
+                        base64 = null,
+                        format = "png",
+                        width = 0,
+                        height = 0,
+                        attemptedPath = "image_acquire_timeout"
+                    )
+                    latch.countDown()
+                    return@execute
+                }
 
                 val image = reader.acquireLatestImage()
                 if (image == null) {
@@ -170,17 +202,31 @@ class MediaProjectionProvider(private val context: Context) {
                     }
 
                     val baos = java.io.ByteArrayOutputStream()
-                    finalBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 90, baos)
-                    val b64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
-
-                    result = ScreenshotDispatchResult(
+                    val encoded = if (finalBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 90, baos)) {
+                        baos.toByteArray()
+                    } else {
+                        ByteArray(0)
+                    }
+                    val candidate = ScreenshotDispatchResult(
                         available = true,
-                        base64 = b64,
+                        base64 = Base64.encodeToString(encoded, Base64.NO_WRAP),
                         format = "png",
                         width = finalBitmap.width,
                         height = finalBitmap.height,
                         attemptedPath = "mediaprojection_capture"
                     )
+                    result = if (candidate.hasUsableImage) {
+                        candidate
+                    } else {
+                        ScreenshotDispatchResult(
+                            available = false,
+                            base64 = null,
+                            format = "png",
+                            width = 0,
+                            height = 0,
+                            attemptedPath = "empty_encoded_image"
+                        )
+                    }
 
                     if (finalBitmap !== bitmap) finalBitmap.recycle()
                     bitmap.recycle()
@@ -223,7 +269,17 @@ class MediaProjectionProvider(private val context: Context) {
     }
 
     private companion object {
+        private const val SCREENSHOT_FRAME_TIMEOUT_MS = 1500L
         private const val SCREENSHOT_TOTAL_TIMEOUT_MS = 5000L
         private const val LOG_TAG = "MediaProjection"
+    }
+
+    private fun hasInvalidResizeRequest(requestWidth: Int, requestHeight: Int): Boolean {
+        if (requestWidth < 0 || requestHeight < 0) {
+            return true
+        }
+        val requestsNativeSize = requestWidth == 0 && requestHeight == 0
+        val requestsCustomSize = requestWidth > 0 && requestHeight > 0
+        return !requestsNativeSize && !requestsCustomSize
     }
 }
