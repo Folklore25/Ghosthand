@@ -25,6 +25,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [x] **Phase 25.3: Architecture Convergence Correction Pass For 1.4.0** - Correct the failed strict architecture-convergence review by materially executing root-package convergence and a first-class Capability Plane v2 without broadening 1.4.0 scope. (completed 2026-04-04)
 - [x] **Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0** - Polish the accepted 1.4.0 architecture-convergence result so the capability plane, self-description surfaces, and closeout state feel clean, coherent, and presentation-ready without broadening scope. (completed 2026-04-04)
 - [x] **Phase 25.5: Current-State Correction Pass For 1.4.0** - Correct the remaining correctness defects and maintenance debt in the accepted 1.4.0 baseline by fixing `/notify` cancellation truthfulness, aligning the screenshot foreground-service contract, removing wildcard-import pollution, making contained coordinator extractions, and continuing test-package convergence without broadening scope. (completed 2026-04-04)
+- [ ] **Phase 25.6: Second Current-State Cleanup Pass For 1.4.0** - Finish the still-incomplete engineering cleanup by removing the remaining UI wildcard imports, doing one more contained extraction pass on the largest coordination-heavy files, and reducing the remaining root-flat tests without reopening accepted fixes or broadening scope.
 
 ## Phase Details
 
@@ -301,3 +302,23 @@ Plans:
 - [x] 25.5-03: Remove wildcard imports from main source without behavioral churn
 - [x] 25.5-04: Perform contained extractions in the remaining oversized coordination-heavy classes
 - [x] 25.5-05: Continue test-package convergence, update maintainability checks, and run verification
+
+### Phase 25.6: Second Current-State Cleanup Pass For 1.4.0
+**Goal**: Finish the still-open engineering cleanup on the accepted 1.4.0 baseline by removing the remaining wildcard imports in UI-owned main source, doing one more contained extraction pass on the biggest coordination-heavy files, and further reducing root-flat tests without touching already accepted fixes.
+**Depends on**: Phase 25.5
+**Success Criteria** (what must be TRUE):
+  1. [CURFIX2-01] `app/src/main/java` contains zero wildcard imports, including the remaining UI-package star imports and any self-package star imports.
+  2. [CURFIX2-02] `GhostCoreAccessibilityService.kt`, `GhostAccessibilityService.kt`, and `StateCoordinator.kt` are materially cleaner through contained helper or collaborator extraction rather than another architecture rewrite.
+  3. [CURFIX2-03] Optional follow-up cleanup in `RuntimeStateStore.kt` or `GhosthandCommandCatalogRoutes.kt` happens only if it is clearly safe and materially useful.
+  4. [CURFIX2-04] Root-flat tests are reduced further so only truly shared or cross-domain tests remain at `app/src/test/java/com/folklore25/ghosthand`.
+  5. [CURFIX2-05] Touched tests also have clean import hygiene and preserve existing test behavior.
+  6. [CURFIX2-06] Already accepted `/notify` and screenshot or MediaProjection fixes remain untouched unless a tiny build-driven follow-up is strictly required.
+  7. [CURFIX2-07] No new routes, contracts, capabilities, presentation polish, or speculative package reshuffling is introduced.
+  8. [CURFIX2-08] The Android project still builds and unit tests pass after the cleanup closes.
+**Plans**: TBD
+
+Plans:
+- [ ] 25.6-01: Remove the remaining wildcard imports from UI-owned main source to reach zero total wildcard imports
+- [ ] 25.6-02: Perform one more contained extraction pass on the biggest coordination-heavy files
+- [ ] 25.6-03: Continue root-flat test convergence and clean touched test imports
+- [ ] 25.6-04: Run final build and unit-test verification and close the cleanup pass

@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready
-last_updated: "2026-04-04T15:45:00.000Z"
+status: planning
+last_updated: "2026-04-05T10:20:00.000Z"
 progress:
-  total_phases: 14
+  total_phases: 15
   completed_phases: 5
-  total_plans: 64
+  total_plans: 68
   completed_plans: 42
 ---
 
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **Phase 25.5 complete** — the accepted 1.4.0 baseline now has truthful `/notify` cancellation, a consistent screenshot foreground-service contract, zero main-source wildcard imports, contained extractions in the largest coordination-heavy owners, and further test-package convergence.
+Current focus: **Phase 25.6 planning** — the accepted 1.4.0 baseline and the accepted 25.5 correctness fixes stand, but a second cleanup pass is still needed because UI-owned main source still carries wildcard imports, the largest coordination-heavy files remain bigger than requested, and 9 root-flat tests still remain.
 
 ## Current Position
 
-Phase: 25.5 (current-state-correction-pass-for-1-4-0) — COMPLETE
-Plan: 5 of 5
+Phase: 25.6 (second-current-state-cleanup-pass-for-1-4-0) — PLANNING
+Plan: 0 of 4
 
-- **Phase:** 25.5
+- **Phase:** 25.6
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase 25.5 complete — the current-state correction pass landed without broadening the accepted 1.4.0 baseline, and the full compile plus unit-test gate passes.
+- **Status:** Planning Phase 25.6 — accepted 25.5 fixes stay binding, and the new pass closes only the remaining import, contained-extraction, and test-convergence cleanup.
 
 ## Progress
 
@@ -45,8 +45,9 @@ Plan: 5 of 5
 - Phase 25.3: **PLANNED FOR V1.4.0 CORRECTION PASS** — strict correction for the rejected architecture-convergence review, focused only on materially executing root-package convergence and a first-class Capability Plane v2
 - Phase 25.4: **PLANNED FOR V1.4.0 CLEAN FINISH** — bounded cleanup and polish for the accepted architecture result, focused on code cleanliness, capability-plane expression, self-description surface coherence, and closeout quality
 - Phase 25.5: **PLANNED FOR V1.4.0 CURRENT-STATE CORRECTION** — truthful `/notify` cancellation, screenshot-service contract alignment, wildcard-import cleanup, contained debt reduction in oversized coordinators, and continued test-package convergence
+- Phase 25.6: **PLANNED FOR V1.4.0 SECOND CLEANUP PASS** — finish the remaining UI wildcard-import cleanup, one more contained extraction pass on the biggest coordination-heavy files, and further root-flat test reduction
 
-Overall: Ghosthand’s 1.4.0 line now has the accepted architecture baseline plus the bounded current-state correction pass. The branch is in a cleaner and more truthful state without adding new features or reopening the substrate direction.
+Overall: Ghosthand’s 1.4.0 line keeps the accepted architecture and accepted 25.5 correctness fixes, but the branch still needs one more bounded cleanup pass to finish the remaining engineering debt cleanly.
 
 ## Recent Decisions
 
@@ -115,9 +116,10 @@ Overall: Ghosthand’s 1.4.0 line now has the accepted architecture baseline plu
 - [Phase 25.5]: Root-flat tests should continue moving into domain-owned packages wherever ownership is clear.
 - [Phase 25.5]: `/notify` cancellation now resolves the exact recorded tag-plus-id identity before removing buffered notification state.
 - [Phase 25.5]: Ghosthand's runtime foreground service now declares and starts with the MediaProjection-compatible service type instead of drifting from the screenshot contract.
-- [Phase 25.5]: `app/src/main/java` now contains zero wildcard imports.
+- [Phase 25.5]: The direct correction pass removed wildcard imports from most of main source, but a direct 2026-04-05 source scan shows 16 UI-owned main-source files still carry 528 wildcard-import lines, so one more cleanup pass is required.
 - [Phase 25.5]: Shared accessibility-node action helpers, selector-hint helpers, and runtime-state failure/text helpers now live in bounded collaborators instead of staying inline in the biggest owner files.
 - [Phase 25.5]: Root-flat test count dropped from 16 to 9 by moving obvious owner tests into `screen`, `server`, `capability`, and `interaction`.
+- [Phase 25.6]: The next pass is strictly bounded to the remaining wildcard-import cleanup, one more contained extraction pass on the biggest coordination-heavy files, and further reduction of root-flat tests.
 
 ## Blockers / Concerns
 
@@ -128,7 +130,7 @@ Overall: Ghosthand’s 1.4.0 line now has the accepted architecture baseline plu
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: Review the finished 1.4.0 branch state and decide whether to prepare merge or shipping work from the now-corrected baseline.
+Next action: Finish the executable plan set for Phase 25.6, then execute the second cleanup pass from the clean 25.5 baseline.
 
 ## Performance Metrics
 
