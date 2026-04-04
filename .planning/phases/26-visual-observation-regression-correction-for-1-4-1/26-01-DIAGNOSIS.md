@@ -124,3 +124,37 @@ So the same weak screenshot truth also leaks into OCR and preview signaling. Tha
 - route-level success with `available=true` but blank or missing bytes should fail
 - default `/screenshot` behavior should keep full-resolution intent instead of silently normalizing to degraded tiny output
 - projection capture should fail specifically when no frame is acquired instead of allowing an empty-image success interpretation
+
+## Recorded red-test failures
+
+Command run:
+
+- `./gradlew :app:testDebugUnitTest --tests "*ReadScreenshotRouteHandlersTest" --tests "*ScreenshotDispatchResultTruthTest" --tests "*MediaProjectionProviderTest"`
+
+Observed result:
+
+- 8 tests executed
+- 6 failed
+- 2 passed control assertions proving the suite stayed screenshot-specific
+
+Intentional failing assertions:
+
+1. `ReadScreenshotRouteHandlersTest.screenshotRouteDoesNotTreatAvailableAloneAsSuccess`
+   - failed because the route still uses `return if (screenshotResult.available)`
+2. `ReadScreenshotRouteHandlersTest.screenshotRouteDoesNotSerializeBlankBase64IntoSuccessPayload`
+   - failed because the route still serializes `data:image/png;base64,${screenshotResult.base64 ?: ""}`
+3. `ScreenshotDispatchResultTruthTest.blankAccessibilityImageMustNotBlockUsableProjectionCapture`
+   - failed because `AccessibilityScreenshotAccess` still returns the accessibility result once `available=true`, even when the image bytes are blank
+4. `ScreenshotDispatchResultTruthTest.zeroDimensionAccessibilityImageMustNotBlockUsableProjectionCapture`
+   - failed because `AccessibilityScreenshotAccess` still returns the accessibility result once `available=true`, even when returned dimensions are unusable
+5. `MediaProjectionProviderTest.projectionCaptureWaitsForAnActualFrameBeforeReadingImage`
+   - failed because `MediaProjectionProvider` still does not wait for an actual frame listener before reading from `ImageReader`
+6. `MediaProjectionProviderTest.projectionCaptureDoesNotAcceptEmptyEncodedBytesAsSuccess`
+   - failed because `MediaProjectionProvider` still has a direct success construction from encoded base64 without any explicit non-empty-byte validation
+
+Passing control assertions:
+
+- `ReadScreenshotRouteHandlersTest.screenshotRouteDefaultsToFullResolutionIntent`
+- `MediaProjectionProviderTest.projectionCaptureDefaultsToDisplayResolutionWhenRequestIsMissing`
+
+Those passes confirm the current regression is not that `/screenshot` defaults to preview-size dimensions. The broken boundary is success truth, backend selection truth, and projection frame acquisition truth.
