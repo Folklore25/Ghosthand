@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-04-04T10:05:10.470Z"
+status: executing
+last_updated: "2026-04-04T11:18:26.741Z"
 progress:
-  total_phases: 10
-  completed_phases: 6
-  total_plans: 45
+  total_phases: 11
+  completed_phases: 7
+  total_plans: 50
   completed_plans: 37
 ---
 
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.4.0 agent-native interface evolution** — Phase 25 is now planned as a bounded layered-interface release that keeps HTTP/JSON stable while adding an observation plane, strengthening the capability plane, normalizing action evidence, and only allowing a thin intent layer if it earns inclusion.
+Current focus: **1.4.0 architecture convergence** — Phase 25.1 is now planned as a bounded follow-up that converges remaining root-package ownership and formalizes Capability Plane v2 without broadening 1.4.0 scope.
 
 ## Current Position
 
-Phase: 25 (agent-native-interface-evolution-for-1-4-0) — EXECUTING
-Plan: 5 of 5
+Phase: 25.1 (architecture-convergence-for-1-4-0) — EXECUTING
+Plan: 1 of 5
 
-- **Phase:** 25
+- **Phase:** 25.1
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase 25 complete — local build and unit-test verification passed
+- **Status:** Executing Phase 25.1
 
 ## Progress
 
@@ -41,8 +41,9 @@ Plan: 5 of 5
 - Phase 24.3: **PLANNED FOR V1.3.1 FIX PASS 03** — strict final follow-up for the last remaining blocker: a still-too-large StateCoordinator
 - Phase 24.4: **PLANNED FOR V1.3.1 CLEAN CLOSEOUT** — preview cleanup, field/hint convergence, bounded code cleanup, and final contract alignment for the 1.3.x line
 - Phase 25: **PLANNED FOR V1.4.0** — agent-native interface evolution through observation plane v1, capability-plane strengthening, action-evidence normalization, and only a very thin intent layer if it is justified after A/B/C stabilize
+- Phase 25.1: **PLANNED FOR V1.4.0** — architecture convergence through root-package cleanup and Capability Plane v2 formalization with a first-class `/capabilities` route
 
-Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 exists to make the substrate easier for agents to reason about with less polling, lower ambiguity, and stronger machine-readable self-description.
+Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 exists to make the codebase easier to navigate and the capability substrate more clearly self-describing without changing product truth.
 
 ## Recent Decisions
 
@@ -51,6 +52,7 @@ Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 e
 | 1.4.0 will evolve Ghosthand through layered exposure, not endpoint accumulation | The product goal is a clearer substrate with less request stitching, not more random routes |
 | Observation plane v1 will be pollable and cursor-based over HTTP/JSON | This keeps the event layer debuggable and bounded without prematurely adopting streaming complexity |
 | Thin intent helpers are gated behind A/B/C and may be explicitly deferred | The primitive, capability, observation, and evidence planes remain primary unless a helper clearly reduces repeated low-value reasoning |
+| 25.1 will formalize capability plane as its own substrate layer | `/commands` and `/state` should stop carrying the entire capability burden alone |
 
 ## Decisions
 
@@ -80,6 +82,9 @@ Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 e
 - [Phase 25]: Major action routes now project one evidence family around `performed`, execution path/backend, observed change, compact post-action state, and bounded observation-shift hints instead of route-local payload conventions.
 - [Phase 25]: Thin intent helpers are explicitly deferred from 1.4.0 because the new observation, capability, and evidence planes already reduce the repeated mechanical reasoning without hiding primitive truth.
 - [Phase 25]: Full local verification now passes with the observation plane, strengthened capability plane, normalized action evidence, and explicit thin-intent deferral all aligned on the 1.4.0 branch.
+- [Phase 25.1]: The remaining root-package classes should move into real subsystem packages so only true top-level entrypoints remain at the root.
+- [Phase 25.1]: Capability Plane v2 will be modeled as definitions, dynamic availability, and presentation views, with `/capabilities` as the capability-centric surface and `/commands` plus `/state` as aligned projections.
+- [Phase 25.1]: Because `docs/API.md` is absent locally, capability-plane alignment should stay runtime/catalog-centered unless minimal new docs are strictly necessary.
 
 ## Blockers / Concerns
 
@@ -90,7 +95,7 @@ Overall: Ghosthand’s next mainline move is not route proliferation. Phase 25 e
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: phase execution is complete; report Phase 25 results and decide whether to continue with post-phase branch/release work or the next roadmap step.
+Next action: plan and then execute Phase 25.1 on the current 1.4.0 branch, starting with the architecture note and the root-package/capability ownership map.
 
 ## Performance Metrics
 

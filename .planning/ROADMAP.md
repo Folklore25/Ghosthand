@@ -21,6 +21,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 24.3: Final StateCoordinator Thinning For Maintainability Convergence** - Resolve the last strict-review blocker by turning `StateCoordinator` into a true orchestration shell while preserving the already-passing LocalApiServer/package/test/canonical-ownership gains.
 - [x] **Phase 24.4: 1.3.1 Clean Closeout** - Finish the 1.3.x line cleanly by making preview actually usable, reducing hint/field noise, cleaning transitional code, and aligning the final runtime/catalog contract without adding features. (completed 2026-04-03)
 - [ ] **Phase 25: Agent-Native Interface Evolution For 1.4.0** - Evolve Ghosthand from a route collection into a more agent-native substrate by adding a bounded observation plane, strengthening the capability plane, normalizing action evidence, and only adding thin intent helpers if A/B/C earn them.
+- [ ] **Phase 25.1: Architecture Convergence For 1.4.0** - Converge remaining root-package ownership into real domain folders and formalize Capability Plane v2 through a first-class `/capabilities` surface without broadening 1.4.0 scope.
 
 ## Phase Details
 
@@ -215,3 +216,24 @@ Plans:
 - [x] 25-03: Action evidence normalization across the main interaction routes
 - [x] 25-04: Thin intent helper decision pass with explicit deferral unless a helper clearly earns inclusion
 - [x] 25-05: Final contract alignment, focused regression coverage, and build verification
+
+### Phase 25.1: Architecture Convergence For 1.4.0
+**Goal**: Finish the next 1.4.0 architecture-convergence step by materially reducing the root-package drop zone and formalizing Capability Plane v2 as a first-class substrate layer centered on definitions, dynamic availability, and capability-centric presentation.
+**Depends on**: Phase 25
+**Success Criteria** (what must be TRUE):
+  1. [ACONV-01] The remaining root-package classes are materially converged into clear domain folders so only true top-level entrypoints remain at the root.
+  2. [ACONV-02] Package placement expresses real subsystem ownership across UI, services, interaction, state, screen, preview, notification, integration, capability, catalog, server, and routes instead of relying on filename guesswork.
+  3. [ACONV-03] Capability Plane v2 exists as a first-class model with clear `CapabilityDefinition`, `CapabilityAvailability`, and `CapabilityPresentation` layers rather than spread across ad hoc route metadata and state summaries.
+  4. [ACONV-04] `GET /capabilities` exists and is genuinely capability-centric rather than a dumb alias of `/commands`.
+  5. [ACONV-05] `/commands`, `/state`, and `/capabilities` align on one canonical capability source of truth without semantic drift.
+  6. [ACONV-06] No de-scoped 1.x public capabilities, especially launch/root-related truths, are accidentally reintroduced during cleanup.
+  7. [ACONV-07] No root/libsu work, observation-plane redesign, intent expansion, app-specific hacks, or unrelated 1.4.1 optimization work is added.
+  8. [ACONV-08] The Android project still compiles and focused tests cover package ownership and capability-plane behavior.
+**Plans**: TBD
+
+Plans:
+- [ ] 25.1-01: Architecture note and root-package/capability-plane convergence map
+- [ ] 25.1-02: Root-package and directory convergence into domain-owned packages
+- [ ] 25.1-03: Capability Plane v2 definitions, availability modeling, and `/capabilities`
+- [ ] 25.1-04: `/commands`, `/state`, and `/capabilities` alignment plus stale/dead/truth-conflicting cleanup
+- [ ] 25.1-05: Ownership tests, capability-plane tests, and full verification
