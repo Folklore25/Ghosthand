@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-04-04T12:15:21Z"
+last_updated: "2026-04-04T13:53:47.212Z"
 progress:
-  total_phases: 12
-  completed_phases: 8
-  total_plans: 55
-  completed_plans: 46
+  total_phases: 13
+  completed_phases: 9
+  total_plans: 60
+  completed_plans: 51
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.4.0 architecture-convergence correction complete** — Phase 25.3 has now landed the missing root-directory convergence and stronger capability-surface alignment that strict review rejected in the earlier 25.1 attempt.
+Current focus: **1.4.0 clean finish complete** — Phase 25.4 has now reduced the remaining import residue, tightened capability-plane presentation, and polished `/commands`, `/state`, and `/capabilities` coherence without changing the accepted 1.4.0 direction.
 
 ## Current Position
 
-Phase: 25.3 (architecture-convergence-correction-pass-for-1-4-0) — COMPLETE
+Phase: 25.4 (clean-finish-and-capability-presentation-polish-for-1-4-0) — COMPLETE
 Plan: 5 of 5
 
-- **Phase:** 25.3
+- **Phase:** 25.4
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase 25.3 complete — the root directory now converges to a single app entrypoint file, `/commands` and `/state` project the stronger capability model, and the full build plus unit-test gate passes.
+- **Status:** Phase 25.4 complete — the accepted 1.4.0 architecture is cleaner, the capability-plane expression is sharper, and the full compile plus unit-test gate still passes.
 
 ## Progress
 
@@ -43,8 +43,9 @@ Plan: 5 of 5
 - Phase 25: **PLANNED FOR V1.4.0** — agent-native interface evolution through observation plane v1, capability-plane strengthening, action-evidence normalization, and only a very thin intent layer if it is justified after A/B/C stabilize
 - Phase 25.1: **PLANNED FOR V1.4.0** — architecture convergence through root-package cleanup and Capability Plane v2 formalization with a first-class `/capabilities` route
 - Phase 25.3: **PLANNED FOR V1.4.0 CORRECTION PASS** — strict correction for the rejected architecture-convergence review, focused only on materially executing root-package convergence and a first-class Capability Plane v2
+- Phase 25.4: **PLANNED FOR V1.4.0 CLEAN FINISH** — bounded cleanup and polish for the accepted architecture result, focused on code cleanliness, capability-plane expression, self-description surface coherence, and closeout quality
 
-Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 25.3 completed the strict correction pass by landing the missing architecture work in code without broadening product scope.
+Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 25.4 finished the accepted architecture result cleanly without redesigning it or adding new capability surface.
 
 ## Recent Decisions
 
@@ -55,6 +56,7 @@ Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 
 | Thin intent helpers are gated behind A/B/C and may be explicitly deferred | The primitive, capability, observation, and evidence planes remain primary unless a helper clearly reduces repeated low-value reasoning |
 | 25.1 will formalize capability plane as its own substrate layer | `/commands` and `/state` should stop carrying the entire capability burden alone |
 | 25.3 will treat the failed strict acceptance as binding and will re-plan the architecture convergence work as a correction pass | The missing work must be materially executed in code rather than defended as partial progress |
+| 25.4 will polish and close out the accepted 1.4.0 architecture result instead of extending or redesigning it | The goal is a cleaner maintained substrate, not another feature wave or modeling pass |
 
 ## Decisions
 
@@ -97,6 +99,13 @@ Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 
 - [Phase 25.3]: `/commands` now publishes `capabilityIds` plus canonical capability definition projections from the same source used by `/capabilities`.
 - [Phase 25.3]: `/state.permissions.capabilitySummary` now exposes full dynamic capability availability fields, including blockers, required services or permissions, and current backend or mode where meaningful.
 - [Phase 25.3]: Full local verification passes after the correction pass with `./gradlew :app:compileDebugKotlin testDebugUnitTest`.
+- [Phase 25.4]: The closeout pass is constrained to four polish workstreams only: code-cleanliness cleanup, capability-plane presentation polish, `/commands` plus `/state` plus `/capabilities` coherence polish, and final 1.4.0 closeout cleanup.
+- [Phase 25.4]: The accepted 25.3 architecture direction is binding; 25.4 must not reopen package ownership decisions or capability-plane structure for another redesign cycle.
+- [Phase 25.4]: Capability-surface owners no longer carry the broad wildcard-import residue left behind by the 25.3 convergence work.
+- [Phase 25.4]: `/commands` now keeps compact capability references while `/capabilities` remains the fuller capability-definition surface and `/state` remains the lighter runtime availability surface.
+- [Phase 25.4]: The lightweight `/state.permissions.capabilitySummary` view now omits empty noise fields while preserving meaningful blockers, requirements, and backend or mode data when present.
+- [Phase 25.4]: Because `docs/API.md` is absent locally, the closeout stayed runtime and catalog centered rather than turning into a docs rewrite.
+- [Phase 25.4]: Full local verification passes after the clean-finish pass with `./gradlew :app:compileDebugKotlin testDebugUnitTest`.
 
 ## Blockers / Concerns
 
@@ -107,7 +116,7 @@ Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: Review the completed 25.3 branch state and decide whether to continue 1.4.0 mainline work, prepare a merge, or plan the next correction or roadmap step.
+Next action: Review the completed 1.4.0 branch state, then decide whether to prepare a merge, ship this line, or plan the next roadmap step.
 
 ## Performance Metrics
 

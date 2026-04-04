@@ -23,6 +23,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [ ] **Phase 25: Agent-Native Interface Evolution For 1.4.0** - Evolve Ghosthand from a route collection into a more agent-native substrate by adding a bounded observation plane, strengthening the capability plane, normalizing action evidence, and only adding thin intent helpers if A/B/C earn them.
 - [ ] **Phase 25.1: Architecture Convergence For 1.4.0** - Converge remaining root-package ownership into real domain folders and formalize Capability Plane v2 through a first-class `/capabilities` surface without broadening 1.4.0 scope.
 - [x] **Phase 25.3: Architecture Convergence Correction Pass For 1.4.0** - Correct the failed strict architecture-convergence review by materially executing root-package convergence and a first-class Capability Plane v2 without broadening 1.4.0 scope. (completed 2026-04-04)
+- [x] **Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0** - Polish the accepted 1.4.0 architecture-convergence result so the capability plane, self-description surfaces, and closeout state feel clean, coherent, and presentation-ready without broadening scope. (completed 2026-04-04)
 
 ## Phase Details
 
@@ -259,3 +260,22 @@ Plans:
 - [x] 25.3-03: Capability Plane v2 canonical model and first-class `/capabilities` route
 - [x] 25.3-04: `/commands`, `/state`, and `/capabilities` alignment plus stale or truth-conflicting cleanup
 - [x] 25.3-05: Focused tests, ownership verification, and final build gate
+
+### Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0
+**Goal**: Finish 1.4.0 cleanly by polishing the accepted architecture-convergence result, reducing refactor residue, sharpening capability-plane presentation, tightening `/commands` plus `/state` plus `/capabilities` coherence, and closing out small remaining roughness without changing product direction.
+**Depends on**: Phase 25.3
+**Success Criteria** (what must be TRUE):
+  1. [POLISH-01] The accepted 1.4.0 architecture feels cleaner and less mid-refactor through targeted cleanup of wildcard imports, import clutter, stale glue, and obvious naming roughness without reopening structural decisions.
+  2. [POLISH-02] Capability-plane presentation is sharper and more coherent, with cleaner field ordering, naming, grouping, and compact capability-centric expression for agent consumption.
+  3. [POLISH-03] `/commands`, `/state`, and `/capabilities` feel intentionally aligned as route-contract, runtime, and capability-plane surfaces without bloating or semantically drifting.
+  4. [POLISH-04] Stale, dead, or truth-conflicting residue is further reduced and de-scoped 1.x truths remain respected.
+  5. [POLISH-05] No new routes, capability-plane redesign, observation-plane work, intent-layer work, root/libsu work, broad naming migration, UI redesign, 1.4.1 optimization, or app-specific heuristics are added.
+  6. [POLISH-06] The Android project still compiles and focused tests cover capability-plane presentation consistency, self-description surface coherence, and cleanup non-regression.
+**Plans**: TBD
+
+Plans:
+- [x] 25.4-01: Closeout note and bounded polish map
+- [x] 25.4-02: Code-cleanliness and refactor-residue cleanup
+- [x] 25.4-03: Capability-plane presentation polish
+- [x] 25.4-04: `/commands`, `/state`, and `/capabilities` coherence polish plus final closeout cleanup
+- [x] 25.4-05: Focused tests and final 1.4.0 clean-finish verification

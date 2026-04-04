@@ -112,7 +112,7 @@ class StateCoordinatorStatePayloadTest {
         val accessibilitySummary = capabilitySummary["accessibility_control"] as Map<*, *>
         assertEquals(true, accessibilitySummary["availableNow"])
         assertEquals(false, accessibilitySummary["degraded"])
-        assertEquals(emptyList<String>(), accessibilitySummary["blockers"])
+        assertFalse(accessibilitySummary.containsKey("blockers"))
         assertEquals(listOf("accessibility_service"), accessibilitySummary["requiredServices"])
         assertEquals("accessibility", accessibilitySummary["currentBackend"])
         assertEquals(true, systemPermissions["usageAccess"])

@@ -6,41 +6,7 @@
 
 package com.folklore25.ghosthand.capability
 
-import com.folklore25.ghosthand.R
-import com.folklore25.ghosthand.capability.*
-import com.folklore25.ghosthand.catalog.*
-import com.folklore25.ghosthand.integration.github.*
-import com.folklore25.ghosthand.integration.projection.*
-import com.folklore25.ghosthand.interaction.accessibility.*
-import com.folklore25.ghosthand.interaction.clipboard.*
-import com.folklore25.ghosthand.interaction.effects.*
-import com.folklore25.ghosthand.interaction.execution.*
-import com.folklore25.ghosthand.notification.*
-import com.folklore25.ghosthand.payload.*
-import com.folklore25.ghosthand.preview.*
-import com.folklore25.ghosthand.screen.find.*
-import com.folklore25.ghosthand.screen.ocr.*
-import com.folklore25.ghosthand.screen.read.*
-import com.folklore25.ghosthand.screen.summary.*
-import com.folklore25.ghosthand.server.*
-import com.folklore25.ghosthand.server.http.*
-import com.folklore25.ghosthand.service.accessibility.*
-import com.folklore25.ghosthand.service.notification.*
-import com.folklore25.ghosthand.service.runtime.*
-import com.folklore25.ghosthand.state.*
-import com.folklore25.ghosthand.state.device.*
-import com.folklore25.ghosthand.state.diagnostics.*
-import com.folklore25.ghosthand.state.health.*
-import com.folklore25.ghosthand.state.read.*
-import com.folklore25.ghosthand.state.runtime.*
-import com.folklore25.ghosthand.state.summary.*
-import com.folklore25.ghosthand.ui.common.dialog.*
-import com.folklore25.ghosthand.ui.common.model.*
-import com.folklore25.ghosthand.ui.diagnostics.*
-import com.folklore25.ghosthand.ui.main.*
-import com.folklore25.ghosthand.ui.permissions.*
-import com.folklore25.ghosthand.wait.*
-
+import com.folklore25.ghosthand.state.device.PermissionSnapshot
 
 data class CapabilityDefinition(
     val capabilityId: String,
@@ -258,19 +224,39 @@ internal object GhosthandCapabilityAvailabilityResolver {
 }
 
 internal object GhosthandCapabilityPresentation {
-    fun commandCapabilityFields(capabilityIds: List<String>): List<Map<String, Any?>> {
-        return GhosthandCapabilityDefinitions.definitions(capabilityIds).map { definition ->
-            linkedMapOf(
-                "capabilityId" to definition.capabilityId,
-                "domain" to definition.domain,
-                "kind" to definition.kind,
-                "implemented" to definition.implemented,
-                "directness" to definition.directness,
-                "truthType" to definition.truthType,
-                "preconditions" to definition.preconditions,
-                "failureModes" to definition.failureModes
-            )
+    private fun compactDefinitionFields(definition: CapabilityDefinition): Map<String, Any?> {
+        return linkedMapOf<String, Any?>(
+            "capabilityId" to definition.capabilityId,
+            "domain" to definition.domain,
+            "kind" to definition.kind,
+            "directness" to definition.directness,
+            "truthType" to definition.truthType,
+            "implemented" to definition.implemented
+        )
+    }
+
+    private fun availabilityFields(
+        availability: CapabilityAvailability,
+        includeEmptyLists: Boolean
+    ): Map<String, Any?> {
+        return linkedMapOf<String, Any?>(
+            "availableNow" to availability.availableNow,
+            "degraded" to availability.degraded
+        ).apply {
+            if (includeEmptyLists || availability.blockers.isNotEmpty()) put("blockers", availability.blockers)
+            if (includeEmptyLists || availability.requiredServices.isNotEmpty()) {
+                put("requiredServices", availability.requiredServices)
+            }
+            if (includeEmptyLists || availability.requiredPermissions.isNotEmpty()) {
+                put("requiredPermissions", availability.requiredPermissions)
+            }
+            availability.currentBackend?.let { put("currentBackend", it) }
+            availability.currentMode?.let { put("currentMode", it) }
         }
+    }
+
+    fun commandCapabilityFields(capabilityIds: List<String>): List<Map<String, Any?>> {
+        return GhosthandCapabilityDefinitions.definitions(capabilityIds).map(::compactDefinitionFields)
     }
 
     fun stateSummaryFields(
@@ -279,15 +265,10 @@ internal object GhosthandCapabilityPresentation {
     ): Map<String, Any?> {
         return GhosthandCapabilityAvailabilityResolver.resolveAll(capabilityAccess, permissionSnapshot)
             .associate { availability ->
-                availability.capabilityId to linkedMapOf(
-                    "availableNow" to availability.availableNow,
-                    "degraded" to availability.degraded,
-                    "blockers" to availability.blockers,
-                    "requiredServices" to availability.requiredServices,
-                    "requiredPermissions" to availability.requiredPermissions,
-                    "currentBackend" to availability.currentBackend,
-                    "currentMode" to availability.currentMode
-                ).filterValues { it != null }
+                availability.capabilityId to availabilityFields(
+                    availability = availability,
+                    includeEmptyLists = false
+                )
             }
     }
 
@@ -305,22 +286,18 @@ internal object GhosthandCapabilityPresentation {
                     "capabilityId" to definition.capabilityId,
                     "domain" to definition.domain,
                     "kind" to definition.kind,
-                    "implemented" to definition.implemented,
                     "directness" to definition.directness,
                     "truthType" to definition.truthType,
-                    "preconditions" to definition.preconditions,
-                    "failureModes" to definition.failureModes,
+                    "implemented" to definition.implemented,
                     "routes" to definition.routes,
-                    "availability" to linkedMapOf(
-                        "availableNow" to live.availableNow,
-                        "degraded" to live.degraded,
-                        "blockers" to live.blockers,
-                        "requiredServices" to live.requiredServices,
-                        "requiredPermissions" to live.requiredPermissions,
-                        "currentBackend" to live.currentBackend,
-                        "currentMode" to live.currentMode
-                    ).filterValues { it != null }
-                )
+                    "availability" to availabilityFields(
+                        availability = live,
+                        includeEmptyLists = true
+                    )
+                ).apply {
+                    if (definition.preconditions.isNotEmpty()) put("preconditions", definition.preconditions)
+                    if (definition.failureModes.isNotEmpty()) put("failureModes", definition.failureModes)
+                }
             }
         )
     }
