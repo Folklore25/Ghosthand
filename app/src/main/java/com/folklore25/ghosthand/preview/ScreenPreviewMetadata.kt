@@ -28,13 +28,14 @@ object ScreenPreviewMetadata {
         previewWidth: Int?,
         previewHeight: Int?
     ): ScreenReadPayload {
-        val advertisedPreviewWidth = previewWidth.takeIf { screenshotUsableNow }
-        val advertisedPreviewHeight = previewHeight.takeIf { screenshotUsableNow }
+        val previewAdvertised = screenshotUsableNow && previewWidth != null && previewHeight != null
+        val advertisedPreviewWidth = previewWidth.takeIf { previewAdvertised }
+        val advertisedPreviewHeight = previewHeight.takeIf { previewAdvertised }
         return payload.copy(
             visualAvailable = screenshotUsableNow,
-            previewAvailable = screenshotUsableNow,
+            previewAvailable = previewAdvertised,
             previewPath = previewPath(
-                screenshotUsableNow = screenshotUsableNow,
+                screenshotUsableNow = previewAdvertised,
                 previewWidth = advertisedPreviewWidth,
                 previewHeight = advertisedPreviewHeight
             ),
