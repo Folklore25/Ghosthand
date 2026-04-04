@@ -14,7 +14,7 @@ import org.junit.Test
 
 class ScreenshotDispatchResultTruthTest {
     @Test
-    fun usableScreenshotTruthRequiresPositiveDimensionsAndNonEmptyImageBytes() {
+    fun usableScreenshotTruthRequiresPositiveDimensionsAndDecodableNonEmptyImageBytes() {
         val usable = ScreenshotDispatchResult(
             available = true,
             base64 = "cG5n",
@@ -24,11 +24,13 @@ class ScreenshotDispatchResultTruthTest {
             attemptedPath = "mediaprojection_capture"
         )
         val blankBytes = usable.copy(base64 = "")
+        val invalidBase64 = usable.copy(base64 = "not-base64")
         val zeroWidth = usable.copy(width = 0)
         val unavailable = usable.copy(available = false)
 
         assertTrue(usable.hasUsableImage)
         assertFalse(blankBytes.hasUsableImage)
+        assertFalse(invalidBase64.hasUsableImage)
         assertFalse(zeroWidth.hasUsableImage)
         assertFalse(unavailable.hasUsableImage)
     }
@@ -103,6 +105,43 @@ class ScreenshotDispatchResultTruthTest {
             assertEquals("mediaprojection_capture", result.attemptedPath)
             assertEquals(1080, result.width)
             assertEquals(2400, result.height)
+        } finally {
+            GhostAccessibilityExecutionCoreRegistry.unregister(service)
+        }
+    }
+
+    @Test
+    fun invalidBase64AccessibilityImageMustNotBlockUsableProjectionCapture() {
+        val service = FakeExecutionCore(
+            screenshotResult = ScreenshotDispatchResult(
+                available = true,
+                base64 = "not-base64",
+                format = "png",
+                width = 1080,
+                height = 2400,
+                attemptedPath = "accessibility_screenshot"
+            )
+        )
+        GhostAccessibilityExecutionCoreRegistry.registerPrimary(service)
+
+        try {
+            val projectionResult = ScreenshotDispatchResult(
+                available = true,
+                base64 = "cHJvamVjdGlvbg==",
+                format = "png",
+                width = 1080,
+                height = 2400,
+                attemptedPath = "mediaprojection_capture"
+            )
+
+            val result = AccessibilityScreenshotAccess.captureBestAvailable(
+                width = 0,
+                height = 0,
+                captureProjection = { _, _ -> projectionResult }
+            )
+
+            assertEquals("mediaprojection_capture", result.attemptedPath)
+            assertEquals("cHJvamVjdGlvbg==", result.base64)
         } finally {
             GhostAccessibilityExecutionCoreRegistry.unregister(service)
         }
