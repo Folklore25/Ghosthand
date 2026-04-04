@@ -6,8 +6,41 @@
 
 package com.folklore25.ghosthand.capability
 
-import com.folklore25.ghosthand.CapabilityAccessSnapshot
-import com.folklore25.ghosthand.PermissionSnapshot
+import com.folklore25.ghosthand.R
+import com.folklore25.ghosthand.capability.*
+import com.folklore25.ghosthand.catalog.*
+import com.folklore25.ghosthand.integration.github.*
+import com.folklore25.ghosthand.integration.projection.*
+import com.folklore25.ghosthand.interaction.accessibility.*
+import com.folklore25.ghosthand.interaction.clipboard.*
+import com.folklore25.ghosthand.interaction.effects.*
+import com.folklore25.ghosthand.interaction.execution.*
+import com.folklore25.ghosthand.notification.*
+import com.folklore25.ghosthand.payload.*
+import com.folklore25.ghosthand.preview.*
+import com.folklore25.ghosthand.screen.find.*
+import com.folklore25.ghosthand.screen.ocr.*
+import com.folklore25.ghosthand.screen.read.*
+import com.folklore25.ghosthand.screen.summary.*
+import com.folklore25.ghosthand.server.*
+import com.folklore25.ghosthand.server.http.*
+import com.folklore25.ghosthand.service.accessibility.*
+import com.folklore25.ghosthand.service.notification.*
+import com.folklore25.ghosthand.service.runtime.*
+import com.folklore25.ghosthand.state.*
+import com.folklore25.ghosthand.state.device.*
+import com.folklore25.ghosthand.state.diagnostics.*
+import com.folklore25.ghosthand.state.health.*
+import com.folklore25.ghosthand.state.read.*
+import com.folklore25.ghosthand.state.runtime.*
+import com.folklore25.ghosthand.state.summary.*
+import com.folklore25.ghosthand.ui.common.dialog.*
+import com.folklore25.ghosthand.ui.common.model.*
+import com.folklore25.ghosthand.ui.diagnostics.*
+import com.folklore25.ghosthand.ui.main.*
+import com.folklore25.ghosthand.ui.permissions.*
+import com.folklore25.ghosthand.wait.*
+
 
 data class CapabilityDefinition(
     val capabilityId: String,
@@ -126,6 +159,9 @@ internal object GhosthandCapabilityDefinitions {
 
     fun definition(capabilityId: String): CapabilityDefinition =
         definitions.first { it.capabilityId == capabilityId }
+
+    fun definitions(capabilityIds: List<String>): List<CapabilityDefinition> =
+        capabilityIds.map(::definition)
 }
 
 internal object GhosthandCapabilityAvailabilityResolver {
@@ -222,6 +258,21 @@ internal object GhosthandCapabilityAvailabilityResolver {
 }
 
 internal object GhosthandCapabilityPresentation {
+    fun commandCapabilityFields(capabilityIds: List<String>): List<Map<String, Any?>> {
+        return GhosthandCapabilityDefinitions.definitions(capabilityIds).map { definition ->
+            linkedMapOf(
+                "capabilityId" to definition.capabilityId,
+                "domain" to definition.domain,
+                "kind" to definition.kind,
+                "implemented" to definition.implemented,
+                "directness" to definition.directness,
+                "truthType" to definition.truthType,
+                "preconditions" to definition.preconditions,
+                "failureModes" to definition.failureModes
+            )
+        }
+    }
+
     fun stateSummaryFields(
         capabilityAccess: CapabilityAccessSnapshot,
         permissionSnapshot: PermissionSnapshot
@@ -231,8 +282,12 @@ internal object GhosthandCapabilityPresentation {
                 availability.capabilityId to linkedMapOf(
                     "availableNow" to availability.availableNow,
                     "degraded" to availability.degraded,
-                    "blockers" to availability.blockers
-                )
+                    "blockers" to availability.blockers,
+                    "requiredServices" to availability.requiredServices,
+                    "requiredPermissions" to availability.requiredPermissions,
+                    "currentBackend" to availability.currentBackend,
+                    "currentMode" to availability.currentMode
+                ).filterValues { it != null }
             }
     }
 

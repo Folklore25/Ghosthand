@@ -22,6 +22,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [x] **Phase 24.4: 1.3.1 Clean Closeout** - Finish the 1.3.x line cleanly by making preview actually usable, reducing hint/field noise, cleaning transitional code, and aligning the final runtime/catalog contract without adding features. (completed 2026-04-03)
 - [ ] **Phase 25: Agent-Native Interface Evolution For 1.4.0** - Evolve Ghosthand from a route collection into a more agent-native substrate by adding a bounded observation plane, strengthening the capability plane, normalizing action evidence, and only adding thin intent helpers if A/B/C earn them.
 - [ ] **Phase 25.1: Architecture Convergence For 1.4.0** - Converge remaining root-package ownership into real domain folders and formalize Capability Plane v2 through a first-class `/capabilities` surface without broadening 1.4.0 scope.
+- [x] **Phase 25.3: Architecture Convergence Correction Pass For 1.4.0** - Correct the failed strict architecture-convergence review by materially executing root-package convergence and a first-class Capability Plane v2 without broadening 1.4.0 scope. (completed 2026-04-04)
 
 ## Phase Details
 
@@ -237,3 +238,24 @@ Plans:
 - [x] 25.1-03: Capability Plane v2 definitions, availability modeling, and `/capabilities`
 - [x] 25.1-04: `/commands`, `/state`, and `/capabilities` alignment plus stale/dead/truth-conflicting cleanup
 - [x] 25.1-05: Ownership tests, capability-plane tests, and full verification
+
+### Phase 25.3: Architecture Convergence Correction Pass For 1.4.0
+**Goal**: Correct the failed strict 1.4.0 architecture-convergence review by materially converging the root package into real domain ownership and implementing Capability Plane v2 as a first-class capability substrate rather than partial route-centric approximations.
+**Depends on**: Phase 25.1
+**Success Criteria** (what must be TRUE):
+  1. [ACFIX-01] The root package is materially converged so it is no longer the default ownership sink and only true top-level entrypoints remain there.
+  2. [ACFIX-02] Remaining UI, service, provider, runtime-state, execution, integration, notification, and screen-owned classes move into clear domain packages with clean imports and manifest alignment where required.
+  3. [ACFIX-03] Capability Plane v2 exists as a real first-class layer with canonical `CapabilityDefinition`, `CapabilityAvailability`, and `CapabilityPresentation` models backed by one capability source of truth.
+  4. [ACFIX-04] `GET /capabilities` exists and is genuinely capability-centric, machine-readable, compact, and distinct from `/commands`.
+  5. [ACFIX-05] `/commands`, `/state`, and `/capabilities` expose aligned meanings over the same canonical capability source without semantic drift or duplicated-but-divergent capability descriptions.
+  6. [ACFIX-06] Stale, dead, or truth-conflicting root-package and capability-surface leftovers, especially launch-adjacent or other de-scoped 1.x public capability remnants, are removed or kept clearly non-public.
+  7. [ACFIX-07] No root/libsu work, observation-plane redesign, intent-layer expansion, unrelated endpoint growth, or other new product features are added in the correction pass.
+  8. [ACFIX-08] The Android project still compiles and focused tests cover root-package convergence, `/capabilities`, capability modeling, cross-surface alignment, and non-regression of existing runtime behavior.
+**Plans**: TBD
+
+Plans:
+- [x] 25.3-01: Architecture correction note and root-package or capability-plane execution map
+- [x] 25.3-02: Material root-package and directory convergence into real domain ownership
+- [x] 25.3-03: Capability Plane v2 canonical model and first-class `/capabilities` route
+- [x] 25.3-04: `/commands`, `/state`, and `/capabilities` alignment plus stale or truth-conflicting cleanup
+- [x] 25.3-05: Focused tests, ownership verification, and final build gate

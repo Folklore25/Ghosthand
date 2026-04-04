@@ -24,7 +24,7 @@
         android:theme="@style/Theme.Ghosthand">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,15 +34,15 @@
         </activity>
 
         <activity
-            android:name=".PermissionsActivity"
+            android:name=".ui.permissions.PermissionsActivity"
             android:exported="false" />
 
         <activity
-            android:name=".DiagnosticsActivity"
+            android:name=".ui.diagnostics.DiagnosticsActivity"
             android:exported="false" />
 
         <service
-            android:name=".GhostCoreAccessibilityService"
+            android:name=".service.accessibility.GhostCoreAccessibilityService"
             android:enabled="true"
             android:exported="true"
             android:label="@string/core_accessibility_service_label"
@@ -57,7 +57,7 @@
         </service>
 
         <service
-            android:name=".GhostAccessibilityService"
+            android:name=".service.accessibility.GhostAccessibilityService"
             android:enabled="false"
             android:exported="true"
             android:label="@string/accessibility_service_label"
@@ -72,7 +72,7 @@
         </service>
 
         <service
-            android:name=".GhostProbeAccessibilityService"
+            android:name=".service.accessibility.GhostProbeAccessibilityService"
             android:enabled="false"
             android:exported="true"
             android:label="@string/probe_accessibility_service_label"
@@ -87,13 +87,13 @@
         </service>
 
         <service
-            android:name=".GhosthandForegroundService"
+            android:name=".service.runtime.GhosthandForegroundService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
         <service
-            android:name=".GhostNotificationService"
+            android:name=".service.notification.GhostNotificationService"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">

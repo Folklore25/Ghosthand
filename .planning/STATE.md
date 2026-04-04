@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-04-04T11:18:26.741Z"
+last_updated: "2026-04-04T12:15:21Z"
 progress:
-  total_phases: 11
-  completed_phases: 7
-  total_plans: 50
-  completed_plans: 41
+  total_phases: 12
+  completed_phases: 8
+  total_plans: 55
+  completed_plans: 46
 ---
 
 # STATE.md — Ghosthand Project
@@ -17,17 +17,17 @@ progress:
 
 Ghosthand — Android accessibility-automation server + premium operator UI.
 Accessibility-first device automation on the local app path only.
-Current focus: **1.4.0 architecture convergence** — Phase 25.1 is now planned as a bounded follow-up that converges remaining root-package ownership and formalizes Capability Plane v2 without broadening 1.4.0 scope.
+Current focus: **1.4.0 architecture-convergence correction complete** — Phase 25.3 has now landed the missing root-directory convergence and stronger capability-surface alignment that strict review rejected in the earlier 25.1 attempt.
 
 ## Current Position
 
-Phase: 25.1 (architecture-convergence-for-1-4-0) — EXECUTING
+Phase: 25.3 (architecture-convergence-correction-pass-for-1-4-0) — COMPLETE
 Plan: 5 of 5
 
-- **Phase:** 25.1
+- **Phase:** 25.3
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
 - **Verified route set:** `/ping`, `/events`, `/screen`, `/tree`, `/info`, `/focused`, `/find`, `/tap`, `/click`, `/input`, `/setText`, `/scroll`, `/swipe`, `/longpress`, `/gesture`, `/back`, `/home`, `/recents`, `/screenshot`, `/notify`, `/wait`, `/clipboard`, `/commands`
-- **Status:** Phase 25.1 complete — ownership, capability-plane, and verification gates passed
+- **Status:** Phase 25.3 complete — the root directory now converges to a single app entrypoint file, `/commands` and `/state` project the stronger capability model, and the full build plus unit-test gate passes.
 
 ## Progress
 
@@ -42,8 +42,9 @@ Plan: 5 of 5
 - Phase 24.4: **PLANNED FOR V1.3.1 CLEAN CLOSEOUT** — preview cleanup, field/hint convergence, bounded code cleanup, and final contract alignment for the 1.3.x line
 - Phase 25: **PLANNED FOR V1.4.0** — agent-native interface evolution through observation plane v1, capability-plane strengthening, action-evidence normalization, and only a very thin intent layer if it is justified after A/B/C stabilize
 - Phase 25.1: **PLANNED FOR V1.4.0** — architecture convergence through root-package cleanup and Capability Plane v2 formalization with a first-class `/capabilities` route
+- Phase 25.3: **PLANNED FOR V1.4.0 CORRECTION PASS** — strict correction for the rejected architecture-convergence review, focused only on materially executing root-package convergence and a first-class Capability Plane v2
 
-Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 exists to make the codebase easier to navigate and the capability substrate more clearly self-describing without changing product truth.
+Overall: Ghosthand’s next 1.4.0 move is still not another feature wave. Phase 25.3 completed the strict correction pass by landing the missing architecture work in code without broadening product scope.
 
 ## Recent Decisions
 
@@ -53,6 +54,7 @@ Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 e
 | Observation plane v1 will be pollable and cursor-based over HTTP/JSON | This keeps the event layer debuggable and bounded without prematurely adopting streaming complexity |
 | Thin intent helpers are gated behind A/B/C and may be explicitly deferred | The primitive, capability, observation, and evidence planes remain primary unless a helper clearly reduces repeated low-value reasoning |
 | 25.1 will formalize capability plane as its own substrate layer | `/commands` and `/state` should stop carrying the entire capability burden alone |
+| 25.3 will treat the failed strict acceptance as binding and will re-plan the architecture convergence work as a correction pass | The missing work must be materially executed in code rather than defended as partial progress |
 
 ## Decisions
 
@@ -89,6 +91,12 @@ Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 e
 - [Phase 25.1]: Capability Plane v2 now has canonical capability definitions, runtime availability derivation, and capability-centric presentation through `/capabilities`, while `/commands` begins to reference capability IDs instead of carrying capability meaning alone.
 - [Phase 25.1]: `/commands` now references canonical capability IDs, `/capabilities` carries the first-class capability burden, and `/state` projects lightweight runtime availability from the same capability source instead of duplicating route metadata.
 - [Phase 25.1]: Full local verification now passes with the root-directory convergence slice, `/capabilities`, and the aligned capability surfaces all on the 1.4.0 branch.
+- [Phase 25.3]: Strict review rejection is accepted as binding, so the correction pass must materially reduce the root package beyond the prior low-coupling slice and must make Capability Plane v2 unambiguously first-class.
+- [Phase 25.3]: The correction pass stays bounded to two workstreams only: root-package or directory convergence and Capability Plane v2 implementation plus alignment.
+- [Phase 25.3]: The root source directory now contains only `GhosthandApp.kt`; UI, service, interaction, screen, runtime-state, and HTTP helper files moved into real owner folders instead of remaining in the root drop zone.
+- [Phase 25.3]: `/commands` now publishes `capabilityIds` plus canonical capability definition projections from the same source used by `/capabilities`.
+- [Phase 25.3]: `/state.permissions.capabilitySummary` now exposes full dynamic capability availability fields, including blockers, required services or permissions, and current backend or mode where meaningful.
+- [Phase 25.3]: Full local verification passes after the correction pass with `./gradlew :app:compileDebugKotlin testDebugUnitTest`.
 
 ## Blockers / Concerns
 
@@ -99,7 +107,7 @@ Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 e
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: Phase 25.1 is complete; report results and decide whether to continue with post-phase branch work or the next roadmap step.
+Next action: Review the completed 25.3 branch state and decide whether to continue 1.4.0 mainline work, prepare a merge, or plan the next correction or roadmap step.
 
 ## Performance Metrics
 

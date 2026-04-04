@@ -6,6 +6,40 @@
 
 package com.folklore25.ghosthand
 
+import com.folklore25.ghosthand.capability.*
+import com.folklore25.ghosthand.catalog.*
+import com.folklore25.ghosthand.integration.github.*
+import com.folklore25.ghosthand.integration.projection.*
+import com.folklore25.ghosthand.interaction.accessibility.*
+import com.folklore25.ghosthand.interaction.clipboard.*
+import com.folklore25.ghosthand.interaction.effects.*
+import com.folklore25.ghosthand.interaction.execution.*
+import com.folklore25.ghosthand.notification.*
+import com.folklore25.ghosthand.payload.*
+import com.folklore25.ghosthand.preview.*
+import com.folklore25.ghosthand.screen.find.*
+import com.folklore25.ghosthand.screen.ocr.*
+import com.folklore25.ghosthand.screen.read.*
+import com.folklore25.ghosthand.screen.summary.*
+import com.folklore25.ghosthand.server.*
+import com.folklore25.ghosthand.server.http.*
+import com.folklore25.ghosthand.service.accessibility.*
+import com.folklore25.ghosthand.service.notification.*
+import com.folklore25.ghosthand.service.runtime.*
+import com.folklore25.ghosthand.state.*
+import com.folklore25.ghosthand.state.device.*
+import com.folklore25.ghosthand.state.diagnostics.*
+import com.folklore25.ghosthand.state.health.*
+import com.folklore25.ghosthand.state.read.*
+import com.folklore25.ghosthand.state.runtime.*
+import com.folklore25.ghosthand.state.summary.*
+import com.folklore25.ghosthand.ui.common.dialog.*
+import com.folklore25.ghosthand.ui.common.model.*
+import com.folklore25.ghosthand.ui.diagnostics.*
+import com.folklore25.ghosthand.ui.main.*
+import com.folklore25.ghosthand.ui.permissions.*
+import com.folklore25.ghosthand.wait.*
+
 import java.io.File
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -110,7 +144,7 @@ class MaintainabilityConvergencePackageOwnershipTest {
     @Test
     fun runtimeOwnersDoNotDependOnTheTransitionalPayloadFacade() {
         val runtimeOwnerPaths = listOf(
-            "app/src/main/java/com/folklore25/ghosthand/AccessibilityTreeSnapshotProvider.kt",
+            "app/src/main/java/com/folklore25/ghosthand/screen/read/AccessibilityTreeSnapshotProvider.kt",
             "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionNavigationRouteHandlers.kt",
             "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionRouteSupport.kt",
             "app/src/main/java/com/folklore25/ghosthand/routes/action/ActionTapClickRouteHandlers.kt",
@@ -142,7 +176,12 @@ class MaintainabilityConvergencePackageOwnershipTest {
 
     @Test
     fun rootDirectoryIsMateriallyReducedAndProviderOwnershipUsesDomainFolders() {
-        val rootFiles = File("app/src/main/java/com/folklore25/ghosthand")
+        val rootDirectory = listOf(
+            File("app/src/main/java/com/folklore25/ghosthand"),
+            File("src/main/java/com/folklore25/ghosthand")
+        ).firstOrNull(File::exists)
+            ?: error("Root source directory not found")
+        val rootFiles = rootDirectory
             .walkTopDown()
             .maxDepth(1)
             .filter { it.isFile && it.extension == "kt" }
@@ -151,7 +190,7 @@ class MaintainabilityConvergencePackageOwnershipTest {
 
         assertTrue(
             "Expected the root directory to be materially reduced, found ${rootFiles.size} files",
-            rootFiles.size <= 38
+            rootFiles.size <= 1 && rootFiles.contains("GhosthandApp.kt")
         )
 
         val movedPaths = listOf(
