@@ -16,6 +16,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.view.accessibility.AccessibilityNodeInfo
 import java.lang.ref.WeakReference
+import java.util.Base64
 
 interface GhostAccessibilityExecutionCore {
     fun <T> withActiveWindowRoot(block: (AccessibilityNodeInfo) -> T): T?
@@ -94,9 +95,19 @@ val ScreenshotDispatchResult.returnedWidth: Int
 val ScreenshotDispatchResult.returnedHeight: Int
     get() = height
 
+val ScreenshotDispatchResult.encodedBytes: ByteArray?
+    get() {
+        val imageBase64 = base64?.takeUnless { it.isBlank() } ?: return null
+        return try {
+            Base64.getDecoder().decode(imageBase64)
+        } catch (_: IllegalArgumentException) {
+            null
+        }?.takeIf { it.isNotEmpty() }
+    }
+
 val ScreenshotDispatchResult.hasUsableImage: Boolean
     get() = available &&
-        !base64.isNullOrBlank() &&
+        encodedBytes != null &&
         returnedWidth > 0 &&
         returnedHeight > 0
 
