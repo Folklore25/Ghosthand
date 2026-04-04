@@ -8,7 +8,7 @@ progress:
   total_phases: 11
   completed_phases: 7
   total_plans: 50
-  completed_plans: 38
+  completed_plans: 39
 ---
 
 # STATE.md — Ghosthand Project
@@ -22,7 +22,7 @@ Current focus: **1.4.0 architecture convergence** — Phase 25.1 is now planned 
 ## Current Position
 
 Phase: 25.1 (architecture-convergence-for-1-4-0) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 
 - **Phase:** 25.1
 - **Implementation baseline:** committed — Android app and Gradle project tracked in git
@@ -86,6 +86,7 @@ Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 e
 - [Phase 25.1]: Capability Plane v2 will be modeled as definitions, dynamic availability, and presentation views, with `/capabilities` as the capability-centric surface and `/commands` plus `/state` as aligned projections.
 - [Phase 25.1]: Because `docs/API.md` is absent locally, capability-plane alignment should stay runtime/catalog-centered unless minimal new docs are strictly necessary.
 - [Phase 25.1]: Root-directory convergence now relocates low-coupling provider, clipboard, notification, OCR, and integration helpers out of the root drop zone, reducing the root directory from 52 Kotlin files to 38 without disturbing the runtime namespace yet.
+- [Phase 25.1]: Capability Plane v2 now has canonical capability definitions, runtime availability derivation, and capability-centric presentation through `/capabilities`, while `/commands` begins to reference capability IDs instead of carrying capability meaning alone.
 
 ## Blockers / Concerns
 
@@ -96,7 +97,7 @@ Overall: Ghosthand’s next 1.4.0 move is not another feature wave. Phase 25.1 e
 ## Session Continuity
 
 Last session: 2026-04-04T00:00:00.000Z
-Next action: execute Phase 25.1-03 to implement Capability Plane v2 and add the first-class `/capabilities` route.
+Next action: execute Phase 25.1-04 to align `/commands`, `/state`, and `/capabilities` on the same canonical capability source and trim stale contradictory capability semantics.
 
 ## Performance Metrics
 
@@ -118,3 +119,4 @@ Next action: execute Phase 25.1-03 to implement Capability Plane v2 and add the 
 | 25 | 04 | 4 min | 1 | 1 |
 | 25 | 05 | 3 min | 1 | 2 |
 | 25.1 | 02 | 12 min | 1 | 15 |
+| 25.1 | 03 | 14 min | 1 | 10 |

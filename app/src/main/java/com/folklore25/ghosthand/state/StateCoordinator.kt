@@ -10,6 +10,7 @@ import android.content.Context
 import com.folklore25.ghosthand.*
 import com.folklore25.ghosthand.interaction.execution.AccessibilityScreenshotAccess
 import com.folklore25.ghosthand.capability.CapabilityAccessResolver
+import com.folklore25.ghosthand.capability.GhosthandCapabilityPresentation
 import com.folklore25.ghosthand.interaction.execution.AccessibilityInteractionPlane
 import com.folklore25.ghosthand.interaction.execution.GhosthandScreenshotAccess
 import com.folklore25.ghosthand.interaction.execution.GhosthandInteractionPlane
@@ -120,6 +121,15 @@ class StateCoordinator(
 
     fun createForegroundPayload(): JSONObject {
         return stateReadCoordinator.createForegroundPayload()
+    }
+
+    fun createCapabilitiesPayload(): JSONObject {
+        return JSONObject(
+            GhosthandCapabilityPresentation.capabilitiesFields(
+                capabilityAccess = stateReadCoordinator.capabilityAccessSnapshot(),
+                permissionSnapshot = permissionSnapshotProvider.snapshot()
+            )
+        )
     }
 
     fun createDevicePayload(): JSONObject {

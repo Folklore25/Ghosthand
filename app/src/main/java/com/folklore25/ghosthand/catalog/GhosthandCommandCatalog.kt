@@ -28,6 +28,7 @@ object GhosthandCommandCatalog {
             "method" to command.method,
             "path" to command.path,
             "description" to command.description,
+            "capabilities" to command.capabilityIds.takeIf { it.isNotEmpty() },
             "params" to command.params.map(::paramPayload),
             "responseFields" to command.responseFields,
             "plane" to capabilityMetadata.plane,

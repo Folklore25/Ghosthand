@@ -97,6 +97,14 @@ internal object GhosthandCapabilityPlaneCatalog {
                 directness = "derived"
             )
 
+            "capabilities", "commands" -> GhosthandCapabilityPlaneMetadata(
+                plane = "capability",
+                availabilityModel = "always_available",
+                preconditions = emptyList(),
+                failureModes = emptyList(),
+                truthType = "capability_truth",
+                directness = "derived"
+            )
             "screenshot" -> GhosthandCapabilityPlaneMetadata(
                 plane = "preview",
                 availabilityModel = "screenshot_runtime_gated",
@@ -124,15 +132,6 @@ internal object GhosthandCapabilityPlaneCatalog {
                     truthType = "local_runtime_utility",
                     directness = "direct"
                 )
-
-            "commands" -> GhosthandCapabilityPlaneMetadata(
-                plane = "capability",
-                availabilityModel = "always_available",
-                preconditions = emptyList(),
-                failureModes = emptyList(),
-                truthType = "capability_schema",
-                directness = "derived"
-            )
 
             else -> GhosthandCapabilityPlaneMetadata(
                 plane = "observation",

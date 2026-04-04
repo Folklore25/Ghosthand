@@ -12,6 +12,7 @@ data class GhosthandCommandDescriptor(
     val method: String,
     val path: String,
     val description: String,
+    val capabilityIds: List<String> = emptyList(),
     val params: List<GhosthandCommandParam> = emptyList(),
     val responseFields: List<String> = emptyList(),
     val selectorSupport: GhosthandSelectorSupport? = null,

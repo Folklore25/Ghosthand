@@ -16,6 +16,7 @@ object GhosthandRoutePolicies {
         "/ping" to RoutePolicy(setOf("GET"), "Only GET is supported for /ping."),
         "/health" to RoutePolicy(setOf("GET"), "Only GET is supported for /health."),
         "/commands" to RoutePolicy(setOf("GET"), "Only GET is supported for /commands."),
+        "/capabilities" to RoutePolicy(setOf("GET"), "Only GET is supported for /capabilities."),
         "/events" to RoutePolicy(setOf("GET"), "Only GET is supported for /events."),
         "/state" to RoutePolicy(setOf("GET"), "Only GET is supported for /state."),
         "/device" to RoutePolicy(setOf("GET"), "Only GET is supported for /device."),
