@@ -278,7 +278,7 @@ internal object GhosthandSensingCommandCatalog {
         GhosthandCommandDescriptor(
             id = "screenshot", category = "sensing", method = "GET", path = "/screenshot",
             capabilityIds = listOf("screenshot_capture", "preview_access"),
-            description = "Return current screenshot as base64 PNG; primary visual truth for debugging and verification when structured surface output is stale, invalid, or ambiguous. `/screen` preview metadata points back to this route through `previewPath`.",
+            description = "Return current screenshot as base64 PNG; primary visual truth for debugging and verification when structured surface output is stale, invalid, or ambiguous. `/screen` preview metadata points back to this route through `previewPath`. Failure responses stay bounded and specific where the runtime knows the cause, distinguishing invalid dimensions, unavailable screenshot capability or projection session, frame timeouts, encode failures, and empty output.",
             responseFields = listOf("image", "width", "height"),
             stateTruth = "visual_truth",
             operatorUses = listOf("visual_truth", "debugging", "verification")

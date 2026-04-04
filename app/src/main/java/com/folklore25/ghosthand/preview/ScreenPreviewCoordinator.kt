@@ -24,6 +24,14 @@ internal class ScreenPreviewCoordinator(
 
     fun hasMediaProjection(): Boolean = mediaProjectionProvider.hasProjection()
 
+    fun capturePreview(displayWidth: Int, displayHeight: Int): ScreenPreviewCapture {
+        return ScreenPreviewCaptureSupport.capturePreview(
+            displayWidth = displayWidth,
+            displayHeight = displayHeight,
+            captureScreenshot = ::captureBestScreenshot
+        )
+    }
+
     fun captureBestScreenshot(width: Int, height: Int): ScreenshotDispatchResult {
         return screenshotAccess.captureBestAvailable(
             width = width,

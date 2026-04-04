@@ -13,10 +13,10 @@ import com.folklore25.ghosthand.screen.read.ScreenReadPayload
 object ScreenPreviewMetadata {
     fun previewPath(
         screenshotUsableNow: Boolean,
-        previewWidth: Int,
-        previewHeight: Int
+        previewWidth: Int?,
+        previewHeight: Int?
     ): String? {
-        if (!screenshotUsableNow) {
+        if (!screenshotUsableNow || previewWidth == null || previewHeight == null) {
             return null
         }
         return "/screenshot?width=$previewWidth&height=$previewHeight"
@@ -25,19 +25,22 @@ object ScreenPreviewMetadata {
     fun apply(
         payload: ScreenReadPayload,
         screenshotUsableNow: Boolean,
-        previewWidth: Int,
-        previewHeight: Int
+        previewWidth: Int?,
+        previewHeight: Int?
     ): ScreenReadPayload {
+        val previewAdvertised = screenshotUsableNow && previewWidth != null && previewHeight != null
+        val advertisedPreviewWidth = previewWidth.takeIf { previewAdvertised }
+        val advertisedPreviewHeight = previewHeight.takeIf { previewAdvertised }
         return payload.copy(
             visualAvailable = screenshotUsableNow,
-            previewAvailable = screenshotUsableNow,
+            previewAvailable = previewAdvertised,
             previewPath = previewPath(
-                screenshotUsableNow = screenshotUsableNow,
-                previewWidth = previewWidth,
-                previewHeight = previewHeight
+                screenshotUsableNow = previewAdvertised,
+                previewWidth = advertisedPreviewWidth,
+                previewHeight = advertisedPreviewHeight
             ),
-            previewWidth = previewWidth,
-            previewHeight = previewHeight
+            previewWidth = advertisedPreviewWidth,
+            previewHeight = advertisedPreviewHeight
         )
     }
 }

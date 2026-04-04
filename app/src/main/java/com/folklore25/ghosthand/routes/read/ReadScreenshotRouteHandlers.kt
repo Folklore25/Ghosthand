@@ -8,6 +8,8 @@ package com.folklore25.ghosthand.routes.read
 
 import com.folklore25.ghosthand.R
 
+import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+import com.folklore25.ghosthand.interaction.execution.hasUsableImage
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -25,25 +27,7 @@ internal class ReadScreenshotRouteHandlers(
         val height = queryParameters["height"]?.toIntOrNull() ?: 0
         val screenshotResult = stateCoordinator.captureBestScreenshot(width, height)
 
-        return if (screenshotResult.available) {
-            buildJsonResponse(
-                statusCode = 200,
-                body = successEnvelope(
-                    JSONObject()
-                        .put("image", "data:image/png;base64,${screenshotResult.base64 ?: ""}")
-                        .put("width", screenshotResult.width)
-                        .put("height", screenshotResult.height)
-                )
-            )
-        } else {
-            buildJsonResponse(
-                statusCode = 503,
-                body = errorEnvelope(
-                    code = "SCREENSHOT_FAILED",
-                    message = "Screenshot capture failed. Reason: ${screenshotResult.attemptedPath}"
-                )
-            )
-        }
+        return buildScreenshotResponseFor(screenshotResult)
     }
 
     fun buildScreenshotResponse(requestBody: String): String {
@@ -54,24 +38,75 @@ internal class ReadScreenshotRouteHandlers(
         val height = body.optIntOrNull("height") ?: 0
 
         val screenshotResult = stateCoordinator.captureBestScreenshot(width, height)
-        return if (screenshotResult.available) {
+        return buildScreenshotResponseFor(screenshotResult)
+    }
+
+    private fun buildScreenshotResponseFor(screenshotResult: ScreenshotDispatchResult): String {
+        return if (screenshotResult.hasUsableImage) {
             buildJsonResponse(
                 statusCode = 200,
                 body = successEnvelope(
                     JSONObject()
-                        .put("image", "data:image/png;base64,${screenshotResult.base64 ?: ""}")
+                        .put("image", "data:image/png;base64,${screenshotResult.base64}")
                         .put("width", screenshotResult.width)
                         .put("height", screenshotResult.height)
                 )
             )
         } else {
+            val failure = screenshotResult.classifyFailure()
             buildJsonResponse(
                 statusCode = 503,
                 body = errorEnvelope(
-                    code = "SCREENSHOT_FAILED",
-                    message = "Screenshot capture failed. Reason: ${screenshotResult.attemptedPath}"
+                    code = failure.code,
+                    message = failure.message
                 )
             )
         }
+    }
+}
+
+internal data class ScreenshotFailureClassification(
+    val code: String,
+    val message: String
+)
+
+internal fun ScreenshotDispatchResult.classifyFailure(): ScreenshotFailureClassification {
+    return when {
+        attemptedPath == "invalid_resize_request" -> ScreenshotFailureClassification(
+            code = "INVALID_SCREENSHOT_DIMENSIONS",
+            message = "Screenshot request dimensions are invalid. Provide both width and height or neither."
+        )
+        attemptedPath in setOf("service_missing", "service_disconnected", "not_supported", "screenshot_capability_unavailable") ->
+            ScreenshotFailureClassification(
+                code = "SCREENSHOT_UNAVAILABLE",
+                message = "Screenshot capability is not currently available."
+            )
+        attemptedPath == "projection_missing" -> ScreenshotFailureClassification(
+            code = "SCREENSHOT_PROJECTION_UNAVAILABLE",
+            message = "MediaProjection session is not active for screenshot capture."
+        )
+        attemptedPath == "root_unavailable" -> ScreenshotFailureClassification(
+            code = "SCREENSHOT_ACTIVITY_UNAVAILABLE",
+            message = "No active window root was available during screenshot capture."
+        )
+        attemptedPath == "image_acquire_timeout" -> ScreenshotFailureClassification(
+            code = "SCREENSHOT_FRAME_TIMEOUT",
+            message = "Screenshot capture timed out while waiting for a real frame."
+        )
+        attemptedPath in setOf("bitmap_wrap_failed", "bitmap_prepare_failed", "resize_encode_failed", "screenshot_exception") ||
+            attemptedPath.startsWith("screenshot_failure_") ||
+            attemptedPath.startsWith("capture_exception_") ->
+            ScreenshotFailureClassification(
+                code = "SCREENSHOT_ENCODE_FAILED",
+                message = "Screenshot capture failed while preparing or encoding image data."
+            )
+        attemptedPath == "empty_encoded_image" -> ScreenshotFailureClassification(
+            code = "SCREENSHOT_EMPTY_OUTPUT",
+            message = "Screenshot capture produced no image bytes."
+        )
+        else -> ScreenshotFailureClassification(
+            code = "SCREENSHOT_CAPTURE_FAILED",
+            message = "Screenshot capture failed. Reason: $attemptedPath"
+        )
     }
 }

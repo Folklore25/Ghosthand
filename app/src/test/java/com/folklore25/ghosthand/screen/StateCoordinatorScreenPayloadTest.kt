@@ -438,6 +438,148 @@ class StateCoordinatorScreenPayloadTest {
     }
 
     @Test
+    fun previewMetadataSupportDoesNotAdvertisePreviewWhenScreenshotIsNotUsable() {
+        val payload = ScreenPreviewMetadata.apply(
+            payload = ScreenReadPayload(
+                packageName = "com.example",
+                activity = "ExampleActivity",
+                snapshotToken = "snap",
+                capturedAt = "2026-04-01T00:00:00Z",
+                foregroundStableDuringCapture = true,
+                partialOutput = false,
+                candidateNodeCount = 1,
+                returnedElementCount = 1,
+                warnings = emptyList(),
+                omittedInvalidBoundsCount = 0,
+                omittedLowSignalCount = 0,
+                omittedNodeCount = 0,
+                omittedCategories = emptyList(),
+                omittedSummary = null,
+                invalidBoundsPresent = false,
+                lowSignalPresent = false,
+                elements = emptyList(),
+                source = ScreenReadMode.ACCESSIBILITY.wireValue,
+                accessibilityElementCount = 1,
+                ocrElementCount = 0,
+                usedOcrFallback = false
+            ),
+            screenshotUsableNow = false,
+            previewWidth = 360,
+            previewHeight = 800
+        )
+
+        assertEquals(false, payload.visualAvailable)
+        assertEquals(false, payload.previewAvailable)
+        assertNull(payload.previewPath)
+        assertNull(payload.previewWidth)
+        assertNull(payload.previewHeight)
+    }
+
+    @Test
+    fun ocrPayloadUsesValidatedScreenshotTruthForVisualAvailability() {
+        val payload = ScreenReadPayloadComposer.createOcrPayload(
+            screenshotResult = ScreenshotDispatchResult(
+                available = true,
+                base64 = "",
+                format = "png",
+                width = 1080,
+                height = 2400,
+                attemptedPath = "mediaprojection_capture"
+            ),
+            foregroundSnapshot = ForegroundAppSnapshot(
+                packageName = "com.example",
+                activity = "ExampleActivity"
+            ),
+            ocrResult = ScreenOcrResult(
+                elements = emptyList(),
+                attemptedPath = "ocr_unavailable",
+                warnings = listOf("ocr_unavailable")
+            ),
+            previewWidth = 240,
+            previewHeight = 240
+        )
+
+        assertEquals(false, payload.visualAvailable)
+        assertEquals(false, payload.previewAvailable)
+        assertNull(payload.previewPath)
+        assertNull(payload.previewWidth)
+        assertNull(payload.previewHeight)
+    }
+
+    @Test
+    fun accessibilityPayloadDoesNotAdvertisePreviewFromCapabilityAlone() {
+        val coordinator = ScreenReadCoordinator(
+            capabilityAccessSnapshotProvider = {
+                CapabilityAccessSnapshot(
+                    accessibility = GovernedCapabilitySnapshot(
+                        system = AccessibilitySystemAuthorizationState(
+                            enabled = true,
+                            connected = true,
+                            dispatchCapable = true,
+                            healthy = true,
+                            status = "enabled_connected"
+                        ),
+                        policy = AppCapabilityPolicyState(allowed = true),
+                        effective = CapabilityEffectiveState(
+                            usableNow = true,
+                            reason = "accessibility_connected"
+                        )
+                    ),
+                    screenshot = GovernedCapabilitySnapshot(
+                        system = ScreenshotSystemAuthorizationState(
+                            accessibilityCaptureReady = true,
+                            mediaProjectionGranted = false
+                        ),
+                        policy = AppCapabilityPolicyState(allowed = true),
+                        effective = CapabilityEffectiveState(
+                            usableNow = true,
+                            reason = "accessibility_capture_ready"
+                        )
+                    )
+                )
+            },
+            captureScreenshot = { _, _ ->
+                throw AssertionError("accessibility payload should use preview capture, not full screenshot capture")
+            },
+            capturePreview = {
+                ScreenPreviewCapture(
+                    request = ScreenPreviewRequest(width = 360, height = 800),
+                    result = ScreenshotDispatchResult(
+                        available = true,
+                        base64 = "",
+                        format = "png",
+                        width = 360,
+                        height = 800,
+                        attemptedPath = "empty_encoded_image"
+                    )
+                )
+            },
+            foregroundSnapshotProvider = { ForegroundAppSnapshot() },
+            screenOcrProvider = ScreenOcrProvider()
+        )
+
+        val payload = coordinator.createAccessibilityPayload(
+            snapshot = AccessibilityTreeSnapshot(
+                packageName = "com.example",
+                activity = "ExampleActivity",
+                snapshotToken = "snap",
+                capturedAt = "2026-04-01T00:00:00Z",
+                nodes = emptyList()
+            ),
+            editableOnly = false,
+            scrollableOnly = false,
+            packageFilter = null,
+            clickableOnly = false
+        )
+
+        assertEquals(false, payload.visualAvailable)
+        assertEquals(false, payload.previewAvailable)
+        assertNull(payload.previewPath)
+        assertNull(payload.previewWidth)
+        assertNull(payload.previewHeight)
+    }
+
+    @Test
     fun screenPreviewContractUsesExplicitScreenshotPathInsteadOfInlineThumbs() {
         val routeHandlers = TestFileSupport.readProjectFile(
             "app/src/main/java/com/folklore25/ghosthand/routes/read/ReadScreenRouteHandlers.kt",

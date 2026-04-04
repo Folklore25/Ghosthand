@@ -26,6 +26,7 @@ The near-term roadmap keeps the platform truthful while improving how agents rea
 - [x] **Phase 25.4: Clean Finish And Capability Presentation Polish For 1.4.0** - Polish the accepted 1.4.0 architecture-convergence result so the capability plane, self-description surfaces, and closeout state feel clean, coherent, and presentation-ready without broadening scope. (completed 2026-04-04)
 - [x] **Phase 25.5: Current-State Correction Pass For 1.4.0** - Correct the remaining correctness defects and maintenance debt in the accepted 1.4.0 baseline by fixing `/notify` cancellation truthfulness, aligning the screenshot foreground-service contract, removing wildcard-import pollution, making contained coordinator extractions, and continuing test-package convergence without broadening scope. (completed 2026-04-04)
 - [x] **Phase 25.6: Second Current-State Cleanup Pass For 1.4.0** - Finish the still-incomplete engineering cleanup by removing the remaining UI wildcard imports, doing one more contained extraction pass on the largest coordination-heavy files, and reducing the remaining root-flat tests without reopening accepted fixes or broadening scope. (completed 2026-04-05)
+- [x] **Phase 26: Visual Observation Regression Correction For 1.4.1** - Correct the real screenshot regression exposed by OpenClaw usage by restoring truthful, reliable, agent-usable visual observation through `/screenshot` and lightweight preview paths without broadening 1.4.1 scope. (completed 2026-04-04)
 
 ## Phase Details
 
@@ -322,3 +323,22 @@ Plans:
 - [x] 25.6-02: Perform one more contained extraction pass on the biggest coordination-heavy files
 - [x] 25.6-03: Continue root-flat test convergence and clean touched test imports
 - [x] 25.6-04: Run final build and unit-test verification and close the cleanup pass
+
+### Phase 26: Visual Observation Regression Correction For 1.4.1
+**Goal**: Restore a truthful and agent-usable visual observation path by correcting the 1.4.0 screenshot regression, tightening preview or downsample quality, and making screenshot failure semantics operationally specific without broadening product scope.
+**Depends on**: Phase 25.6
+**Success Criteria** (what must be TRUE):
+  1. [VIS-01] Full-resolution screenshot works again in the normal supported case, or Ghosthand now reports a precise truthful reason why it cannot.
+  2. [VIS-02] Reduced-size screenshot or preview output remains lightweight but is materially usable for agent visual reasoning rather than trivially low quality.
+  3. [VIS-03] Empty-image success cases are eliminated so Ghosthand never reports visual success with zero-byte or blank image payloads.
+  4. [VIS-04] Screenshot failure responses distinguish materially different causes such as unavailable capability, missing session, inactive projection, bitmap acquisition failure, encode failure, empty output, invalid requested dimensions, or unsupported mode where the runtime can know that truth.
+  5. [VIS-05] Observation-plane truthfulness is preserved: Ghosthand does not fake success through silent degradation or misleading fallback behavior.
+  6. [VIS-06] The fix stays bounded to screenshot and closely related visual-observation contract paths, without reopening action evidence, capability-plane design, or unrelated 1.4.1 work.
+  7. [VIS-07] Real-device and local verification prove the corrected screenshot path and the Android project still compiles after the pass lands.
+**Plans**: TBD
+
+Plans:
+- [x] 26-01: Trace the screenshot regression end-to-end and lock the exact failing path
+- [x] 26-02: Restore truthful full-resolution capture and eliminate empty-image success cases
+- [x] 26-03: Raise lightweight preview or downsample output to a decision-usable floor with truthful metadata
+- [x] 26-04: Tighten screenshot failure classification, regression coverage, and real-device verification

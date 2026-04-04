@@ -19,6 +19,7 @@ import com.folklore25.ghosthand.state.runtime.RuntimeStateStore
 import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
 import com.folklore25.ghosthand.interaction.execution.SwipeGestureDispatchDiagnostic
 import com.folklore25.ghosthand.interaction.execution.TextInputDispatchResult
+import com.folklore25.ghosthand.interaction.execution.hasUsableImage
 
 import com.folklore25.ghosthand.R
 
@@ -346,6 +347,17 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
             )
         }
 
+        if (hasInvalidResizeRequest(width, height)) {
+            return ScreenshotDispatchResult(
+                available = false,
+                base64 = null,
+                format = "png",
+                width = 0,
+                height = 0,
+                attemptedPath = "invalid_resize_request"
+            )
+        }
+
         var result = ScreenshotDispatchResult(
             available = false,
             base64 = null,
@@ -382,17 +394,26 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
                         }
 
                         val finalBitmap = try {
-                            val targetWidth = if (width > 0) width else hardwareBitmap.width
-                            val targetHeight = if (height > 0) height else hardwareBitmap.height
-                            if (targetWidth != hardwareBitmap.width || targetHeight != hardwareBitmap.height) {
-                                android.graphics.Bitmap.createScaledBitmap(
-                                    hardwareBitmap,
-                                    targetWidth,
-                                    targetHeight,
-                                    true
-                                )
+                            val softwareBitmap = hardwareBitmap.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+                            if (softwareBitmap == null) {
+                                null
                             } else {
-                                hardwareBitmap.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+                                val targetWidth = if (width > 0) width else softwareBitmap.width
+                                val targetHeight = if (height > 0) height else softwareBitmap.height
+                                if (targetWidth != softwareBitmap.width || targetHeight != softwareBitmap.height) {
+                                    android.graphics.Bitmap.createScaledBitmap(
+                                        softwareBitmap,
+                                        targetWidth,
+                                        targetHeight,
+                                        true
+                                    ).also {
+                                        if (it !== softwareBitmap) {
+                                            softwareBitmap.recycle()
+                                        }
+                                    }
+                                } else {
+                                    softwareBitmap
+                                }
                             }
                         } catch (_: Exception) {
                             null
@@ -401,16 +422,31 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
                         if (finalBitmap != null) {
                             try {
                                 val baos = java.io.ByteArrayOutputStream()
-                                finalBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 90, baos)
-                                val b64 = android.util.Base64.encodeToString(baos.toByteArray(), android.util.Base64.NO_WRAP)
-                                result = ScreenshotDispatchResult(
+                                val encoded = if (finalBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 90, baos)) {
+                                    baos.toByteArray()
+                                } else {
+                                    ByteArray(0)
+                                }
+                                val candidate = ScreenshotDispatchResult(
                                     available = true,
-                                    base64 = b64,
+                                    base64 = android.util.Base64.encodeToString(encoded, android.util.Base64.NO_WRAP),
                                     format = "png",
                                     width = finalBitmap.width,
                                     height = finalBitmap.height,
                                     attemptedPath = "accessibility_screenshot"
                                 )
+                                result = if (candidate.hasUsableImage) {
+                                    candidate
+                                } else {
+                                    ScreenshotDispatchResult(
+                                        available = false,
+                                        base64 = null,
+                                        format = "png",
+                                        width = 0,
+                                        height = 0,
+                                        attemptedPath = "empty_encoded_image"
+                                    )
+                                }
                             } finally {
                                 finalBitmap.recycle()
                             }
@@ -467,6 +503,15 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
 
         latch.await((SCREENSHOT_TIMEOUT_MS + ACTION_TIMEOUT_BUFFER_MS).coerceAtLeast(ACTION_TIMEOUT_MS), TimeUnit.MILLISECONDS)
         return result
+    }
+
+    private fun hasInvalidResizeRequest(requestWidth: Int, requestHeight: Int): Boolean {
+        if (requestWidth < 0 || requestHeight < 0) {
+            return true
+        }
+        val requestsNativeSize = requestWidth == 0 && requestHeight == 0
+        val requestsCustomSize = requestWidth > 0 && requestHeight > 0
+        return !requestsNativeSize && !requestsCustomSize
     }
 
     override fun setTextOnNode(nodeId: String, text: CharSequence): NodeTextDispatchResult {

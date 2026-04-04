@@ -71,10 +71,6 @@ class StateCoordinator(
     context: Context,
     private val runtimeStateProvider: () -> RuntimeState
 ) {
-    companion object {
-        const val SCREEN_PREVIEW_WIDTH = 240
-        const val SCREEN_PREVIEW_HEIGHT = 240
-    }
     private val appContext = context.applicationContext
     private val homeDiagnosticsProvider = HomeDiagnosticsProvider(appContext)
     private val deviceSnapshotProvider = DeviceSnapshotProvider(appContext)
@@ -130,10 +126,15 @@ class StateCoordinator(
     private val screenReadCoordinator = ScreenReadCoordinator(
         capabilityAccessSnapshotProvider = stateReadCoordinator::capabilityAccessSnapshot,
         captureScreenshot = screenPreviewCoordinator::captureBestScreenshot,
+        capturePreview = {
+            val displayMetrics = appContext.resources.displayMetrics
+            screenPreviewCoordinator.capturePreview(
+                displayWidth = displayMetrics.widthPixels,
+                displayHeight = displayMetrics.heightPixels
+            )
+        },
         foregroundSnapshotProvider = foregroundAppProvider::snapshot,
-        screenOcrProvider = screenOcrProvider,
-        previewWidth = SCREEN_PREVIEW_WIDTH,
-        previewHeight = SCREEN_PREVIEW_HEIGHT
+        screenOcrProvider = screenOcrProvider
     )
     private val waitCoordinator = GhosthandWaitCoordinator(
         treeSnapshotProvider = screenSnapshotCoordinator::getTreeSnapshotResult,

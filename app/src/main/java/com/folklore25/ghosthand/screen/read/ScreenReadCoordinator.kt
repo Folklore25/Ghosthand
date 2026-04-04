@@ -10,18 +10,19 @@ import com.folklore25.ghosthand.capability.CapabilityAccessSnapshot
 import com.folklore25.ghosthand.state.device.ForegroundAppSnapshot
 import com.folklore25.ghosthand.screen.ocr.ScreenOcrProvider
 import com.folklore25.ghosthand.interaction.execution.ScreenshotDispatchResult
+import com.folklore25.ghosthand.interaction.execution.hasUsableImage
 
 import com.folklore25.ghosthand.R
 
+import com.folklore25.ghosthand.preview.ScreenPreviewCapture
 import com.folklore25.ghosthand.preview.ScreenPreviewCaptureSupport
 
 internal class ScreenReadCoordinator(
     private val capabilityAccessSnapshotProvider: () -> CapabilityAccessSnapshot,
     private val captureScreenshot: (Int, Int) -> ScreenshotDispatchResult,
+    private val capturePreview: () -> ScreenPreviewCapture,
     private val foregroundSnapshotProvider: () -> ForegroundAppSnapshot,
-    private val screenOcrProvider: ScreenOcrProvider,
-    private val previewWidth: Int,
-    private val previewHeight: Int
+    private val screenOcrProvider: ScreenOcrProvider
 ) {
     fun createAccessibilityPayload(
         snapshot: AccessibilityTreeSnapshot,
@@ -30,6 +31,12 @@ internal class ScreenReadCoordinator(
         packageFilter: String?,
         clickableOnly: Boolean
     ): ScreenReadPayload {
+        val previewCapture = capabilityAccessSnapshotProvider()
+            .screenshot
+            .effective
+            .usableNow
+            .takeIf { it }
+            ?.let { capturePreview() }
         return ScreenPreviewCaptureSupport.withPreviewMetadata(
             payload = ScreenReadPayloadComposer.createAccessibilityPayload(
                 snapshot = snapshot,
@@ -38,9 +45,9 @@ internal class ScreenReadCoordinator(
                 packageFilter = packageFilter,
                 clickableOnly = clickableOnly
             ),
-            screenshotUsableNow = capabilityAccessSnapshotProvider().screenshot.effective.usableNow,
-            previewWidth = previewWidth,
-            previewHeight = previewHeight
+            screenshotUsableNow = previewCapture?.result?.hasUsableImage == true,
+            previewWidth = previewCapture?.request?.width,
+            previewHeight = previewCapture?.request?.height
         )
     }
 
@@ -48,13 +55,14 @@ internal class ScreenReadCoordinator(
         val screenshotResult = captureScreenshot(0, 0)
         val foregroundSnapshot = foregroundSnapshotProvider()
         val ocrResult = screenOcrProvider.read(screenshotResult)
+        val previewRequest = ScreenPreviewCaptureSupport.previewRequestForScreenshot(screenshotResult)
 
         return ScreenReadPayloadComposer.createOcrPayload(
             screenshotResult = screenshotResult,
             foregroundSnapshot = foregroundSnapshot,
             ocrResult = ocrResult,
-            previewWidth = previewWidth,
-            previewHeight = previewHeight
+            previewWidth = previewRequest?.width,
+            previewHeight = previewRequest?.height
         )
     }
 
