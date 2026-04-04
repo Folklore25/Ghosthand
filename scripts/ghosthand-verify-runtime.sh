@@ -2,12 +2,14 @@
 set -euo pipefail
 
 PKG="com.folklore25.ghosthand"
-SERVICE="${PKG}/.GhosthandForegroundService"
-ACTIVITY="${PKG}/.MainActivity"
+SERVICE="${PKG}/.service.runtime.GhosthandForegroundService"
+ACTIVITY="${PKG}/.ui.main.MainActivity"
 CORE_SERVICE="${PKG}/${PKG}.GhostCoreAccessibilityService"
 PORT="5583"
 APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
 SCREENSHOT_RESPONSE_FILE="/tmp/ghosthand-screenshot-response.txt"
+PREVIEW_MIN_SHORT_EDGE=360
+FORWARD_PORT=6553
 LAST_OUTPUT=""
 LAST_LABEL=""
 MODE_NAME=""
@@ -60,6 +62,15 @@ http_request() {
   else
     adb shell "printf '${method} ${path} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n' | toybox nc 127.0.0.1 ${PORT}"
   fi
+}
+
+forwarded_http_get() {
+  local path="$1"
+  adb forward "tcp:${FORWARD_PORT}" "tcp:${PORT}" >/dev/null
+  local status=0
+  curl -sS -D - "http://127.0.0.1:${FORWARD_PORT}${path}" || status=$?
+  adb forward --remove "tcp:${FORWARD_PORT}" >/dev/null 2>&1 || true
+  return $status
 }
 
 expect_contains() {
@@ -161,7 +172,67 @@ extract_json_int() {
 extract_json_string() {
   local response="$1"
   local field="$2"
-  printf '%s' "$response" | sed -n "s/.*\"${field}\":\"\\([^\"]*\\)\".*/\\1/p" | head -n 1
+  printf '%s' "$response" | sed -n "s/.*\"${field}\":\"\\([^\"]*\\)\".*/\\1/p" | head -n 1 | sed 's#\\/#/#g'
+}
+
+decoded_base64_byte_count() {
+  local payload="$1"
+  printf '%s' "$payload" | node -e '
+let s = "";
+process.stdin.on("data", d => s += d);
+process.stdin.on("end", () => {
+  if (!s.trim()) {
+    process.stdout.write("0");
+    return;
+  }
+  try {
+    process.stdout.write(String(Buffer.from(s.trim(), "base64").length));
+  } catch (_) {
+    process.stdout.write("0");
+  }
+});
+'
+}
+
+validate_screenshot_response() {
+  local response="$1"
+  local label="$2"
+  local min_short_edge="${3:-0}"
+
+  expect_contains "$response" '"image":"data:image\/png;base64,' "${label} failed: response did not expose PNG image data" || return 1
+
+  local image_base64
+  image_base64="$(extract_screenshot_base64 "$response")"
+  if [[ -z "$image_base64" ]]; then
+    echo "${label} failed: screenshot base64 payload was blank after the PNG prefix"
+    return 1
+  fi
+
+  local decoded_bytes
+  decoded_bytes="$(decoded_base64_byte_count "$image_base64")"
+  if [[ -z "$decoded_bytes" || "$decoded_bytes" -le 0 ]]; then
+    echo "${label} failed: screenshot payload did not decode into non-empty bytes"
+    return 1
+  fi
+
+  local width height
+  width="$(extract_json_int "$response" "width")"
+  height="$(extract_json_int "$response" "height")"
+  if [[ -z "$width" || -z "$height" || "$width" -le 0 || "$height" -le 0 ]]; then
+    echo "${label} failed: screenshot dimensions were not positive"
+    return 1
+  fi
+
+  if (( min_short_edge > 0 )); then
+    local short_edge="$width"
+    if (( height < short_edge )); then
+      short_edge="$height"
+    fi
+    if (( short_edge < min_short_edge )); then
+      echo "${label} failed: preview short edge ${short_edge}px was below the ${min_short_edge}px decision-usable floor"
+      return 1
+    fi
+  fi
 }
 
 run_step() {
@@ -232,7 +303,7 @@ install_current_build() {
 
   local size
   size="$(stat -f %z "${APK_PATH}")"
-  cat "${APK_PATH}" | adb shell su -c "pm install -r -S ${size}"
+  cat "${APK_PATH}" | adb shell su -c "pm install -r -d -S ${size}"
 }
 
 commands_preview() {
@@ -244,7 +315,23 @@ screenshot_preview() {
 }
 
 capture_screenshot_response() {
-  http_request GET /screenshot | tee "${SCREENSHOT_RESPONSE_FILE}"
+  forwarded_http_get /screenshot | tee "${SCREENSHOT_RESPONSE_FILE}"
+}
+
+capture_endpoint_response() {
+  local endpoint="$1"
+  forwarded_http_get "$endpoint" | tee "${SCREENSHOT_RESPONSE_FILE}"
+}
+
+capture_screenshot_response_quiet() {
+  forwarded_http_get /screenshot > "${SCREENSHOT_RESPONSE_FILE}"
+  wc -c "${SCREENSHOT_RESPONSE_FILE}"
+}
+
+capture_endpoint_response_quiet() {
+  local endpoint="$1"
+  forwarded_http_get "$endpoint" > "${SCREENSHOT_RESPONSE_FILE}"
+  wc -c "${SCREENSHOT_RESPONSE_FILE}"
 }
 
 extract_http_content_length() {
@@ -283,6 +370,49 @@ try {
   process.stdout.write(image.replace(/^data:image\/png;base64,/, ""));
 } catch (_) {}
 ' "$path"
+}
+
+validate_screenshot_response_file() {
+  local path="$1"
+  local label="$2"
+  local min_short_edge="${3:-0}"
+  local response
+  response="$(cat "$path")"
+
+  expect_contains "$response" '"image":"data:image\/png;base64,' "${label} failed: response did not expose PNG image data" || return 1
+
+  local image_base64
+  image_base64="$(extract_screenshot_base64_from_file "$path")"
+  if [[ -z "$image_base64" ]]; then
+    echo "${label} failed: screenshot base64 payload was blank after the PNG prefix"
+    return 1
+  fi
+
+  local decoded_bytes
+  decoded_bytes="$(decoded_base64_byte_count "$image_base64")"
+  if [[ -z "$decoded_bytes" || "$decoded_bytes" -le 0 ]]; then
+    echo "${label} failed: screenshot payload did not decode into non-empty bytes"
+    return 1
+  fi
+
+  local width height
+  width="$(extract_json_int "$response" "width")"
+  height="$(extract_json_int "$response" "height")"
+  if [[ -z "$width" || -z "$height" || "$width" -le 0 || "$height" -le 0 ]]; then
+    echo "${label} failed: screenshot dimensions were not positive"
+    return 1
+  fi
+
+  if (( min_short_edge > 0 )); then
+    local short_edge="$width"
+    if (( height < short_edge )); then
+      short_edge="$height"
+    fi
+    if (( short_edge < min_short_edge )); then
+      echo "${label} failed: preview short edge ${short_edge}px was below the ${min_short_edge}px decision-usable floor"
+      return 1
+    fi
+  fi
 }
 
 hash_text_sha256() {
@@ -406,11 +536,20 @@ swipe_check() {
 }
 
 screenshot_check() {
-  run_step "screenshot" screenshot_preview || return 1
-  if [[ "$LAST_OUTPUT" == *'"format":"png"'* ]]; then
-    return 0
+  run_step "screenshot full" capture_screenshot_response_quiet || return 1
+  validate_screenshot_response_file "${SCREENSHOT_RESPONSE_FILE}" "screenshot-check full capture" || return 1
+
+  run_step "screen preview metadata" http_request GET /screen || return 1
+  local preview_path
+  preview_path="$(extract_json_string "$LAST_OUTPUT" "previewPath")"
+  if [[ -z "$preview_path" ]]; then
+    echo "screenshot-check failed: /screen did not publish previewPath"
+    return 1
   fi
-  expect_contains "$LAST_OUTPUT" '"image":"data:image\/png;base64,' "screenshot-check failed: response did not expose PNG image data" || return 1
+
+  sleep 1
+  run_step "screenshot preview" capture_endpoint_response_quiet "$preview_path" || return 1
+  validate_screenshot_response_file "${SCREENSHOT_RESPONSE_FILE}" "screenshot-check preview capture" "$PREVIEW_MIN_SHORT_EDGE" || return 1
 }
 
 notify_check() {

@@ -394,17 +394,26 @@ class GhostCoreAccessibilityService : AccessibilityService(), GhostAccessibility
                         }
 
                         val finalBitmap = try {
-                            val targetWidth = if (width > 0) width else hardwareBitmap.width
-                            val targetHeight = if (height > 0) height else hardwareBitmap.height
-                            if (targetWidth != hardwareBitmap.width || targetHeight != hardwareBitmap.height) {
-                                android.graphics.Bitmap.createScaledBitmap(
-                                    hardwareBitmap,
-                                    targetWidth,
-                                    targetHeight,
-                                    true
-                                )
+                            val softwareBitmap = hardwareBitmap.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+                            if (softwareBitmap == null) {
+                                null
                             } else {
-                                hardwareBitmap.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+                                val targetWidth = if (width > 0) width else softwareBitmap.width
+                                val targetHeight = if (height > 0) height else softwareBitmap.height
+                                if (targetWidth != softwareBitmap.width || targetHeight != softwareBitmap.height) {
+                                    android.graphics.Bitmap.createScaledBitmap(
+                                        softwareBitmap,
+                                        targetWidth,
+                                        targetHeight,
+                                        true
+                                    ).also {
+                                        if (it !== softwareBitmap) {
+                                            softwareBitmap.recycle()
+                                        }
+                                    }
+                                } else {
+                                    softwareBitmap
+                                }
                             }
                         } catch (_: Exception) {
                             null
