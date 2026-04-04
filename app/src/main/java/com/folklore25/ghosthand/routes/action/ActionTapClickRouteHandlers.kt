@@ -9,10 +9,12 @@ package com.folklore25.ghosthand.routes.action
 import android.util.Log
 import com.folklore25.ghosthand.ClickAttemptResult
 import com.folklore25.ghosthand.ClickFailureReason
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
 import com.folklore25.ghosthand.payload.GhosthandDisclosurePayloads
 import com.folklore25.ghosthand.payload.GhosthandInteractionPayloads
 import com.folklore25.ghosthand.payload.GhosthandPayloadJsonSupport
+import com.folklore25.ghosthand.interaction.effects.ActionEvidencePayloads
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -26,7 +28,8 @@ import com.folklore25.ghosthand.TapFailureReason
 import org.json.JSONObject
 
 internal class ActionTapClickRouteHandlers(
-    private val stateCoordinator: StateCoordinator
+    private val stateCoordinator: StateCoordinator,
+    private val observationPublisher: GhosthandObservationPublisher
 ) {
     fun buildTapResponse(requestBody: String): String {
         val body = parseJsonBodyOrNull(requestBody, "/tap")
@@ -39,6 +42,7 @@ internal class ActionTapClickRouteHandlers(
 
         val directX = body.optIntOrNull("x")
         val directY = body.optIntOrNull("y")
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
         val tapResult = if (directX != null && directY != null) {
             stateCoordinator.tapPoint(directX, directY)
         } else {
@@ -68,23 +72,43 @@ internal class ActionTapClickRouteHandlers(
                 else -> return buildJsonResponse(422, errorEnvelope("UNSUPPORTED_OPERATION", "Unsupported tap target type: ${target.optString("type").trim()}."))
             }
         }
+        val observation = if (tapResult.performed) {
+            observeActionSurfaceChange(beforeSnapshot) { stateCoordinator.getTreeSnapshotResult().snapshot }
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
+        val actionEffect = if (tapResult.performed) observation.toActionEffectObservation() else null
+        val postActionState = PostActionStateComposer.fromObservedEffect(
+            actionEffect = actionEffect,
+            fallbackSnapshot = observation.afterSnapshot
+        )
 
         Log.i(TAP_LOG_TAG, "event=tap_request backendRequested=$backend backendUsed=${tapResult.backendUsed ?: "none"} tapPath=${tapResult.attemptedPath} success=${tapResult.performed} failure=${tapResult.failureReason ?: "none"}")
         return when {
-            tapResult.performed -> buildJsonResponse(
-                200,
-                successEnvelope(
-                    JSONObject()
-                        .put("performed", true)
-                        .put("backendUsed", tapResult.backendUsed)
-                        .putPostActionState(
-                            PostActionStateComposer.fromObservedEffect(
-                                actionEffect = null,
-                                fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
-                            )
-                        )
+            tapResult.performed -> {
+                observationPublisher.recordActionCompleted(
+                    route = "/tap",
+                    attemptedPath = tapResult.attemptedPath,
+                    backendUsed = tapResult.backendUsed,
+                    actionEffect = actionEffect,
+                    postActionState = postActionState
                 )
-            )
+                buildJsonResponse(
+                    200,
+                    successEnvelope(
+                        JSONObject(
+                            ActionEvidencePayloads.commonFields(
+                                performed = true,
+                                backendUsed = tapResult.backendUsed,
+                                attemptedPath = tapResult.attemptedPath,
+                                actionEffect = actionEffect,
+                                postActionState = postActionState
+                            )
+                        ),
+                        disclosure = buildActionEffectDisclosure("/tap", true, actionEffect?.stateChanged ?: false)
+                    )
+                )
+            }
 
             tapResult.failureReason == TapFailureReason.ACCESSIBILITY_UNAVAILABLE ->
                 buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Accessibility service is not available for tap execution."))
@@ -113,29 +137,50 @@ internal class ActionTapClickRouteHandlers(
                 index = body.optIntOrNull("index") ?: 0
             )
         }
+        val observation = if (initialClickResult.performed) {
+            observeActionSurfaceChange(beforeSnapshot) {
+                stateCoordinator.getTreeSnapshotResult().snapshot
+            }
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
         val clickResult = if (initialClickResult.performed) {
-            initialClickResult.copy(
-                effect = observeActionSurfaceChange(beforeSnapshot) {
-                    stateCoordinator.getTreeSnapshotResult().snapshot
-                }.toActionEffectObservation()
-            )
+            initialClickResult.copy(effect = observation.toActionEffectObservation())
         } else {
             initialClickResult
         }
+        val postActionState = PostActionStateComposer.fromObservedEffect(
+            actionEffect = clickResult.effect,
+            fallbackSnapshot = observation.afterSnapshot
+        )
 
         Log.i(CLICK_LOG_TAG, "event=click_request nodeId=$nodeId clickPath=${clickResult.attemptedPath} success=${clickResult.performed} failure=${clickResult.failureReason?.name ?: "none"}")
         val selectorStrategy = selector?.strategy
         val clickableOnly = if (!nodeIdProvided) clickSelectorRequiresClickableTarget(body) else false
 
         return when {
-            clickResult.performed -> buildJsonResponse(
-                200,
-                successEnvelope(
-                    data = GhosthandPayloadJsonSupport.fieldsToJson(GhosthandInteractionPayloads.clickFields(clickResult)),
-                    disclosure = buildClickDisclosure(selectorStrategy, clickableOnly, clickResult)
-                        ?: buildActionEffectDisclosure("/click", clickResult.performed, clickResult.effect?.stateChanged ?: false)
+            clickResult.performed -> {
+                observationPublisher.recordActionCompleted(
+                    route = "/click",
+                    attemptedPath = clickResult.attemptedPath,
+                    backendUsed = clickResult.backendUsed,
+                    actionEffect = clickResult.effect,
+                    postActionState = postActionState
                 )
-            )
+                buildJsonResponse(
+                    200,
+                    successEnvelope(
+                        data = GhosthandPayloadJsonSupport.fieldsToJson(
+                            GhosthandInteractionPayloads.clickFields(
+                                clickResult,
+                                fallbackSnapshot = observation.afterSnapshot
+                            )
+                        ),
+                        disclosure = buildClickDisclosure(selectorStrategy, clickableOnly, clickResult)
+                            ?: buildActionEffectDisclosure("/click", clickResult.performed, clickResult.effect?.stateChanged ?: false)
+                    )
+                )
+            }
 
             clickResult.failureReason == ClickFailureReason.ACCESSIBILITY_UNAVAILABLE ->
                 buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Accessibility service is not available for click execution."))

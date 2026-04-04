@@ -6,6 +6,8 @@
 
 package com.folklore25.ghosthand.observation
 
+import com.folklore25.ghosthand.ActionEffectObservation
+import com.folklore25.ghosthand.payload.PostActionState
 import com.folklore25.ghosthand.TreeUnavailableReason
 import com.folklore25.ghosthand.screen.read.ScreenReadMode
 import com.folklore25.ghosthand.screen.read.ScreenReadPayload
@@ -139,6 +141,43 @@ internal class GhosthandObservationPublisher(
                 "reason" to reason?.name?.lowercase()
             )
         )
+    }
+
+    fun recordActionCompleted(
+        route: String,
+        attemptedPath: String? = null,
+        backendUsed: String? = null,
+        actionEffect: ActionEffectObservation? = null,
+        postActionState: PostActionState? = null
+    ) {
+        val packageName = postActionState?.packageName ?: actionEffect?.finalPackageName
+        val activity = postActionState?.activity ?: actionEffect?.finalActivity
+        observationLog.append(
+            type = "action_completed",
+            packageName = packageName,
+            activity = activity,
+            route = route,
+            evidence = mapOf(
+                "attemptedPath" to attemptedPath,
+                "backendUsed" to backendUsed,
+                "snapshotToken" to postActionState?.snapshotToken
+            )
+        )
+        actionEffect?.let { effect ->
+            observationLog.append(
+                type = "action_effect_observed",
+                packageName = effect.finalPackageName ?: packageName,
+                activity = effect.finalActivity ?: activity,
+                route = route,
+                evidence = mapOf(
+                    "stateChanged" to effect.stateChanged,
+                    "beforeSnapshotToken" to effect.beforeSnapshotToken,
+                    "afterSnapshotToken" to effect.afterSnapshotToken,
+                    "suggestedSource" to postActionState?.suggestedSource,
+                    "fallbackReason" to postActionState?.fallbackReason
+                )
+            )
+        }
     }
 }
 

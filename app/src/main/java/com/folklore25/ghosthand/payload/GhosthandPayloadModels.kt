@@ -53,5 +53,7 @@ data class PostActionState(
     val focusedEditablePresent: Boolean? = null,
     val renderMode: String? = null,
     val surfaceReadability: String? = null,
-    val visualAvailable: Boolean? = null
+    val visualAvailable: Boolean? = null,
+    val suggestedSource: String? = null,
+    val fallbackReason: String? = null
 )

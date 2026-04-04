@@ -8,6 +8,8 @@ package com.folklore25.ghosthand.routes.action
 
 import com.folklore25.ghosthand.GesturePoint
 import com.folklore25.ghosthand.GestureStroke
+import com.folklore25.ghosthand.interaction.effects.ActionEvidencePayloads
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
 import com.folklore25.ghosthand.routes.errorEnvelope
@@ -20,7 +22,8 @@ import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONObject
 
 internal class ActionGestureRouteHandlers(
-    private val stateCoordinator: StateCoordinator
+    private val stateCoordinator: StateCoordinator,
+    private val observationPublisher: GhosthandObservationPublisher
 ) {
     fun buildLongpressResponse(requestBody: String): String {
         val body = parseJsonBodyOrNull(requestBody, "/longpress")
@@ -34,17 +37,37 @@ internal class ActionGestureRouteHandlers(
         if (durationMs < 100 || durationMs > 10000) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "durationMs must be between 100 and 10000."))
         }
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
         val performed = stateCoordinator.performLongPressGesture(x, y, durationMs)
+        val observation = if (performed) {
+            observeActionSurfaceChange(beforeSnapshot) { stateCoordinator.getTreeSnapshotResult().snapshot }
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
         return if (performed) {
+            val actionEffect = observation.toActionEffectObservation()
+            val postActionState = PostActionStateComposer.fromObservedEffect(
+                actionEffect = actionEffect,
+                fallbackSnapshot = observation.afterSnapshot
+            )
+            observationPublisher.recordActionCompleted(
+                route = "/longpress",
+                attemptedPath = "gesture_dispatch",
+                actionEffect = actionEffect,
+                postActionState = postActionState
+            )
             buildJsonResponse(
                 200,
                 successEnvelope(
-                    JSONObject().put("performed", true).putPostActionState(
-                        PostActionStateComposer.fromObservedEffect(
-                            actionEffect = null,
-                            fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                    JSONObject(
+                        ActionEvidencePayloads.commonFields(
+                            performed = true,
+                            attemptedPath = "gesture_dispatch",
+                            actionEffect = actionEffect,
+                            postActionState = postActionState
                         )
-                    )
+                    ),
+                    disclosure = buildActionEffectDisclosure("/longpress", true, actionEffect.stateChanged)
                 )
             )
         } else {
@@ -73,7 +96,11 @@ internal class ActionGestureRouteHandlers(
                     GestureStroke(listOf(GesturePoint(x, y), GesturePoint(x + half, y)), durationMs)
                 )
             }
-            return gestureResponse(stateCoordinator.performGesture(strokes))
+            val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+            return gestureResponse(
+                performed = stateCoordinator.performGesture(strokes),
+                beforeSnapshot = beforeSnapshot
+            )
         }
 
         val strokesJson = body.optJSONArray("strokes")
@@ -96,20 +123,46 @@ internal class ActionGestureRouteHandlers(
         if (strokes.isEmpty()) {
             return buildJsonResponse(400, errorEnvelope("INVALID_ARGUMENT", "At least one valid stroke with points is required."))
         }
-        return gestureResponse(stateCoordinator.performGesture(strokes))
+        val beforeSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+        return gestureResponse(
+            performed = stateCoordinator.performGesture(strokes),
+            beforeSnapshot = beforeSnapshot
+        )
     }
 
-    private fun gestureResponse(performed: Boolean): String {
+    private fun gestureResponse(
+        performed: Boolean,
+        beforeSnapshot: com.folklore25.ghosthand.AccessibilityTreeSnapshot?
+    ): String {
+        val observation = if (performed) {
+            observeActionSurfaceChange(beforeSnapshot) { stateCoordinator.getTreeSnapshotResult().snapshot }
+        } else {
+            observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
+        }
         return if (performed) {
+            val actionEffect = observation.toActionEffectObservation()
+            val postActionState = PostActionStateComposer.fromObservedEffect(
+                actionEffect = actionEffect,
+                fallbackSnapshot = observation.afterSnapshot
+            )
+            observationPublisher.recordActionCompleted(
+                route = "/gesture",
+                attemptedPath = "gesture_dispatch",
+                actionEffect = actionEffect,
+                postActionState = postActionState
+            )
             buildJsonResponse(
                 200,
                 successEnvelope(
-                    JSONObject().put("performed", true).putPostActionState(
-                        PostActionStateComposer.fromObservedEffect(
-                            actionEffect = null,
-                            fallbackSnapshot = stateCoordinator.getTreeSnapshotResult().snapshot
+                    JSONObject(
+                        ActionEvidencePayloads.commonFields(
+                            performed = true,
+                            attemptedPath = "gesture_dispatch",
+                            actionEffect = actionEffect,
+                            postActionState = postActionState
                         )
-                    )
+                    ),
+                    disclosure = buildActionEffectDisclosure("/gesture", true, actionEffect.stateChanged)
                 )
             )
         } else {

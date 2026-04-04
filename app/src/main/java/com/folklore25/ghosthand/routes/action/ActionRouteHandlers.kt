@@ -7,16 +7,18 @@
 package com.folklore25.ghosthand.routes.action
 
 import android.accessibilityservice.AccessibilityService
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.server.LocalApiServerRoute
 import com.folklore25.ghosthand.state.StateCoordinator
 
 internal class ActionRouteHandlers(
-    internal val stateCoordinator: StateCoordinator
+    internal val stateCoordinator: StateCoordinator,
+    observationPublisher: GhosthandObservationPublisher
 ) {
-    private val tapClickHandlers = ActionTapClickRouteHandlers(stateCoordinator)
-    private val motionHandlers = ActionMotionRouteHandlers(stateCoordinator)
-    private val gestureHandlers = ActionGestureRouteHandlers(stateCoordinator)
-    private val navigationHandlers = ActionNavigationRouteHandlers(stateCoordinator)
+    private val tapClickHandlers = ActionTapClickRouteHandlers(stateCoordinator, observationPublisher)
+    private val motionHandlers = ActionMotionRouteHandlers(stateCoordinator, observationPublisher)
+    private val gestureHandlers = ActionGestureRouteHandlers(stateCoordinator, observationPublisher)
+    private val navigationHandlers = ActionNavigationRouteHandlers(stateCoordinator, observationPublisher)
 
     fun routes(): List<LocalApiServerRoute> {
         return listOf(

@@ -7,6 +7,8 @@
 package com.folklore25.ghosthand.routes.action
 
 import android.util.Log
+import com.folklore25.ghosthand.interaction.effects.ActionEvidencePayloads
+import com.folklore25.ghosthand.observation.GhosthandObservationPublisher
 import com.folklore25.ghosthand.payload.GhosthandDisclosure
 import com.folklore25.ghosthand.routes.badJsonBodyResponse
 import com.folklore25.ghosthand.routes.buildJsonResponse
@@ -23,7 +25,8 @@ import com.folklore25.ghosthand.state.summary.PostActionStateComposer
 import org.json.JSONObject
 
 internal class ActionMotionRouteHandlers(
-    private val stateCoordinator: StateCoordinator
+    private val stateCoordinator: StateCoordinator,
+    private val observationPublisher: GhosthandObservationPublisher
 ) {
     fun buildSwipeResponse(requestBody: String): String {
         val body = parseJsonBodyOrNull(requestBody, "/swipe")
@@ -59,27 +62,39 @@ internal class ActionMotionRouteHandlers(
 
         Log.i(SWIPE_LOG_TAG, "event=swipe_request backendRequested=$backend backendUsed=${swipeResult.backendUsed ?: "none"} swipePath=${swipeResult.attemptedPath} success=${swipeResult.performed} failure=${swipeResult.failureReason ?: "none"} from=${swipeCoordinates.fromX},${swipeCoordinates.fromY} to=${swipeCoordinates.toX},${swipeCoordinates.toY} durationMs=$durationMs requestShape=${swipeCoordinates.requestShape}")
         return when {
-            swipeResult.performed -> buildJsonResponse(
-                200,
-                successEnvelope(
-                    data = JSONObject()
-                        .put("performed", true)
-                        .put("backendUsed", swipeResult.backendUsed)
-                        .put("requestShape", swipeCoordinates.requestShape)
-                        .put("contentChanged", observation.surfaceChanged)
-                        .put("beforeSnapshotToken", observation.beforeSnapshotToken)
-                        .put("afterSnapshotToken", observation.afterSnapshotToken)
-                        .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity)
-                        .putPostActionState(
-                            PostActionStateComposer.fromObservedEffect(
-                                actionEffect = observation.toActionEffectObservation(),
-                                fallbackSnapshot = null
+            swipeResult.performed -> {
+                val actionEffect = observation.toActionEffectObservation()
+                val postActionState = PostActionStateComposer.fromObservedEffect(
+                    actionEffect = actionEffect,
+                    fallbackSnapshot = observation.afterSnapshot
+                )
+                observationPublisher.recordActionCompleted(
+                    route = "/swipe",
+                    attemptedPath = swipeResult.attemptedPath,
+                    backendUsed = swipeResult.backendUsed,
+                    actionEffect = actionEffect,
+                    postActionState = postActionState
+                )
+                buildJsonResponse(
+                    200,
+                    successEnvelope(
+                        data = JSONObject(
+                            ActionEvidencePayloads.commonFields(
+                                performed = true,
+                                backendUsed = swipeResult.backendUsed,
+                                attemptedPath = swipeResult.attemptedPath,
+                                requestShape = swipeCoordinates.requestShape,
+                                actionEffect = actionEffect,
+                                postActionState = postActionState,
+                                extras = linkedMapOf(
+                                    "contentChanged" to observation.surfaceChanged
+                                )
                             )
                         ),
-                    disclosure = buildMotionDisclosure("/swipe", swipeResult.performed, observation.surfaceChanged)
+                        disclosure = buildMotionDisclosure("/swipe", swipeResult.performed, observation.surfaceChanged)
+                    )
                 )
-            )
+            }
 
             swipeResult.failureReason == SwipeFailureReason.ACCESSIBILITY_UNAVAILABLE ->
                 buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Accessibility service is not available for swipe execution."))
@@ -115,29 +130,39 @@ internal class ActionMotionRouteHandlers(
             observeScrollSurfaceChange(beforeSnapshot, beforeSnapshot)
         }
         return when {
-            result.performed -> buildJsonResponse(
-                200,
-                successEnvelope(
-                    data = JSONObject()
-                        .put("performed", true)
-                        .put("count", result.performedCount)
-                        .put("direction", direction)
-                        .put("attemptedPath", result.attemptedPath)
-                        .put("contentChanged", observation.surfaceChanged)
-                        .put("surfaceChanged", observation.surfaceChanged)
-                        .put("beforeSnapshotToken", observation.beforeSnapshotToken)
-                        .put("afterSnapshotToken", observation.afterSnapshotToken)
-                        .put("finalPackageName", observation.finalPackageName)
-                        .put("finalActivity", observation.finalActivity)
-                        .putPostActionState(
-                            PostActionStateComposer.fromObservedEffect(
-                                actionEffect = observation.toActionEffectObservation(),
-                                fallbackSnapshot = null
+            result.performed -> {
+                val actionEffect = observation.toActionEffectObservation()
+                val postActionState = PostActionStateComposer.fromObservedEffect(
+                    actionEffect = actionEffect,
+                    fallbackSnapshot = observation.afterSnapshot
+                )
+                observationPublisher.recordActionCompleted(
+                    route = "/scroll",
+                    attemptedPath = result.attemptedPath,
+                    actionEffect = actionEffect,
+                    postActionState = postActionState
+                )
+                buildJsonResponse(
+                    200,
+                    successEnvelope(
+                        data = JSONObject(
+                            ActionEvidencePayloads.commonFields(
+                                performed = true,
+                                attemptedPath = result.attemptedPath,
+                                actionEffect = actionEffect,
+                                postActionState = postActionState,
+                                extras = linkedMapOf(
+                                    "count" to result.performedCount,
+                                    "direction" to direction,
+                                    "contentChanged" to observation.surfaceChanged,
+                                    "surfaceChanged" to observation.surfaceChanged
+                                )
                             )
                         ),
-                    disclosure = buildMotionDisclosure("/scroll", result.performed, observation.surfaceChanged)
+                        disclosure = buildMotionDisclosure("/scroll", result.performed, observation.surfaceChanged)
+                    )
                 )
-            )
+            }
 
             result.failureReason == ScrollFailureReason.ACCESSIBILITY_UNAVAILABLE ->
                 buildJsonResponse(503, errorEnvelope("ACCESSIBILITY_UNAVAILABLE", "Accessibility service is not available."))

@@ -25,7 +25,8 @@ internal data class ScrollSurfaceObservation(
     val beforeSnapshotToken: String?,
     val afterSnapshotToken: String?,
     val finalPackageName: String?,
-    val finalActivity: String?
+    val finalActivity: String?,
+    val afterSnapshot: AccessibilityTreeSnapshot? = null
 )
 
 internal fun unsupportedBackendResponse(): String {
@@ -45,7 +46,14 @@ internal fun observeScrollSurfaceChange(
     val surfaceChanged = (beforeToken != null && afterToken != null && beforeToken != afterToken) ||
         beforePackage != afterPackage ||
         beforeActivity != afterActivity
-    return ScrollSurfaceObservation(surfaceChanged, beforeToken, afterToken, afterPackage, afterActivity)
+    return ScrollSurfaceObservation(
+        surfaceChanged = surfaceChanged,
+        beforeSnapshotToken = beforeToken,
+        afterSnapshotToken = afterToken,
+        finalPackageName = afterPackage,
+        finalActivity = afterActivity,
+        afterSnapshot = afterSnapshot
+    )
 }
 
 internal fun observeActionSurfaceChange(

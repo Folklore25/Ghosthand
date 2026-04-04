@@ -9,6 +9,9 @@ package com.folklore25.ghosthand.state.summary
 import com.folklore25.ghosthand.AccessibilityTreeSnapshot
 import com.folklore25.ghosthand.ActionEffectObservation
 import com.folklore25.ghosthand.payload.PostActionState
+import com.folklore25.ghosthand.screen.read.deriveAccessibilityRetryHint
+import com.folklore25.ghosthand.screen.read.hasActionableBounds
+import com.folklore25.ghosthand.screen.read.isLowSignalNode
 import com.folklore25.ghosthand.screen.read.ScreenStateLegibilityProjector
 
 object PostActionStateComposer {
@@ -20,6 +23,16 @@ object PostActionStateComposer {
         val activity = actionEffect?.finalActivity ?: fallbackSnapshot?.activity
         val snapshotToken = actionEffect?.afterSnapshotToken ?: fallbackSnapshot?.snapshotToken
         val legibility = fallbackSnapshot?.let(ScreenStateLegibilityProjector::fromAccessibilitySnapshot)
+        val retryHint = fallbackSnapshot?.let { snapshot ->
+            val candidateNodeCount = snapshot.nodes.size
+            val returnedElementCount = snapshot.nodes.count { it.hasActionableBounds() && !it.isLowSignalNode() }
+            val omittedNodeCount = candidateNodeCount - returnedElementCount
+            deriveAccessibilityRetryHint(
+                candidateNodeCount = candidateNodeCount,
+                returnedElementCount = returnedElementCount,
+                omittedNodeCount = omittedNodeCount
+            )
+        }
         if (packageName == null &&
             activity == null &&
             snapshotToken == null &&
@@ -35,7 +48,9 @@ object PostActionStateComposer {
             focusedEditablePresent = legibility?.focusedEditablePresent,
             renderMode = legibility?.renderMode?.wireValue,
             surfaceReadability = legibility?.surfaceReadability?.wireValue,
-            visualAvailable = legibility?.visualAvailable
+            visualAvailable = legibility?.visualAvailable,
+            suggestedSource = retryHint?.source,
+            fallbackReason = retryHint?.reason
         )
     }
 
@@ -48,6 +63,8 @@ object PostActionStateComposer {
             state.renderMode?.let { put("renderMode", it) }
             state.surfaceReadability?.let { put("surfaceReadability", it) }
             state.visualAvailable?.let { put("visualAvailable", it) }
+            state.suggestedSource?.let { put("suggestedSource", it) }
+            state.fallbackReason?.let { put("fallbackReason", it) }
         }
     }
 }

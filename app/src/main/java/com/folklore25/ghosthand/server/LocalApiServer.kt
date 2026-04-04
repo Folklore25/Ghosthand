@@ -265,8 +265,8 @@ class LocalApiServer(
             addAll(SystemRouteHandlers(stateCoordinator).routes())
             addAll(ObservationRouteHandlers(observationLog).routes())
             addAll(ReadRouteHandlers(stateCoordinator, observationPublisher).routes())
-            addAll(ActionRouteHandlers(stateCoordinator).routes())
-            addAll(InputRouteHandlers(stateCoordinator).routes())
+            addAll(ActionRouteHandlers(stateCoordinator, observationPublisher).routes())
+            addAll(InputRouteHandlers(stateCoordinator, observationPublisher).routes())
             addAll(WaitRouteHandlers(stateCoordinator).routes())
         }
         val pathPolicies = buildMap {
