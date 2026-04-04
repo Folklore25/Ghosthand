@@ -88,6 +88,18 @@ data class ScreenshotDispatchResult(
     val attemptedPath: String
 )
 
+val ScreenshotDispatchResult.returnedWidth: Int
+    get() = width
+
+val ScreenshotDispatchResult.returnedHeight: Int
+    get() = height
+
+val ScreenshotDispatchResult.hasUsableImage: Boolean
+    get() = available &&
+        !base64.isNullOrBlank() &&
+        returnedWidth > 0 &&
+        returnedHeight > 0
+
 data class NodeTextDispatchResult(
     val nodeFound: Boolean,
     val performed: Boolean,

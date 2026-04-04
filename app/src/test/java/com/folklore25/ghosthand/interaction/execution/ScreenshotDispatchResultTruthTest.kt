@@ -8,9 +8,31 @@ package com.folklore25.ghosthand.interaction.execution
 
 import android.view.accessibility.AccessibilityNodeInfo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ScreenshotDispatchResultTruthTest {
+    @Test
+    fun usableScreenshotTruthRequiresPositiveDimensionsAndNonEmptyImageBytes() {
+        val usable = ScreenshotDispatchResult(
+            available = true,
+            base64 = "cG5n",
+            format = "png",
+            width = 1080,
+            height = 2400,
+            attemptedPath = "mediaprojection_capture"
+        )
+        val blankBytes = usable.copy(base64 = "")
+        val zeroWidth = usable.copy(width = 0)
+        val unavailable = usable.copy(available = false)
+
+        assertTrue(usable.hasUsableImage)
+        assertFalse(blankBytes.hasUsableImage)
+        assertFalse(zeroWidth.hasUsableImage)
+        assertFalse(unavailable.hasUsableImage)
+    }
+
     @Test
     fun blankAccessibilityImageMustNotBlockUsableProjectionCapture() {
         val service = FakeExecutionCore(

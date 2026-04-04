@@ -24,12 +24,12 @@ internal object AccessibilityScreenshotAccess : GhosthandScreenshotAccess {
         captureProjection: (Int, Int) -> ScreenshotDispatchResult
     ): ScreenshotDispatchResult {
         val serviceCapture = takeAccessibilityScreenshot(width, height)
-        if (serviceCapture.available) {
+        if (serviceCapture.hasUsableImage) {
             return serviceCapture
         }
 
         val projectionCapture = captureProjection(width, height)
-        if (projectionCapture.available) {
+        if (projectionCapture.hasUsableImage) {
             return projectionCapture
         }
 
