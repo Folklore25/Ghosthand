@@ -26,7 +26,6 @@ CLAUDE.md
 ghosthand-window-latest.xml
 
 # Local-only reference and operating material
-ui/
 docs/
 
 # Local guidance / assets not required for public build availability
