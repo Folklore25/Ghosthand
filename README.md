@@ -20,7 +20,7 @@
 > Ghosthand is not a no-code macro app, not a cloud dashboard, and not a generic RPA shell.  
 > It is a phone-side control plane that exposes truthful Android state and action primitives to an external agent over a local HTTP API.
 
-Inspired by Karry × Orb: https://github.com/cflank/orb-eye
+Inspired by Karry × Orb: https://github.com/KarryViber/orb-eye
 
 ---
 
